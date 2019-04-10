@@ -1,7 +1,3 @@
-
-
-
-
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -18,22 +14,19 @@ using namespace org::phenopackets::schema::v1;
 
 
 int main(int argc, char ** argv) {
-  std::string fileName="Gebbia-1997-ZIC3.json";
-   GOOGLE_PROTOBUF_VERIFY_VERSION;
+  string fileName="Gebbia-1997-ZIC3.json";
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-   std::stringstream sstr;
-   ifstream ifs(fileName.c_str(), ios::in | ios::ate);
-   std::ifstream inFile;
-   inFile.open(fileName);
-   if (ifs.good()) {
-     cout << "good\n";
-   } else {
-     cout << "bad\n";
+  stringstream sstr;
+  ifstream inFile;
+  inFile.open(fileName);
+  if (! inFile.good()) {
+     cerr << "Could not open Phenopacket file at " << fileName <<"\n";
+     return EXIT_FAILURE;
    }
-    sstr << inFile.rdbuf();
-    //cout << "sstr: " << sstr << "\n";
-    string JSONstring = sstr.str();
-    std::cout <<"reading phenopacket\n" << JSONstring << "\n";
+   sstr << inFile.rdbuf();
+   string JSONstring = sstr.str();
+   cout <<"reading phenopacket\n" << JSONstring << "\n";
 
     //Phenopacket phenopacket;
     // Create a TypeResolver used to resolve protobuf message types
