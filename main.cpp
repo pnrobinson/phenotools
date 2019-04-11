@@ -44,4 +44,7 @@ int main(int argc, char ** argv) {
     //"type.googleapis.com", google::protobuf::DescriptorPool::generated_pool()));
   //  phenopacket = google::protobuf::JsonToMessage("org/phenopackets/schema/v1/phenopackets.Phenopacket", JSONstring);
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacket,options);
+  cout << "Phenopacket at: " << fileName << "\n";
+  cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
+
 }

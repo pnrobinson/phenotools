@@ -8,12 +8,14 @@ TARGET=phenopacket_demo
 
 all:$(TARGET)
 
+OBJS=phenopackets.pb.o
+
 
 $(TARGET):main.cpp phenopackets.pb.o
-	$(CXX)   $< $(CXXFLAGS) ${LIBS} -O0 -o $@
+	$(CXX)   $< $(OBJS) $(CXXFLAGS) ${LIBS} -O0 -o $@
 
 phenopackets.pb.o:phenopackets.pb.cc
-	$(CXX) $(CXXFLAGS)  phenopackets.pb.cc -o $@
+	$(CXX) $(CXXFLAGS) -c  phenopackets.pb.cc 
 
 phenopackets.pb.cc: phenopackets.proto
 	protoc --proto_path=. --cpp_out=. phenopackets.proto
