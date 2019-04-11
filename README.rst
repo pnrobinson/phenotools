@@ -42,6 +42,23 @@ Running the demo
 The software currently just decodes a Phenopacket from JSON format and outputs
 some of the data. To run it, enter ::
 
-  $ ./phenotools
+  $ ./phenopacket_demo
 
-We will soon improve the command line handling.
+It will input the Phenopacket included in the demo and output this. ::
+
+  Phenopacket at: Gebbia-1997-ZIC3.json
+  subject.id: III-1
+  subject.age: 7W
+  subject.sex: male
+  id: HP:0002139: Arrhinencephaly
+  id: HP:0001750: Single ventricle
+  id: HP:0001643: Patent ductus arteriosus
+  id: HP:0001746: Asplenia
+  id: HP:0004971: Pulmonary artery hypoplasia
+  id: HP:0001674: Complete atrioventricular canal defect
+  id: HP:0001669: Transposition of the great arteries
+  id: HP:0012890: Posteriorly placed anus
+  id: HP:0001629: Ventricular septal defect
+  id: HP:0012262: Abnormal ciliary motility
+  id: HP:0004935: Pulmonary artery atresia
+  id: HP:0003363: Abdominal situs inversus

@@ -28,23 +28,34 @@ int main(int argc, char ** argv) {
    string JSONstring = sstr.str();
    cout <<"reading phenopacket\n" << JSONstring << "\n";
 
-    //Phenopacket phenopacket;
-    // Create a TypeResolver used to resolve protobuf message types
   ::google::protobuf::util::JsonParseOptions options;
-
-  /*
-  inline util::Status JsonStringToMessage(StringPiece input,
-                                          Message* message) {
-  return JsonStringToMessage(input, message, JsonParseOptions());
-}
-*/
   Phenopacket phenopacket;
-  //options.always_print_primitive_fields = true;
-  //std::unique_ptr<google::protobuf::util::TypeResolver> resolver(google::protobuf::util::NewTypeResolverForDescriptorPool(
-    //"type.googleapis.com", google::protobuf::DescriptorPool::generated_pool()));
-  //  phenopacket = google::protobuf::JsonToMessage("org/phenopackets/schema/v1/phenopackets.Phenopacket", JSONstring);
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacket,options);
   cout << "Phenopacket at: " << fileName << "\n";
   cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
+  // print age if available
+  if (phenopacket.subject().has_age_at_collection()) {
+    Age age = phenopacket.subject().age_at_collection();
+    if (! age.age().empty()) {
+      cout <<"\tsubject.age: " << age.age() << "\n";
+    }
+      cout <<"\tsubject.sex: " ;
+      Sex sex = phenopacket.subject().sex();
+      switch (sex) {
+        case UNKNOWN_SEX : cout << " unknown"; break;
+        case FEMALE : cout <<"female"; break;
+        case MALE: cout <<"male"; break;
+        case OTHER_SEX:
+        default:
+          cout <<"other"; break;
+      }
+      cout << "\n";
+  }
+  for (auto i = 0; i < phenopacket.phenotypes_size(); i++) {
+   const Phenotype& phenotype = phenopacket.phenotypes(i);
+   const OntologyClass type = phenotype.type();
+   cout << "\tid: " << type.id() << ": " << type.label() << "\n";
+ }
+
 
 }
