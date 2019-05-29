@@ -15,10 +15,17 @@ with open(path,'r') as f:
 
 print("Reading phenopacket from {}".format(path))
 print("Subject id: {}".format(packet.subject.id))
-print("dtaypte",type(packet.subject))
 indiv = packet.subject
 print(indiv.id)
-
-
-
-print(indiv.age_at_collection.age)
+if indiv.age_at_collection and indiv.age_at_collection.age:
+    print("Age: {}".format(indiv.age_at_collection.age))
+else:
+    print("Could not find age")
+if indiv.sex:
+    sx = base.Sex.Name(indiv.sex)
+    print(sx)
+else:
+    print("Could not find sex element")
+for pt in packet.phenotypes:
+    term=pt.type
+    print("{} [{}]".format(term.label,term.id))
