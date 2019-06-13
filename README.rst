@@ -6,8 +6,8 @@ A C++ app for working with the GA4GH Phenopackets standard.
 
 
 
-Installation
-~~~~~~~~~~~~
+Installing protoc
+~~~~~~~~~~~~~~~~~
 First, install the latest version of the protobuf library and compiler.
 
 Download protobuf from https://github.com/protocolbuffers/protobuf/releases/.
@@ -24,8 +24,8 @@ Briefly ::
   $ sudo ldconfig # refresh shared library cache.
 
 
-Compiling this software
-~~~~~~~~~~~~~~~~~~~~~~~
+Building phentools
+~~~~~~~~~~~~~~~~~~
 The build process first generates C++ code to represent the Phenopacket on the
 basis of the protobuf file. We use a Makefile to represent this dependency. Following
 this, g++ is used to compile the code using the C++17 standard. Note that
