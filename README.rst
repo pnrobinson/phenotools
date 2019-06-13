@@ -15,13 +15,13 @@ At the time of this writing, the latest version was 3.7.1.
 
 For these instructions (https://github.com/protocolbuffers/protobuf/blob/master/src/README.md)
 
-Briefly
+Briefly ::
 
-$ ./configure
-$ make
-$ make check
-$ sudo make install
-$ sudo ldconfig # refresh shared library cache.
+  $ ./configure
+  $ make
+  $ make check
+  $ sudo make install
+  $ sudo ldconfig # refresh shared library cache.
 
 
 Compiling this software
