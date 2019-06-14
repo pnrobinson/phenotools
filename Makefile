@@ -1,26 +1,38 @@
 CXX=g++
 INC=-I=.
-CXXFLAGS=-Wall -g -O0 --std=c++17 $(INC) -pthread 
 LIBS=-lprotobuf
 
 
-TARGET=phenopacket_demo
-
-all:$(TARGET)
-
-OBJS=phenopackets.pb.o
+TARGET_EXEC=phenotools
 
 
-$(TARGET):main.cpp phenopackets.pb.o
-	$(CXX)   $< $(OBJS) $(CXXFLAGS) ${LIBS} -o $@
+SRC_DIR = src
 
-phenopackets.pb.o:phenopackets.pb.cc
-	$(CXX) $(CXXFLAGS) -c  phenopackets.pb.cc
+SRCS := $(shell find $(SRC_DIRS) -name *.cc)
+OBJS := $(SRCS:%=build/%.o)
+DEPS := $(OBJS:.o=.d)
 
-phenopackets.pb.cc: phenopackets.proto
-	protoc --proto_path=. --cpp_out=. phenopackets.proto
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
+CXXFLAGS ?= $(INC_FLAGS) -Wall -g -O0 --std=c++17 $(INC) -pthread
+
+build/$(TARGET_EXEC): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(LIBS)
+
+
+# c++ source
+build/%.cpp.o: %.cpp
+	echo "build $(BUILD_DIR)"
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+.PHONY: clean
 
 clean:
-	rm -f $(TARGET)
-	rm -f $(OBJS)
+	$(RM) -r $(BUILD_DIR)
+
+-include $(DEPS)
+
+MKDIR_P ?= mkdir -p
+
