@@ -14,8 +14,8 @@ SRCS = base.pb.cc interpretation.pb.cc phenopackets.pb.cc
 #OBJS := $(SRCS:%=%.o)
 OBJS =  base.pb.o interpretation.pb.o phenopackets.pb.o
 
-$(TARGET_EXEC): $(OBJS) main.cpp 
-	$(CXX) $(OBJS) main.cpp  -o $@ $(LIBS)
+$(TARGET_EXEC): $(OBJS) main.cpp
+	$(CXX) $(OBJS) main.cpp $(CXXFLAGS) -o $@ $(LIBS)
 
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

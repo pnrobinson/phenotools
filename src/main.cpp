@@ -7,6 +7,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "phenopackets.pb.h"
+#include "base.pb.h"
 
 
 using namespace std;
