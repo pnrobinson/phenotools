@@ -47,29 +47,38 @@ else
 fi
 
 
-# For simplicity, just check one of the generated files.
-if [ ! -e ${GENERATED_CPP_DIR}/interpretation.pb.h ]; then
-    cp ${GENERATED_CPP_DIR}/*.h src/.
-    cp ${GENERATED_CPP_DIR}/*.cc src/.
+PROTO_PATH='phenopacket-schema/src/main/proto'
+
+
+
+## Generate the C++ files with protoc
+if [ -e 'src/base.pb.h' ]; then
+    echo "base.pb.h previously generated"
 else
-    echo "[INFO] Already copied generated C++ source files"
-    echo
+    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/base.proto
 fi
 
-
-# Always compile a new version
-if [ -e phenotools ]; then
-    - rm phenotools
+if [ -e 'src/interpretation.pb.h' ]; then
+    echo "interpretation.pb.h previously generated"
+else
+    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/interpretation.proto
 fi
+
+if [ -e 'src/phenopackets.pb.h' ]; then
+    echo "phenopackets.pb.h previously generated"
+else
+    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/phenopackets.proto
+fi
+
+   ${PROTO_PATH}/phenopackets.proto ${PROTO_PATH}/interpretation.proto
 
 
 echo "Building phenotools..."
 
-cd gensrc; make
-mv gensrc/phenotools .
+cd src; make
+mv src/phenotools .
 
 
-make
 
 
 

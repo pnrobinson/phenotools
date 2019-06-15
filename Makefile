@@ -1,38 +1,20 @@
-CXX=g++
-INC=-I=.
-LIBS=-lprotobuf
 
 
-TARGET_EXEC=phenotools
+
+TARGET=phenotools
+
+ALL=${TARGET}
 
 
-SRC_DIR = src
-
-SRCS := $(shell find $(SRC_DIRS) -name *.cc)
-OBJS := $(SRCS:%=build/%.o)
-DEPS := $(OBJS:.o=.d)
-
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-
-CXXFLAGS ?= $(INC_FLAGS) -Wall -g -O0 --std=c++17 $(INC) -pthread
-
-build/$(TARGET_EXEC): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LIBS)
-
-
-# c++ source
-build/%.cpp.o: %.cpp
-	echo "build $(BUILD_DIR)"
-	$(MKDIR_P) $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+${TARGET}:
+	cd src; make
+	mv src/phenotools .
 
 .PHONY: clean
 
 clean:
-	$(RM) -r $(BUILD_DIR)
+	-rm phenotools
+	cd src; make clean
 
--include $(DEPS)
 
-MKDIR_P ?= mkdir -p
 

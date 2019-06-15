@@ -11,11 +11,15 @@ Installing protoc
 First, install the latest version of the protobuf library and compiler.
 
 Download protobuf from https://github.com/protocolbuffers/protobuf/releases/.
-At the time of this writing, the latest version was 3.7.1.
+At the time of this writing, the latest version was 3.8.0.
 
-For these instructions (https://github.com/protocolbuffers/protobuf/blob/master/src/README.md)
+For these instructions (https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
 
-Briefly ::
+On an Ubuntu system, one can install the requirements as follows. ::
+
+  $ sudo apt-get install autoconf automake libtool curl make g++ unzip
+
+Following this, download the latest source code, compile and install it. Briefly ::
 
   $ ./configure
   $ make
@@ -24,25 +28,28 @@ Briefly ::
   $ sudo ldconfig # refresh shared library cache.
 
 
-Building phentools
-~~~~~~~~~~~~~~~~~~
+Building phenotools
+~~~~~~~~~~~~~~~~~~~
 The build process first generates C++ code to represent the Phenopacket on the
 basis of the protobuf file. We use a Makefile to represent this dependency. Following
 this, g++ is used to compile the code using the C++17 standard. Note that
 the code will not compile with some older version of the protobuf library. Use
 version 3.7.1 or later.
 
+The ``setup.sh`` script downloads the GitHub repository, generates the C++ files from the
+protobuf code, and compiles the ``phenotools`` executable.
+
 
 This software can be built simply with ::
 
-  $ make
+  $ ./setup.sh
 
 Running the demo
 ~~~~~~~~~~~~~~~~
 The software currently just decodes a Phenopacket from JSON format and outputs
 some of the data. To run it, enter ::
 
-  $ ./phenopacket_demo
+  $ ./phenotools Gebbia-1997-ZIC3.json
 
 It will input the Phenopacket included in the demo and output this. ::
 

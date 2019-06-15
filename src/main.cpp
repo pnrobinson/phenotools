@@ -2,17 +2,18 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 
 #include "phenopackets.pb.h"
 #include "base.pb.h"
+#include "phenotools.h"
 
 
 using namespace std;
-using namespace org::phenopackets::schema::v1;
-using namespace org::phenopackets::schema::v1::core;
+
 
 
 int main(int argc, char ** argv) {
@@ -36,9 +37,11 @@ int main(int argc, char ** argv) {
    //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
 
   ::google::protobuf::util::JsonParseOptions options;
-  Phenopacket phenopacket;
-  ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacket,options);
+  ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
+  ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
   cout << "Phenopacket at: " << fileName << "\n";
+
+  auto ppacket = std::make_unique<Phenopacket>(phenopacketpb);
   // cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
   // print age if available
   
