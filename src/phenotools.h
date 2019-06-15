@@ -15,6 +15,7 @@ using std::vector;
 
 
 enum class ValidationType { WARNING, ERROR };
+static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
 class Validation{
     
@@ -35,10 +36,48 @@ public:
     
 };
 
+class ValidatorI {
+public:
+    virtual ~ValidatorI(){}
+    virtual vector<Validation> validate()=0;
+};
+
+class OntologyClass : public ValidatorI {
+private:
+    string id_;
+    string label_;
+    
+public:
+    OntologyClass(const string &id, const string &label):
+        id_(id),label_(label) {
+        }
+    OntologyClass(org::phenopackets::schema::v1::core::OntologyClass ontclz):
+        id_(ontclz.id()),
+        label_(ontclz.label()) {}
+    ~OntologyClass(){}
+    vector<Validation> validate();
+    
+};
+
+
+class Age {
+private:
+    string age_;
+    
+};
+
 
 class Subject {
 private:
-  std::string id_;
+    // required
+  string id_;
+    // optional
+  string dataset_id_;
+    // optional (timestamp)
+  string data_of_birth_;
+    
+  
+  
   
 public:
   Subject(org::phenopackets::schema::v1::core::Individual individual) {

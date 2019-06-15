@@ -9,9 +9,6 @@ TARGET_EXEC=phenotools
 
 ALL=$(TARGET_EXEC)
 
-#SRCS := $(shell find -name *.cc)
-SRCS = base.pb.cc interpretation.pb.cc phenopackets.pb.cc
-#OBJS := $(SRCS:%=%.o)
 OBJS =  base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o
 
 $(TARGET_EXEC): $(OBJS) main.cpp
@@ -19,6 +16,11 @@ $(TARGET_EXEC): $(OBJS) main.cpp
 
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+
+unittests: unittests.cpp $(OBJS)
+	 $(CXX) $(CXXFLAGS) unittests.cpp $(OBJS) -o $@ $(LIBS)
+
 
 .PHONY: clean
 

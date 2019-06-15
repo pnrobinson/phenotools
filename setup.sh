@@ -70,13 +70,17 @@ else
     protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/phenopackets.proto
 fi
 
-   ${PROTO_PATH}/phenopackets.proto ${PROTO_PATH}/interpretation.proto
 
 
 echo "Building phenotools..."
 
-cd src; make
-mv src/phenotools .
+if [ -e phenotools ]; then
+    cd src; make
+    mv ./src/phenotools .
+else
+    echo "phenotools exectuable found. Delete it to make a new version"
+fi
+       
 
 
 
