@@ -33,6 +33,9 @@ public:
     static Validation createWarning(const string &msg) {
          return Validation(msg, ValidationType::WARNING);
     }
+  bool is_error() const { return validation_type_ == ValidationType::ERROR; }
+  bool is_warning() const {  return validation_type_ == ValidationType::WARNING; }
+  const string message() const { return message_; }
     
 };
 
@@ -56,14 +59,18 @@ public:
         label_(ontclz.label()) {}
     ~OntologyClass(){}
     vector<Validation> validate();
-    
 };
 
 
-class Age {
+class Age : public ValidatorI {
 private:
-    string age_;
-    
+  string age_;
+  unique_ptr<OntologyClass> age_class_;
+
+public:
+  Age(org::phenopackets::schema::v1::core::Age a);
+  ~Age(){}
+   vector<Validation> validate();
 };
 
 
