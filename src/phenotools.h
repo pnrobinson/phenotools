@@ -68,8 +68,20 @@ private:
   unique_ptr<OntologyClass> age_class_;
 
 public:
-  Age(org::phenopackets::schema::v1::core::Age a);
+  Age(const org::phenopackets::schema::v1::core::Age &a);
   ~Age(){}
+   vector<Validation> validate();
+};
+
+class AgeRange : public ValidatorI {
+private:
+  Age start_;
+  Age end_;
+public:
+  AgeRange(const org::phenopackets::schema::v1::core::AgeRange &ar):
+      start_(ar.start()),
+      end_(ar.end()) {}
+  ~AgeRange(){}
    vector<Validation> validate();
 };
 

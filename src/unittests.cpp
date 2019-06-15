@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <iostream>
+
 #include "catch.hpp"
 #include "base.pb.h"
 #include "phenopackets.pb.h"
@@ -71,4 +73,42 @@ TEST_CASE("test Age with string and empty","[age]") {
     validation = age3.validate();
     REQUIRE( validation.empty() == true );
     agepb.release_age_class();
+}
+
+TEST_CASE("AgeRange","[agerange]") {
+    org::phenopackets::schema::v1::core::Age* agepb1 =   google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
+    string age40 = "P40Y"; // 40 years old
+    agepb1->set_age(age40);
+  
+    org::phenopackets::schema::v1::core::Age* agepb2 =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
+    string age50 = "P50Y"; // 40 years old
+    agepb2->set_age(age50);
+      
+    org::phenopackets::schema::v1::core::AgeRange agerangepb;
+    agerangepb.set_allocated_start(agepb1); 
+    agerangepb.set_allocated_end(agepb2);
+    
+    AgeRange ar(agerangepb);
+    
+    vector<Validation> validation = ar.validate();
+    for (Validation v : validation) {
+        std::cout << v.message() << "\n";
+    }
+    REQUIRE(validation.size()==0);
+    
+    // Now make one of the elements invalid
+    agepb1->set_age("");
+    agerangepb.release_start();
+    agerangepb.set_allocated_start(agepb1);
+    AgeRange ar2(agerangepb);
+    validation = ar2.validate();
+    for (Validation v : validation) {
+        std::cout << v.message() << "\n";
+    }
+    REQUIRE(validation.size()==1);
+    agerangepb.release_start();
+    agerangepb.release_end();
+    
+    
 }

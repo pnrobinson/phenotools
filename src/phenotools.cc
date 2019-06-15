@@ -25,7 +25,7 @@ OntologyClass::validate(){
     return vl;
 }
 
-Age::Age(org::phenopackets::schema::v1::core::Age a):age_(a.age()){
+Age::Age(const org::phenopackets::schema::v1::core::Age &a):age_(a.age()){
     if (a.has_age_class()) {
         age_class_ = make_unique<OntologyClass>(a.age_class());
     }
@@ -44,6 +44,21 @@ vector<Validation> Age::validate(){
         }
     }
     return vl;
+}
+
+vector<Validation> 
+AgeRange::validate(){
+   vector<Validation> vl;
+   vector<Validation> age1 = start_.validate();
+   if (age1.size()>0) {
+       vl.insert(vl.end(),age1.begin(),age1.end() );
+   }
+   vector<Validation> age2 = end_.validate();
+   if (age2.size()>0) {
+       vl.insert(vl.end(),age2.begin(),age2.end() );
+   }
+   return vl;
+    
 }
 
  
