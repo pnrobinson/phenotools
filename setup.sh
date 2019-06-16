@@ -15,6 +15,8 @@ NOTFOUND='libprotoc:'
 # ibprotoc: /usr/local/lib/libprotoc.a /usr/local/lib/libprotoc.la ...
 L1=${#NOTFOUND}
 
+echo
+
 if [ ${#LOC} \> $L1 ];
 then
     echo "[INFO] protoc library found"
@@ -53,37 +55,53 @@ PROTO_PATH='phenopacket-schema/src/main/proto'
 
 ## Generate the C++ files with protoc
 if [ -e 'src/base.pb.h' ]; then
-    echo "base.pb.h previously generated"
+    echo "[INFO] base.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/base.proto
 fi
 
 if [ -e 'src/interpretation.pb.h' ]; then
-    echo "interpretation.pb.h previously generated"
+    echo "[INFO] interpretation.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/interpretation.proto
 fi
 
 if [ -e 'src/phenopackets.pb.h' ]; then
-    echo "phenopackets.pb.h previously generated"
+    echo "[INFO] phenopackets.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/phenopackets.proto
 fi
 
+echo
 
+## Make the executbale
 
-echo "Building phenotools..."
-
-if [ -e phenotools ]; then
-    cd src; make
+if [ ! -e phenotools ]; then
+    echo "[INFO] Building phenotools..."
+    cd src; make; cd ..
     mv ./src/phenotools .
 else
-    echo "phenotools exectuable found. Delete it to make a new version"
+    echo "[INFO] phenotools exectuable found. Delete it to make a new version"
 fi
        
 
+echo
 
+# Make the unit tests
 
+if [ ! -e unittests ]; then
+   echo "[INFO] Building the unit tests"
+   cd src; make unittests; cd ..
+   mv ./src/unittests .
+fi
+
+echo "[INFO] Running the unit tests ..."
+echo
+./unittests
+echo
+echo "[INFO] DONE"
+echo
+   
 
 
 

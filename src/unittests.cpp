@@ -92,9 +92,6 @@ TEST_CASE("AgeRange","[agerange]") {
     AgeRange ar(agerangepb);
     
     vector<Validation> validation = ar.validate();
-    for (Validation v : validation) {
-        std::cout << v.message() << "\n";
-    }
     REQUIRE(validation.size()==0);
     
     // Now make one of the elements invalid
@@ -103,12 +100,36 @@ TEST_CASE("AgeRange","[agerange]") {
     agerangepb.set_allocated_start(agepb1);
     AgeRange ar2(agerangepb);
     validation = ar2.validate();
-    for (Validation v : validation) {
-        std::cout << v.message() << "\n";
-    }
     REQUIRE(validation.size()==1);
     agerangepb.release_start();
     agerangepb.release_end();
+}
+
+
+TEST_CASE("test Individual","[individual]") {
+    // All we need to get a valid Individual element is an id
+    // if no Sex or Age information is provided, then two
+    // warnings are generated.
+    org::phenopackets::schema::v1::core::Individual individualpb;
+    individualpb.set_id("42");
     
-    
+    Individual ind(individualpb);
+    vector<Validation> validation = ind.validate();
+     REQUIRE(validation.size()==2);
+     Validation v1 = validation.at(0);
+     REQUIRE(v1.get_cause() == ValidationCause::INDIVIDUAL_LACKS_AGE);
+     REQUIRE(v1.is_warning() == true );
+     Validation v2 = validation.at(1);
+     REQUIRE(v2.get_cause() == ValidationCause::UNKNOWN_SEX);
+    REQUIRE(v2.is_warning() == true );
+    // Now let's generate an error by trying to create an individual
+    // with an id
+    individualpb.clear_id();
+    Individual ind2(individualpb);
+    validation = ind2.validate();
+     REQUIRE(validation.size()==3);
+     v1 = validation.at(0);
+     REQUIRE(v1.get_cause() == ValidationCause::INDIVIDUAL_LACKS_ID);
+     REQUIRE(v1.is_error() == true);
+     
 }
