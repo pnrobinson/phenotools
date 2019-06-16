@@ -25,6 +25,8 @@ enum class ValidationCause {
     UNKNOWN_SEX, //"individual sex not known/provided"
     EXTERNAL_REFERENCE_LACKS_ID, //"evidence must have an id"
     EVIDENCE_LACKS_CODE, //"Evidence element must contain an ontology code";
+    PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, //"PhenotypicFeature element must contain an ontology term representing the phenotype";
+    PHENOTYPIC_FEATURE_LACKS_EVIDENCE, //"PhenotypicFeature element must contain an evidence element";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -85,6 +87,7 @@ public:
     OntologyClass(org::phenopackets::schema::v1::core::OntologyClass ontclz):
         id_(ontclz.id()),
         label_(ontclz.label()) {}
+    OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
     ~OntologyClass(){}
     vector<Validation> validate();
 };
@@ -96,7 +99,7 @@ private:
   unique_ptr<OntologyClass> age_class_;
 
 public:
-    Age()=default;
+  Age()=default;
   Age(const org::phenopackets::schema::v1::core::Age &a);
   ~Age(){}
    vector<Validation> validate();
@@ -181,46 +184,48 @@ private:
     unique_ptr<ExternalReference> reference_;
 public:
     Evidence(org::phenopackets::schema::v1::core::Evidence evi);
+    Evidence(const Evidence& from);
+    Evidence(Evidence &&);
+    Evidence & operator=(const Evidence &);
     ~Evidence(){}
     vector<Validation> validate();
 };
 
-/*
- * message PhenotypicFeature {
-  string description = 1;
-  OntologyClass type = 2;
-  bool negated = 3;
-  OntologyClass severity = 4;
-  repeated OntologyClass modifiers = 5;
-  oneof onset {
-      Age age_of_onset = 6;
-      google.protobuf.Timestamp time_of_onset = 7;
-      Period period_of_onset = 8;
-      OntologyClass class_of_onset = 9;
-  }
-  repeated Evidence evidence = 10;
-}*/
 
-
-
-
-class Phenopacket {
+class PhenotypicFeature : public ValidatorI {
 private:
-    vector<Validation> validation_list_;    
+    string description_;
+    unique_ptr<OntologyClass> type_;
+    bool negated_;
+    unique_ptr<OntologyClass> severity_;
+    vector<OntologyClass> modifiers_;
+    // onset can be one of the following three.
+    unique_ptr<Age> age_of_onset_;
+    unique_ptr<AgeRange> age_range_of_onset_;
+    unique_ptr<OntologyClass> class_of_onset_;
+    vector<Evidence> evidence_;
+public:
+    PhenotypicFeature(org::phenopackets::schema::v1::core::PhenotypicFeature pf);
+    PhenotypicFeature(const PhenotypicFeature & pfeat) { std::cerr<<"TODO";  }
+    PhenotypicFeature &operator=(const PhenotypicFeature & pfeat) { std::cerr<<"TODO"; return *this; }
+    ~PhenotypicFeature(){}
+    vector<Validation> validate();
+    
+};
+
+
+class Phenopacket : public ValidatorI {
+private:
     unique_ptr<Individual> subject_;
+    vector<PhenotypicFeature> phenotypic_features_;
   
+
   
-			      
-			      
-			      
-  void validate(org::phenopackets::schema::v1::Phenopacket &pp);
   
 public:
-  Phenopacket(org::phenopackets::schema::v1::Phenopacket &pp) {
-    validate(pp);
-    
-  }
-  
+  Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
+  ~Phenopacket(){}
+   vector<Validation> validate();
 
 
 

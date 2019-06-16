@@ -159,7 +159,6 @@ TEST_CASE("test Evidence","[evidence]") {
     // error -- Evidence needs to have an Ontology class evidence release_evidence_code
     
     Evidence evi1(evipb);
-    std::cerr <<" HAS EVI PB " << (evipb.has_evidence_code() ? " YES \n" : " NO\n"); 
     vector<Validation> validation = evi1.validate();
     REQUIRE(validation.size()==1);
      Validation v1 = validation.at(0);

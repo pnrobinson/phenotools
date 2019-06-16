@@ -27,6 +27,8 @@ Validation::message() const {
         case ValidationCause::UNKNOWN_SEX: return "individual sex not known/provided";
         case ValidationCause::EXTERNAL_REFERENCE_LACKS_ID: return "external reference must have an id";
         case ValidationCause::EVIDENCE_LACKS_CODE: return "Evidence element must contain an ontology code";
+        case ValidationCause::PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM: return "PhenotypicFeature element must contain an ontology term representing the phenotype";
+        case ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE: return "PhenotypicFeature element must contain an evidence element";
     }
     // should never happen
     return "unknown error";
@@ -219,6 +221,35 @@ Evidence::Evidence(org::phenopackets::schema::v1::core::Evidence evi){
 }
 
 
+Evidence::Evidence(const Evidence &from){
+    if (from.evidence_code_) {
+     evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));   
+    }
+    if (from.reference_) {
+     reference_.reset(new ExternalReference(*(from.reference_)));   
+    }
+}
+
+Evidence::Evidence(Evidence && from){
+    if (from.evidence_code_) {
+     evidence_code_ = std::move(from.evidence_code_);   
+    }
+    if (from.reference_) {
+     reference_= std::move(from.reference_);   
+    }
+}
+
+Evidence & Evidence::operator=(const Evidence & from){
+    if (from.evidence_code_) {
+     evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));   
+    }
+    if (from.reference_) {
+     reference_.reset(new ExternalReference(*(from.reference_)));   
+    }
+    return *this;
+}
+
+
 vector<Validation> 
 Evidence::validate(){
     vector<Validation> vl;
@@ -241,14 +272,88 @@ Evidence::validate(){
     return vl;
 }
 
-
-
-void
-Phenopacket::validate(org::phenopackets::schema::v1::Phenopacket &pp){
-    // check the subject
-    org::phenopackets::schema::v1::core::Individual subject = pp.subject();
-    if (subject.id().empty() ){
-        Validation e = Validation::createError(ValidationCause::INDIVIDUAL_LACKS_ID);
-        validation_list_.push_back(e);
+PhenotypicFeature::PhenotypicFeature(org::phenopackets::schema::v1::core::PhenotypicFeature pf):
+description_(pf.description()),
+negated_(pf.negated())
+{
+   if (pf.has_type()) {
+       type_ = make_unique<OntologyClass>(pf.type());
+   }
+   if (pf.has_severity()){
+        severity_ = make_unique<OntologyClass>(pf.severity());
+   }
+    if (pf.modifiers_size()>0) {
+     for (auto m : pf.modifiers()) {
+      OntologyClass ocm(m);
+      modifiers_.push_back(ocm);
+     }
     }
+     // onset can be one of the following three.
+ if(pf.has_age_of_onset()) {
+     age_of_onset_ = make_unique<Age>(pf.age_of_onset());
+ } else if (pf.has_age_range_of_onset()) {
+     age_range_of_onset_ = make_unique<AgeRange>(pf.age_range_of_onset());
+ } else if (pf.has_class_of_onset()) {
+    class_of_onset_ = make_unique<OntologyClass>(pf.class_of_onset());
+ }
+     if (pf.evidence_size()>0) {
+         for (auto e : pf.evidence()) {
+             Evidence evi(e);
+             evidence_.push_back(evi);
+         }
+     }
+}
+
+vector<Validation> 
+PhenotypicFeature::validate(){
+     vector<Validation> vl;
+     // description is optional so we will not check it
+     if (! type_ ){
+         Validation v = Validation::createError(ValidationCause::PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM);
+         vl.push_back(v);
+     } else {
+        vector<Validation>  v2 =  type_->validate();
+        if (v2.size()>0) {
+             vl.insert(vl.end(),v2.begin(),v2.end() );  
+        }
+     }
+     // we do not need to check the negated_ field -- it is a primitive bool
+     // The only other field that is not optional is the evidence.
+     if (evidence_.empty() ){
+          Validation v = Validation::createError(ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE);
+     } else  {
+        for (Evidence e : evidence_) {
+            vector<Validation>  v2 =  e.validate();
+            if (v2.size()>0) {
+                vl.insert(vl.end(),v2.begin(),v2.end() );  
+            }  
+         }
+     } 
+     return vl;
+}
+
+
+Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
+    if (pp.has_subject()){
+        subject_ = make_unique<Individual> (pp.subject());
+    }
+    if (pp.phenotypic_features_size()>0) {
+        for (auto m : pp.phenotypic_features()) {
+            PhenotypicFeature phenofeature(m);
+            phenotypic_features_.push_back(phenofeature);
+        }
+    }
+    if (pp.biosamples_size()>0) {
+     std::cerr<<"[WARNING] Biosamples not implemented yet\n";   
+    }
+    
+}
+
+
+
+vector<Validation> 
+Phenopacket::validate(){
+    // check the subject
+     vector<Validation> vl;
+     return vl;
 }
