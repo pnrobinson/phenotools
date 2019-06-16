@@ -25,6 +25,8 @@ Validation::message() const {
         case ValidationCause::INDIVIDUAL_LACKS_ID: return "id must be present in Individual element";
         case ValidationCause::INDIVIDUAL_LACKS_AGE: return "individual lacks age or age range information";
         case ValidationCause::UNKNOWN_SEX: return "individual sex not known/provided";
+        case ValidationCause::EXTERNAL_REFERENCE_LACKS_ID: return "external reference must have an id";
+        case ValidationCause::EVIDENCE_LACKS_CODE: return "Evidence element must contain an ontology code";
     }
     // should never happen
     return "unknown error";
@@ -196,8 +198,49 @@ Individual::validate(){
      return vl;
 }
 
+vector<Validation>
+ExternalReference::validate(){
+    vector<Validation> vl;
+    if (id_.empty()) {
+        Validation e = Validation::createError(ValidationCause::EXTERNAL_REFERENCE_LACKS_ID);
+        vl.push_back(e);
+    }
+    // the description is optional so we do not validate it.
+    return vl;
+}
 
- 
+Evidence::Evidence(org::phenopackets::schema::v1::core::Evidence evi){
+    if (evi.has_evidence_code()) {
+     evidence_code_ = make_unique<OntologyClass>(evi.evidence_code());   
+    } 
+    if (evi.has_reference()) {
+        reference_ = make_unique<ExternalReference>(evi.reference());
+    }
+}
+
+
+vector<Validation> 
+Evidence::validate(){
+    vector<Validation> vl;
+    if (! evidence_code_ ) {
+      Validation e = Validation::createError(ValidationCause::EVIDENCE_LACKS_CODE);
+      vl.push_back(e);
+    } else {
+        vector<Validation> v2 = evidence_code_->validate();
+        if (v2.size()>0) {
+            vl.insert(vl.end(),v2.begin(),v2.end() );  
+        }
+    }
+    // external reference is optional, if it is absent there is no ERROR/WARNING
+    if (reference_) {
+         vector<Validation> v2 = reference_->validate();
+        if (v2.size()>0) {
+            vl.insert(vl.end(),v2.begin(),v2.end() );  
+        }
+    }
+    return vl;
+}
+
 
 
 void

@@ -23,6 +23,8 @@ enum class ValidationCause {
     INDIVIDUAL_LACKS_ID,//"id must be present in Individual element"
     INDIVIDUAL_LACKS_AGE,//"individual lacks age or age range information
     UNKNOWN_SEX, //"individual sex not known/provided"
+    EXTERNAL_REFERENCE_LACKS_ID, //"evidence must have an id"
+    EVIDENCE_LACKS_CODE, //"Evidence element must contain an ontology code";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -159,6 +161,45 @@ public:
   ~Individual(){}
   vector<Validation> validate();
 };
+
+
+class ExternalReference : public ValidatorI {
+private:
+    string id_;
+    string description_;
+public:
+    ExternalReference(org::phenopackets::schema::v1::core::ExternalReference er):
+        id_(er.id()),
+        description_(er.description()) {}
+    ~ExternalReference(){}
+    vector<Validation> validate();
+};
+
+class Evidence : public ValidatorI {
+private:
+    unique_ptr<OntologyClass> evidence_code_;
+    unique_ptr<ExternalReference> reference_;
+public:
+    Evidence(org::phenopackets::schema::v1::core::Evidence evi);
+    ~Evidence(){}
+    vector<Validation> validate();
+};
+
+/*
+ * message PhenotypicFeature {
+  string description = 1;
+  OntologyClass type = 2;
+  bool negated = 3;
+  OntologyClass severity = 4;
+  repeated OntologyClass modifiers = 5;
+  oneof onset {
+      Age age_of_onset = 6;
+      google.protobuf.Timestamp time_of_onset = 7;
+      Period period_of_onset = 8;
+      OntologyClass class_of_onset = 9;
+  }
+  repeated Evidence evidence = 10;
+}*/
 
 
 

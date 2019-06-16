@@ -10,6 +10,7 @@
 #include "interpretation.pb.h"
 #include "phenotools.h"
 
+// The arena object is used to allocate certain protobuf objects
 google::protobuf::Arena arena;
 
 
@@ -131,5 +132,54 @@ TEST_CASE("test Individual","[individual]") {
      v1 = validation.at(0);
      REQUIRE(v1.get_cause() == ValidationCause::INDIVIDUAL_LACKS_ID);
      REQUIRE(v1.is_error() == true);
+}
+
+
+TEST_CASE("test ExternalReference element","[externalreference]") {
+    org::phenopackets::schema::v1::core::ExternalReference extrefpb;
+    
+    ExternalReference er(extrefpb);
+    // no id, this is an error
+     vector<Validation> validation = er.validate();
+     REQUIRE(validation.size()==1);
+     Validation v1 = validation.at(0);
+     REQUIRE(v1.is_error()==true);
+     REQUIRE(v1.get_cause() == ValidationCause::EXTERNAL_REFERENCE_LACKS_ID);
+    // set the id. Then the element is OK.
+     extrefpb.set_id("PMID:1234");
+     ExternalReference er2(extrefpb);
+     validation = er2.validate();
+     REQUIRE(validation.size()==0);
+}
+
+
+TEST_CASE("test Evidence","[evidence]") {
+    
+    org::phenopackets::schema::v1::core::Evidence evipb;
+    // error -- Evidence needs to have an Ontology class evidence release_evidence_code
+    
+    Evidence evi1(evipb);
+    std::cerr <<" HAS EVI PB " << (evipb.has_evidence_code() ? " YES \n" : " NO\n"); 
+    vector<Validation> validation = evi1.validate();
+    REQUIRE(validation.size()==1);
+     Validation v1 = validation.at(0);
+     REQUIRE(v1.is_error()==true);
+     REQUIRE(v1.get_cause() == ValidationCause::EVIDENCE_LACKS_CODE);
      
+    string eco_id = "ECO:0006017";
+    string eco_label = "author statement from published clinical study used in manual assertion";
+    
+    
+    org::phenopackets::schema::v1::core::OntologyClass* eco =
+     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena); 
+    eco->set_id(eco_id);
+    eco->set_label(eco_label);
+    // now add an ontology term -- all should be OK
+    evipb.set_allocated_evidence_code(eco);
+    Evidence evi2(evipb);
+    validation = evi2.validate();
+    REQUIRE(validation.size()==0);
+    
+    evipb.release_evidence_code();
+    
 }
