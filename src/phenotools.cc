@@ -49,6 +49,9 @@ Validation::message() const {
   case ValidationCause::LACKS_CHROMOSOME: return "Chromosome missing";
   case ValidationCause::LACKS_REF: return "ref missing";
   case ValidationCause::LACKS_ALT: return "alt missing";
+  case ValidationCause::LACKS_ZYGOSITY: return "zygosity missing";
+  case ValidationCause::LACKS_ALLELE: return "allele missing";
+  case ValidationCause::DISEASE_LACKS_TERM: return "disease lacks term";
     
   }
   // should never happen
@@ -75,6 +78,11 @@ OntologyClass::validate(){
     vl.push_back(e);
   }
   return vl;
+}
+
+std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc){
+  ost <<oc.label_ << " ["<<oc.id_ << "]";
+  return ost;
 }
 
 Age::Age(const org::phenopackets::schema::v1::core::Age &a):age_(a.age()){
@@ -559,8 +567,104 @@ Variant::Variant(const Variant & var) {
 vector<Validation>
 Variant::validate() {
   vector<Validation> vl;
-  // todo
+  bool has_allele=false;
+  if (hgvs_allele_) {
+    has_allele=true;
+     vector<Validation>  v2 =  hgvs_allele_->validate();
+     if (v2.size()>0) {
+       vl.insert(vl.end(),v2.begin(),v2.end() );  
+     }
+  } else if (vcf_allele_) {
+    has_allele=true;
+    vector<Validation>  v2 =  vcf_allele_->validate();
+    if (v2.size()>0) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  } else {
+    std::cout <<"WARNING SOME ALLELE SUBTYPES NOT IMPLEMENTED YET";
+  }
+  if (! has_allele) {
+    Validation v = Validation::createError(ValidationCause::LACKS_ALLELE);
+    vl.push_back(v);
+  }
+  if (! zygosity_) {
+    Validation v = Validation::createError(ValidationCause::LACKS_ZYGOSITY);
+    vl.push_back(v);
+  } else {
+    vector<Validation>  v2 =  zygosity_->validate();
+    if (v2.size()>0) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  }
   return vl;
+}
+
+
+ 
+Disease::Disease(const org::phenopackets::schema::v1::core::Disease & dis){
+  if (dis.has_term()) {
+    term_=make_unique<OntologyClass>(dis.term());
+  }
+  if (dis.has_age_of_onset()) {
+    age_of_onset_ = make_unique<Age>(dis.age_of_onset());
+  } else if (dis.has_age_range_of_onset()) {
+    age_range_of_onset_ = make_unique<AgeRange>(dis.age_range_of_onset());
+  } else if (dis.has_class_of_onset()) {
+    class_of_onset_=make_unique<OntologyClass>(dis.class_of_onset());
+  }
+}
+
+Disease::Disease(const Disease &dis){
+  if (dis.term_) {
+    term_=make_unique<OntologyClass>(*(dis.term_.get()));
+  }
+  if (dis.age_of_onset_) {
+    age_of_onset_ = make_unique<Age>(*(dis.age_of_onset_.get()));
+  } else if (dis.age_range_of_onset_) {
+    age_range_of_onset_ = make_unique<AgeRange>(*(dis.age_range_of_onset_.get()));
+  } else if (dis.class_of_onset_) {
+    term_=make_unique<OntologyClass>(*(dis.class_of_onset_.get()));
+  }
+
+}
+vector<Validation> Disease::validate(){
+  vector<Validation> vl;
+  if (! term_ ){
+    Validation v = Validation::createError(ValidationCause::DISEASE_LACKS_TERM);
+    vl.push_back(v);
+  }
+  // onset is optional but if present we check the validity
+  if (age_of_onset_) {
+    vector<Validation>  v2 =  age_of_onset_->validate();
+    if (v2.size()>0) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  } else if (age_range_of_onset_) {
+     vector<Validation>  v2 =  age_range_of_onset_->validate();
+    if (v2.size()>0) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  } else if (class_of_onset_) {
+    vector<Validation>  v2 =  class_of_onset_->validate();
+    if (v2.size()>0) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  }
+  return vl;
+}
+  
+std::ostream &operator<<(std::ostream& ost, const Disease& dis){
+  if (dis.term_) {
+    ost << *(dis.term_);
+  }
+  if (dis.age_of_onset_) {
+    ost << *(dis.age_of_onset_);
+  } else if (dis.age_range_of_onset_) {
+    ost << *(dis.age_range_of_onset_);
+  } else if (dis.class_of_onset_) {
+    ost << *(dis.class_of_onset_);
+  }
+  return ost;
 }
 
 
@@ -598,6 +702,12 @@ Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
     for (auto v:pp.variants()) {
       Variant var(v);
       variants_.push_back(var);
+    }
+  }
+  if (pp.diseases_size()>0) {
+    for (auto d:pp.diseases()) {
+      Disease dis(d);
+      diseases_.push_back(dis);
     }
   }
 }
@@ -646,6 +756,14 @@ std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
     for (Variant v : ppacket.variants_) {
       ost << "\t" << v << "\n";
     }
+  }
+  if (ppacket.diseases_.empty()) {
+    ost << "Diseases: n/a\n";
+  } else {
+    for (Disease d : ppacket.diseases_) {
+      ost << "Disease: "<< d <<"\n";
+    }
+
   }
   
   //ost << *(ppacket.get_subject()) << "\n";

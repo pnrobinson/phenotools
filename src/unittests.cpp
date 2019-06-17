@@ -65,7 +65,8 @@ TEST_CASE("test Age with string and empty","[age]") {
   string id = "HsapDv:0000236";
   string label = "second decade human stage";
   
-  org::phenopackets::schema::v1::core::OntologyClass* c =   google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
+  org::phenopackets::schema::v1::core::OntologyClass* c =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
   c->set_id(id);
   c->set_label(label);
   // now we are OK again -- the Age object as an age-class OntologyClass object.
@@ -77,7 +78,8 @@ TEST_CASE("test Age with string and empty","[age]") {
 }
 
 TEST_CASE("AgeRange","[agerange]") {
-  org::phenopackets::schema::v1::core::Age* agepb1 =   google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
+  org::phenopackets::schema::v1::core::Age* agepb1 =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
   string age40 = "P40Y"; // 40 years old
   agepb1->set_age(age40);
   
@@ -268,3 +270,84 @@ TEST_CASE("Test VcfAllele","[vcfallele]") {
   validation = allele2.validate();
   REQUIRE(validation.empty()==true);
 }
+
+
+TEST_CASE("Test Variant","[variant]"){
+  org::phenopackets::schema::v1::core::Variant variantpb;
+  // error -- no data
+  Variant var1(variantpb);
+  vector<Validation> validation = var1.validate();
+  REQUIRE(validation.size()==2);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_ALLELE);
+  v = validation.at(1);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_ZYGOSITY);
+  // now construct a correct variant
+  org::phenopackets::schema::v1::core::VcfAllele* vc =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::VcfAllele>(&arena);
+  vc->set_id("id:A");
+  vc->set_genome_assembly("GRCh37");
+  vc->set_chr("chr1");
+  vc->set_pos(42);
+  vc->set_ref("A");
+  vc->set_alt("C");
+
+  // Now make an Age that has an ontology class
+  string id = "GENO:0000135";
+  string label = "heterozygous";
+  org::phenopackets::schema::v1::core::OntologyClass* c =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
+  c->set_id(id);
+  c->set_label(label);
+
+  variantpb.set_allocated_vcf_allele(vc);
+  variantpb.set_allocated_zygosity(c);
+
+  Variant var2(variantpb);
+  validation = var2.validate();
+  REQUIRE(validation.empty()==true); // we expect no errors/warnings here.
+  
+  variantpb.release_vcf_allele();
+  variantpb.release_zygosity();
+}
+
+
+TEST_CASE("Test Disease","[disease]"){
+  org::phenopackets::schema::v1::core::Disease diseasepb;
+  // error -- no data
+  Disease d1(diseasepb);
+  vector<Validation> validation = d1.validate();
+  REQUIRE(validation.size()==1);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::DISEASE_LACKS_TERM);
+  
+  // add a term and an onset with one error
+  string id = "OMIM:101600";
+  string label = "Pfeiffer syndrome";
+  org::phenopackets::schema::v1::core::OntologyClass* diseaseTerm =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
+  diseaseTerm->set_id(id);
+  diseaseTerm->set_label(label);
+
+  org::phenopackets::schema::v1::core::OntologyClass* onsetTerm =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
+  onsetTerm->set_id("HP:0011463");
+  // Forgot to set label  Childhood onset HP:0011463
+
+  diseasepb.set_allocated_term(diseaseTerm);
+  diseasepb.set_allocated_class_of_onset(onsetTerm);
+  Disease d2(diseasepb);
+  validation = d2.validate();
+  REQUIRE(validation.size()==1);
+  v = validation.at(0);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::ONTOLOGY_LABEL_EMPTY);
+
+  diseasepb.release_term();
+  diseasepb.release_class_of_onset();
+
+}
+

@@ -35,6 +35,9 @@ enum class ValidationCause {
     LACKS_CHROMOSOME, // return "Chromosome missing";
     LACKS_REF, //"ref missing";
     LACKS_ALT, //"alt missing";
+    LACKS_ZYGOSITY, // "zygosity missing";
+    LACKS_ALLELE, // "allele missing";
+    DISEASE_LACKS_TERM, // "disease lacks term";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -99,7 +102,9 @@ public:
   vector<Validation> validate();
   const string & get_id() const { return id_; }
   const string & get_label() const { return label_; }
+  friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);  
 };
+std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc); 
 
 
 class Age : public ValidatorI {
@@ -299,7 +304,20 @@ class Variant : public ValidatorI {
 std::ostream &operator<<(std::ostream& ost, const Variant& var);
 
 
+class Disease : public ValidatorI {
+ private:
+  unique_ptr<OntologyClass> term_;
+  unique_ptr<Age> age_of_onset_;
+  unique_ptr<AgeRange> age_range_of_onset_;
+  unique_ptr<OntologyClass> class_of_onset_;
 
+ public:
+  Disease(const org::phenopackets::schema::v1::core::Disease & dis);
+  Disease(const Disease &dis);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const Disease& dis);
+};
+std::ostream &operator<<(std::ostream& ost, const Disease& dis);
 
 
 class Phenopacket : public ValidatorI {
@@ -308,7 +326,7 @@ private:
   vector<PhenotypicFeature> phenotypic_features_;
   vector<Gene> genes_;
   vector<Variant> variants_;
-  
+  vector<Disease> diseases_;
 
   
   
