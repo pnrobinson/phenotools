@@ -41,6 +41,8 @@ Validation::message() const {
   case ValidationCause::EVIDENCE_LACKS_CODE: return "Evidence element must contain an ontology code";
   case ValidationCause::PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM: return "PhenotypicFeature element must contain an ontology term representing the phenotype";
   case ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE: return "PhenotypicFeature element must contain an evidence element";
+  case   ValidationCause::GENE_LACKS_ID: return "Gene must have id element";
+  case ValidationCause::GENE_LACKS_SYMBOL: return "Gene must have symbol";
   }
   // should never happen
   return "unknown error";
@@ -324,7 +326,7 @@ Evidence::validate(){
   return vl;
 }
 
-PhenotypicFeature::PhenotypicFeature(org::phenopackets::schema::v1::core::PhenotypicFeature pf):
+PhenotypicFeature::PhenotypicFeature(const org::phenopackets::schema::v1::core::PhenotypicFeature &pf):
   description_(pf.description()),
   negated_(pf.negated())
 {
@@ -416,6 +418,25 @@ PhenotypicFeature::validate(){
   return vl;
 }
 
+vector<Validation>
+Gene::validate(){
+  vector<Validation> vl;
+  if (id_.empty()) {
+    Validation v = Validation::createError(ValidationCause::GENE_LACKS_ID);
+    vl.push_back(v);
+  }
+  if (symbol_.empty()) {
+    Validation v = Validation::createError(ValidationCause::GENE_LACKS_SYMBOL);
+    vl.push_back(v);
+  }
+  return vl;
+}
+
+std::ostream& operator<<(std::ostream& ost, const Gene& gene){
+  ost <<gene.symbol_<<"["<<gene.id_<<"]";
+  return ost;
+}
+
 
 Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
   if (pp.has_subject()){
@@ -429,7 +450,13 @@ Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
   }
   if (pp.biosamples_size()>0) {
     std::cerr<<"[WARNING] Biosamples not implemented yet\n";   
-  } 
+  }
+  if (pp.genes_size()>0) {
+    for (auto g:pp.genes()) {
+      Gene gene(g);
+      genes_.push_back(gene);
+    }
+  }
 }
 
 
@@ -460,6 +487,13 @@ std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
   }
   for (PhenotypicFeature feature: ppacket.phenotypic_features_) {
     ost << feature.get_label() <<" ["<<feature.get_id()<<"]\n";   
+  }
+  if (ppacket.genes_.empty()) {
+    ost << "genes: n/a\n";
+  } else {
+    for (Gene g : ppacket.genes_) {
+      ost << "Gene: "<<g<<"\n";
+    }
   }
   //ost << *(ppacket.get_subject()) << "\n";
   return ost;

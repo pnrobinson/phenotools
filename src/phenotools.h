@@ -17,16 +17,18 @@ using std::vector;
 enum class ValidationType { WARNING, ERROR };
 enum class ValidationCause {
   ONTOLOGY_ID_EMPTY, // "OntologyClass id not allowed to be empty"
-  INVALID_ONTOLOGY_ID, //OntologyClass id not a valid CURIE"
-  ONTOLOGY_LABEL_EMPTY, // "OntologyClass label not allowed to be empty"
-  AGE_ELEMENT_UNINITIALIZED,//"At least one of age and age_class must be present in Age element",
-  INDIVIDUAL_LACKS_ID,//"id must be present in Individual element"
-  INDIVIDUAL_LACKS_AGE,//"individual lacks age or age range information
-  UNKNOWN_SEX, //"individual sex not known/provided"
-  EXTERNAL_REFERENCE_LACKS_ID, //"evidence must have an id"
-  EVIDENCE_LACKS_CODE, //"Evidence element must contain an ontology code";
-  PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, //"PhenotypicFeature element must contain an ontology term representing the phenotype";
-  PHENOTYPIC_FEATURE_LACKS_EVIDENCE, //"PhenotypicFeature element must contain an evidence element";
+    INVALID_ONTOLOGY_ID, //OntologyClass id not a valid CURIE"
+    ONTOLOGY_LABEL_EMPTY, // "OntologyClass label not allowed to be empty"
+    AGE_ELEMENT_UNINITIALIZED,//"At least one of age and age_class must be present in Age element",
+    INDIVIDUAL_LACKS_ID,//"id must be present in Individual element"
+    INDIVIDUAL_LACKS_AGE,//"individual lacks age or age range information
+    UNKNOWN_SEX, //"individual sex not known/provided"
+    EXTERNAL_REFERENCE_LACKS_ID, //"evidence must have an id"
+    EVIDENCE_LACKS_CODE, //"Evidence element must contain an ontology code";
+    PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, //"PhenotypicFeature element must contain an ontology term representing the phenotype";
+    PHENOTYPIC_FEATURE_LACKS_EVIDENCE, //"PhenotypicFeature element must contain an evidence element";
+    GENE_LACKS_ID, //"Gene must have id element";
+    GENE_LACKS_SYMBOL, //"Gene must have symbol"
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -216,7 +218,7 @@ private:
   unique_ptr<OntologyClass> class_of_onset_;
   vector<Evidence> evidence_;
 public:
-  PhenotypicFeature(org::phenopackets::schema::v1::core::PhenotypicFeature pf);
+  PhenotypicFeature(const org::phenopackets::schema::v1::core::PhenotypicFeature &pfeat);
   PhenotypicFeature(const PhenotypicFeature & pfeat);
   PhenotypicFeature &operator=(const PhenotypicFeature & pfeat) { std::cerr<<"TODO"; return *this; }
   ~PhenotypicFeature(){}
@@ -226,10 +228,26 @@ public:
 };
 
 
+class Gene : public ValidatorI {
+ private:
+  string id_;
+  string symbol_;
+ public:
+ Gene(const org::phenopackets::schema::v1::core::Gene & gene):
+  id_(gene.id()),
+    symbol_(gene.symbol())
+      {}
+ Gene(const Gene &gene):id_(gene.id_),symbol_(gene.symbol_){}
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const Gene& gene);   
+};
+std::ostream &operator<<(std::ostream& ost, const Gene& gene);  
+
 class Phenopacket : public ValidatorI {
 private:
-    unique_ptr<Individual> subject_;
-    vector<PhenotypicFeature> phenotypic_features_;
+  unique_ptr<Individual> subject_;
+  vector<PhenotypicFeature> phenotypic_features_;
+  vector<Gene> genes_;  
   
 
   
