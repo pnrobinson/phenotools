@@ -11,6 +11,7 @@ using std::make_unique;
 
 
 static string EMPTY_STRING="";
+static string NOT_AVAILABLE="n/a";
 
 
 
@@ -75,6 +76,17 @@ vector<Validation> Age::validate(){
         }
     }
     return vl;
+}
+
+const string &
+Age::to_string() const {
+    if (! age_.empty()) return age_;
+    else if (age_class_) {
+        return age_class_->get_label() + "["+age_class_->get_id() +"]";
+    } else {
+         return NOT_AVAILABLE;
+    }
+    
 }
 
 
@@ -198,6 +210,29 @@ Individual::validate(){
      // karyotype and taxonomy are option so we do not validate them
      
      return vl;
+}
+
+const string & 
+Individual::get_age() const{
+        if (age_) {
+            return age_->to_string();
+        } else if (age_range_ ) {
+            return "NOT IMPLEMENTED";// todo: age_range_->to_string();
+        } else {
+            return "n/a";
+        }
+    
+}
+
+const string & 
+Individual::get_sex() const{
+ switch(sex_) {
+     case Sex::FEMALE: return "female";
+     case Sex::MALE: return "male";
+     case Sex::OTHER_SEX : return "other sex";
+     case Sex::UNKNOWN_SEX:
+     default: return "unknown sex";
+ }
 }
 
 vector<Validation>
@@ -356,4 +391,28 @@ Phenopacket::validate(){
     // check the subject
      vector<Validation> vl;
      return vl;
+}
+
+
+std::ostream& operator<<(std::ostream& ost, const Individual& ind){
+    ost << ind.get_age();
+    return ost;
+    
+}
+
+std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
+{
+        ost<<"Phenopacket:\n";
+        if (ppacket.subject_) {
+        ost<<ppacket.subject_->get_id() <<"\n";
+        ost<<ppacket.subject_->get_age() <<"\n";
+        ost<<ppacket.subject_->get_sex()<<"\n";
+        } else {
+            ost <<"[ERROR] subject element not initialized\n";
+        }
+        for (PhenotypicFeature feature: ppacket.phenotypic_features_) {
+         ost << feature.get_label() <<" ["<<feature.get_id()<<"]\n";   
+        }
+        //ost << *(ppacket.get_subject()) << "\n";
+        return ost;
 }

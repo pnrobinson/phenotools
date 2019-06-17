@@ -90,6 +90,8 @@ public:
     OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
     ~OntologyClass(){}
     vector<Validation> validate();
+    const string & get_id() const { return id_; }
+    const string & get_label() const { return label_; }
 };
 
 
@@ -103,6 +105,7 @@ public:
   Age(const org::phenopackets::schema::v1::core::Age &a);
   ~Age(){}
    vector<Validation> validate();
+   const string &to_string() const;
 };
 
 class AgeRange : public ValidatorI {
@@ -163,6 +166,9 @@ public:
   Individual(org::phenopackets::schema::v1::core::Individual individual);
   ~Individual(){}
   vector<Validation> validate();
+   const string & get_id() const { return id_; }
+   const string & get_age() const;
+   const string & get_sex() const;
 };
 
 
@@ -210,6 +216,8 @@ public:
     PhenotypicFeature &operator=(const PhenotypicFeature & pfeat) { std::cerr<<"TODO"; return *this; }
     ~PhenotypicFeature(){}
     vector<Validation> validate();
+    const string &get_id() const { return type_->get_id(); }
+    const string &get_label() const { return type_->get_label();}
     
 };
 
@@ -226,13 +234,13 @@ public:
   Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
   ~Phenopacket(){}
    vector<Validation> validate();
-
-
+   friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);   
+   //const Individual * get_subject() const { return subject_.get(); }
 
 
 };
 
-
+std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);   
 
 
 

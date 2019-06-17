@@ -41,7 +41,11 @@ int main(int argc, char ** argv) {
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
   cout << "Phenopacket at: " << fileName << "\n";
 
-  auto ppacket = std::make_unique<Phenopacket>(phenopacketpb);
+  Phenopacket ppacket(phenopacketpb);
+  
+  cout << ppacket << "\n";
+  cout << phenopacketpb <<"\n";
+  
   // cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
   // print age if available
   
