@@ -31,6 +31,10 @@ enum class ValidationCause {
     GENE_LACKS_SYMBOL, //"Gene must have symbol"
     ALLELE_LACKS_ID, //"Variant should have an id"
     ALLELE_LACKS_HGVS, //"HgvsAllele lack HGVS string"
+    LACKS_GENOME_ASSEMBLY, // "Genome assembly missing";
+    LACKS_CHROMOSOME, // return "Chromosome missing";
+    LACKS_REF, //"ref missing";
+    LACKS_ALT, //"alt missing";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -255,19 +259,43 @@ class HgvsAllele : public ValidatorI {
  HgvsAllele(const HgvsAllele &ha):id_(ha.id_),hgvs_(ha.hgvs_){}
   HgvsAllele &operator=(const HgvsAllele &ha);
   vector<Validation> validate();
-
+  friend std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
 };
+std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
 
+class VcfAllele : public ValidatorI {
+ private:
+  string genome_assembly_;
+  string id_;
+  string chr_;
+  int pos_;
+  string ref_;
+  string alt_;
+  string info_;
+ public:
+  VcfAllele(const org::phenopackets::schema::v1::core::VcfAllele &vcf);
+  VcfAllele(const VcfAllele &vcf);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
+};
+std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
 
 
 
 class Variant : public ValidatorI {
  private:
-  string x;
+  unique_ptr<HgvsAllele> hgvs_allele_;
+  unique_ptr<VcfAllele> vcf_allele_;
+  // todo
 
+ public:
+  Variant(const org::phenopackets::schema::v1::core::Variant & var);
+  Variant(const Variant & var);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const Variant& var);
 
 };
-
+std::ostream &operator<<(std::ostream& ost, const Variant& var);
 
 
 
@@ -277,7 +305,8 @@ class Phenopacket : public ValidatorI {
 private:
   unique_ptr<Individual> subject_;
   vector<PhenotypicFeature> phenotypic_features_;
-  vector<Gene> genes_;  
+  vector<Gene> genes_;
+  vector<Variant> variants_;
   
 
   

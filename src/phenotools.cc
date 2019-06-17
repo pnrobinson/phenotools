@@ -41,10 +41,15 @@ Validation::message() const {
   case ValidationCause::EVIDENCE_LACKS_CODE: return "Evidence element must contain an ontology code";
   case ValidationCause::PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM: return "PhenotypicFeature element must contain an ontology term representing the phenotype";
   case ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE: return "PhenotypicFeature element must contain an evidence element";
-  case   ValidationCause::GENE_LACKS_ID: return "Gene must have id element";
+  case ValidationCause::GENE_LACKS_ID: return "Gene must have id element";
   case ValidationCause::GENE_LACKS_SYMBOL: return "Gene must have symbol";
-  case   ValidationCause::ALLELE_LACKS_ID: return "Variant should have an id";
+  case ValidationCause::ALLELE_LACKS_ID: return "Variant should have an id";
   case ValidationCause::ALLELE_LACKS_HGVS: return "HgvsAllele lack HGVS string";
+  case ValidationCause::LACKS_GENOME_ASSEMBLY: return "Genome assembly missing";
+  case ValidationCause::LACKS_CHROMOSOME: return "Chromosome missing";
+  case ValidationCause::LACKS_REF: return "ref missing";
+  case ValidationCause::LACKS_ALT: return "alt missing";
+    
   }
   // should never happen
   return "unknown error";
@@ -453,6 +458,116 @@ HgvsAllele::validate(){
   return vl;
 }
 
+std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs){
+  if (! hgvs.id_.empty()) {
+    ost << hgvs.id_ <<": ";
+  }
+  ost << hgvs.hgvs_;
+  return ost;
+}
+
+
+VcfAllele::VcfAllele(const org::phenopackets::schema::v1::core::VcfAllele &vcf):
+  genome_assembly_(vcf.genome_assembly()),
+  id_(vcf.id()),
+  chr_(vcf.chr()),
+  pos_(vcf.pos()),
+  ref_(vcf.ref()),
+  alt_(vcf.alt()),
+  info_(vcf.info()) {}
+
+VcfAllele::VcfAllele(const VcfAllele &vcf):
+  genome_assembly_(vcf.genome_assembly_),
+  id_(vcf.id_),
+  chr_(vcf.chr_),
+  pos_(vcf.pos_),
+  ref_(vcf.ref_),
+  alt_(vcf.alt_),
+  info_(vcf.info_) {}
+
+vector<Validation>
+VcfAllele::validate(){
+ vector<Validation> vl;
+  if (id_.empty()) {
+    Validation v = Validation::createWarning(ValidationCause::ALLELE_LACKS_ID);
+    vl.push_back(v);
+  }
+  if ( genome_assembly_.empty()) {
+    Validation v = Validation::createError(ValidationCause::LACKS_GENOME_ASSEMBLY);
+     vl.push_back(v);
+  }
+  if (chr_.empty()) {
+      Validation v = Validation::createError(ValidationCause::LACKS_CHROMOSOME);
+       vl.push_back(v);
+  }
+  // way of checking pos?
+  if (ref_.empty()) {
+    Validation v = Validation::createError(ValidationCause::LACKS_REF);
+     vl.push_back(v);
+  }
+  if (alt_.empty()) {
+    Validation v = Validation::createError(ValidationCause::LACKS_ALT);
+    vl.push_back(v);
+  }
+  // info is optional, we do not check it
+  return vl;
+}
+
+std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf){
+  if (! vcf.id_.empty() ) {
+    ost << vcf.id_ <<": ";
+  }
+  ost << vcf.chr_ << ":" << vcf.pos_ << vcf.ref_ << ">"<<vcf.alt_
+      << "[" << vcf.genome_assembly_;
+  if (! vcf.info_.empty() ) {
+    ost << ", "<< vcf.info_;
+  }
+  ost << "]";
+  return ost;
+}
+
+
+
+Variant::Variant(const org::phenopackets::schema::v1::core::Variant & var){
+  if (var.has_hgvs_allele()) {
+    hgvs_allele_ = make_unique<HgvsAllele>(var.hgvs_allele());
+  } else if (var.has_vcf_allele()) {
+    vcf_allele_ = make_unique<VcfAllele>(var.vcf_allele());
+  }
+
+  // TODO
+
+
+}
+
+Variant::Variant(const Variant & var) {
+  if (var.hgvs_allele_) {
+    hgvs_allele_ = make_unique<HgvsAllele>(*(var.hgvs_allele_.get()));
+  } else if (var.vcf_allele_) {
+    vcf_allele_ = make_unique<VcfAllele>(*(var.vcf_allele_.get()));
+  }
+  // todo
+
+}
+
+vector<Validation>
+Variant::validate() {
+  vector<Validation> vl;
+  // todo
+  return vl;
+}
+
+
+std::ostream &operator<<(std::ostream& ost, const Variant& var){
+  if (var.hgvs_allele_) {
+    ost << *(var.hgvs_allele_.get());
+  } else if (var.vcf_allele_) {
+    ost << *(var.vcf_allele_.get());
+  }
+      return ost;
+}
+  
+
 
 Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
   if (pp.has_subject()){
@@ -473,7 +588,15 @@ Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
       genes_.push_back(gene);
     }
   }
+  if (pp.variants_size()>0) {
+    for (auto v:pp.variants()) {
+      Variant var(v);
+      variants_.push_back(var);
+    }
+  }
 }
+
+
 
 
 
@@ -511,6 +634,14 @@ std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
       ost << "Gene: "<<g<<"\n";
     }
   }
+  if (ppacket.variants_.empty()) {
+    ost << "Variants: n/a\n";
+  } else {
+    for (Variant v : ppacket.variants_) {
+      ost << "\t" << v << "\n";
+    }
+  }
+  
   //ost << *(ppacket.get_subject()) << "\n";
   return ost;
 }
