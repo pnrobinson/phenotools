@@ -22,29 +22,29 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
   string fileName=argv[1];
-
+  
   GOOGLE_PROTOBUF_VERIFY_VERSION;
-
+  
   stringstream sstr;
   ifstream inFile;
   inFile.open(fileName);
   if (! inFile.good()) {
-     cerr << "Could not open Phenopacket file at " << fileName <<"\n";
-     return EXIT_FAILURE;
-   }
-   sstr << inFile.rdbuf();
-   string JSONstring = sstr.str();
-   //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
-
+    cerr << "Could not open Phenopacket file at " << fileName <<"\n";
+    return EXIT_FAILURE;
+  }
+  sstr << inFile.rdbuf();
+  string JSONstring = sstr.str();
+  //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
+  
   ::google::protobuf::util::JsonParseOptions options;
   ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
-  cout << "Phenopacket at: " << fileName << "\n";
-
+  cout << "\n#### Phenopacket at: " << fileName << " ####\n\n";
+  
   Phenopacket ppacket(phenopacketpb);
   
   cout << ppacket << "\n";
-  cout << phenopacketpb <<"\n";
+
   
   // cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
   // print age if available

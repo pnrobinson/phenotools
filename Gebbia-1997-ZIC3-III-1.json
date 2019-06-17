@@ -10,7 +10,7 @@
       "label": "Homo sapiens"
     }
   },
-  "phenotypes": [{
+  "phenotypicFeatures": [{
     "type": {
       "id": "HP:0002139",
       "label": "Arrhinencephaly"
@@ -204,7 +204,8 @@
     }
   }],
   "metaData": {
-    "createdBy": "HPO:probinson",
+    "createdBy": "Hpo Case Annotator : 1.0.13-SNAPSHOT",
+    "submittedBy": "HPO:probinson",
     "resources": [{
       "id": "hp",
       "name": "human phenotype ontology",
