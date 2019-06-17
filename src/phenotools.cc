@@ -536,7 +536,9 @@ Variant::Variant(const org::phenopackets::schema::v1::core::Variant & var){
   }
 
   // TODO
-
+  if (var.has_zygosity()) {
+    zygosity_ = make_unique<OntologyClass>(var.zygosity());
+  }
 
 }
 
@@ -547,6 +549,10 @@ Variant::Variant(const Variant & var) {
     vcf_allele_ = make_unique<VcfAllele>(*(var.vcf_allele_.get()));
   }
   // todo
+  if (var.zygosity_) {
+    zygosity_ = make_unique<OntologyClass>(*(var.zygosity_));
+  }
+ 
 
 }
 

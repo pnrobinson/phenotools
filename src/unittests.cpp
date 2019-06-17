@@ -233,5 +233,38 @@ TEST_CASE("Test HGVS allele","[hgvsallele]"){
   HgvsAllele allele3(hgvspb);
   validation = allele3.validate();
   REQUIRE(validation.empty()==true);
+}
 
+
+TEST_CASE("Test VcfAllele","[vcfallele]") {
+  org::phenopackets::schema::v1::core::VcfAllele vcfpb;
+  // error -- no data
+  VcfAllele allele1(vcfpb);
+  vector<Validation> validation = allele1.validate();
+  REQUIRE(validation.size()==5);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_warning()==true);
+  REQUIRE(v.get_cause() == ValidationCause::ALLELE_LACKS_ID);
+  v = validation.at(1);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_GENOME_ASSEMBLY);
+  v = validation.at(2);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_CHROMOSOME);
+  v = validation.at(3);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_REF);
+  v = validation.at(4);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_ALT);
+  // Now let's make a well formed VCF
+  vcfpb.set_id("id:A");
+  vcfpb.set_genome_assembly("GRCh37");
+  vcfpb.set_chr("chr1");
+  vcfpb.set_pos(42);
+  vcfpb.set_ref("A");
+  vcfpb.set_alt("C");
+  VcfAllele allele2(vcfpb);
+  validation = allele2.validate();
+  REQUIRE(validation.empty()==true);
 }

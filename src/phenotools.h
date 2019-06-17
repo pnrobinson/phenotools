@@ -286,7 +286,8 @@ class Variant : public ValidatorI {
  private:
   unique_ptr<HgvsAllele> hgvs_allele_;
   unique_ptr<VcfAllele> vcf_allele_;
-  // todo
+  // todo spdi, iscn,murine
+  unique_ptr<OntologyClass> zygosity_;
 
  public:
   Variant(const org::phenopackets::schema::v1::core::Variant & var);
