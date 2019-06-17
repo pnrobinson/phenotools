@@ -205,6 +205,33 @@ TEST_CASE("test Gene","[gene]") {
   Gene g3{genepb};
   validation = g3.validate();
   REQUIRE(validation.empty()==true);
-  
+}
+
+
+TEST_CASE("Test HGVS allele","[hgvsallele]"){
+  org::phenopackets::schema::v1::core::HgvsAllele hgvspb;
+  // error -- no id or hgvs
+  HgvsAllele allele1(hgvspb);
+  vector<Validation> validation = allele1.validate();
+  REQUIRE(validation.size()==2);
+  Validation v1 = validation.at(0);
+  REQUIRE(v1.is_warning()==true);
+  REQUIRE(v1.get_cause() == ValidationCause::ALLELE_LACKS_ID);
+  Validation v2 = validation.at(1);
+  REQUIRE(v2.is_error()==true);
+  REQUIRE(v2.get_cause() == ValidationCause::ALLELE_LACKS_HGVS);
+  // add the HGVS -- there should be only a warning now
+  hgvspb.set_hgvs("NM_000276.3:c.2581G>A");
+  HgvsAllele allele2(hgvspb);
+  validation = allele2.validate();
+  REQUIRE(validation.size()==1);
+  v1 = validation.at(0);
+  REQUIRE(v1.is_warning()==true);
+  REQUIRE(v1.get_cause() == ValidationCause::ALLELE_LACKS_ID);
+  // add an ID -- there should now be no warning
+  hgvspb.set_id("id:A");
+  HgvsAllele allele3(hgvspb);
+  validation = allele3.validate();
+  REQUIRE(validation.empty()==true);
 
 }

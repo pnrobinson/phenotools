@@ -29,6 +29,8 @@ enum class ValidationCause {
     PHENOTYPIC_FEATURE_LACKS_EVIDENCE, //"PhenotypicFeature element must contain an evidence element";
     GENE_LACKS_ID, //"Gene must have id element";
     GENE_LACKS_SYMBOL, //"Gene must have symbol"
+    ALLELE_LACKS_ID, //"Variant should have an id"
+    ALLELE_LACKS_HGVS, //"HgvsAllele lack HGVS string"
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -241,7 +243,35 @@ class Gene : public ValidatorI {
   vector<Validation> validate();
   friend std::ostream &operator<<(std::ostream& ost, const Gene& gene);   
 };
-std::ostream &operator<<(std::ostream& ost, const Gene& gene);  
+std::ostream &operator<<(std::ostream& ost, const Gene& gene);
+
+
+class HgvsAllele : public ValidatorI {
+ private:
+  string id_;
+  string hgvs_;
+ public:
+ HgvsAllele(const org::phenopackets::schema::v1::core::HgvsAllele &ha):id_(ha.id()), hgvs_(ha.hgvs()) {}
+ HgvsAllele(const HgvsAllele &ha):id_(ha.id_),hgvs_(ha.hgvs_){}
+  HgvsAllele &operator=(const HgvsAllele &ha);
+  vector<Validation> validate();
+
+};
+
+
+
+
+class Variant : public ValidatorI {
+ private:
+  string x;
+
+
+};
+
+
+
+
+
 
 class Phenopacket : public ValidatorI {
 private:

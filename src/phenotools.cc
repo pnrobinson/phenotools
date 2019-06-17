@@ -43,6 +43,8 @@ Validation::message() const {
   case ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE: return "PhenotypicFeature element must contain an evidence element";
   case   ValidationCause::GENE_LACKS_ID: return "Gene must have id element";
   case ValidationCause::GENE_LACKS_SYMBOL: return "Gene must have symbol";
+  case   ValidationCause::ALLELE_LACKS_ID: return "Variant should have an id";
+  case ValidationCause::ALLELE_LACKS_HGVS: return "HgvsAllele lack HGVS string";
   }
   // should never happen
   return "unknown error";
@@ -435,6 +437,20 @@ Gene::validate(){
 std::ostream& operator<<(std::ostream& ost, const Gene& gene){
   ost <<gene.symbol_<<"["<<gene.id_<<"]";
   return ost;
+}
+
+vector<Validation>
+HgvsAllele::validate(){
+  vector<Validation> vl;
+  if (id_.empty()) {
+    Validation v = Validation::createWarning(ValidationCause::ALLELE_LACKS_ID);
+    vl.push_back(v);
+  }
+  if (hgvs_.empty()) {
+    Validation v = Validation::createError(ValidationCause::ALLELE_LACKS_HGVS);
+    vl.push_back(v);
+  }
+  return vl;
 }
 
 
