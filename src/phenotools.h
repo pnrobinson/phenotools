@@ -49,6 +49,9 @@ enum class ValidationCause {
     RESOURCE_LACKS_URL, //  "resource URL missing";
     RESOURCE_LACKS_VERSION, //  "resource version missing";
     RESOURCE_LACKS_IRI_PREFIX, // "resource IRI prefix missing";
+    METADATA_LACKS_CREATED_TIMESTAMP, //  "metadata timestamp missing";
+    METADATA_LACKS_CREATED_BY, //  "metadata created-by missing";
+    METADATA_LACKS_RESOURCES, // "metadata lacks resources";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -393,14 +396,24 @@ public:
 std::ostream &operator<<(std::ostream& ost, const Resource& resource);
 
 
-/*
+
 class MetaData : public ValidatorI {
-//  (timestamp, converted to RFC 3339 date string)
-  string timestamp_;
+private:
+    //  (timestamp, converted to RFC 3339 date string)
+  string created_;
   string created_by_;
+  string submitted_by_;
   vector<Resource> resources_;
+  vector<string> updated_;
+  string phenopacket_schema_version_;
+  vector<ExternalReference> external_references_;
+public:
+    MetaData(const org::phenopackets::schema::v1::core::MetaData &md);
+    MetaData(const MetaData & md);
+    vector<Validation> validate();
+    friend std::ostream &operator<<(std::ostream& ost, const MetaData& md);
 };
-*/
+ std::ostream &operator<<(std::ostream& ost, const MetaData& md);
 
 
 
@@ -414,6 +427,8 @@ private:
   vector<Gene> genes_;
   vector<Variant> variants_;
   vector<Disease> diseases_;
+  vector<HtsFile> htsFiles_;
+  unique_ptr<MetaData> metadata_;
 
   
   

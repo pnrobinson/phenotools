@@ -368,10 +368,10 @@ TEST_CASE("Test File","[file]"){
 
 
 TEST_CASE("Test HtsFile","[htsfile]") {
-     org::phenopackets::schema::v1::core::HtsFile htsfilepb;
+  org::phenopackets::schema::v1::core::HtsFile htsfilepb;
   // error -- no data
   HtsFile f1(htsfilepb);
-   vector<Validation> validation = f1.validate();
+  vector<Validation> validation = f1.validate();
   REQUIRE(validation.size()==4);
   Validation v = validation.at(0);
   REQUIRE(v.is_error()==true);
@@ -387,18 +387,18 @@ TEST_CASE("Test HtsFile","[htsfile]") {
   REQUIRE(v.get_cause() == ValidationCause::LACKS_HTS_FILE);
   // set the HTS format to VCF. Then we should only have 3 QC issues
   htsfilepb.set_hts_format(org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM);
-    HtsFile f2(htsfilepb);
-   validation = f2.validate();
+  HtsFile f2(htsfilepb);
+  validation = f2.validate();
   REQUIRE(validation.size()==3);
   // set the genome assembly. Then we should only have 2 Q/C issues
   htsfilepb.set_genome_assembly("GRCh38");
-    HtsFile f3(htsfilepb);
-   validation = f3.validate();
+  HtsFile f3(htsfilepb);
+  validation = f3.validate();
   REQUIRE(validation.size()==2);
   // add an entry to the sample id map. Then we should only have one error
-   (*(htsfilepb.mutable_individual_to_sample_identifiers()))["sample 1"]="file 1";
+  (*(htsfilepb.mutable_individual_to_sample_identifiers()))["sample 1"]="file 1";
   HtsFile f4(htsfilepb);
-   validation = f4.validate();
+  validation = f4.validate();
   REQUIRE(validation.size()==1);
   // And a File -- then we should be 100%
   org::phenopackets::schema::v1::core::File* file =
@@ -406,17 +406,17 @@ TEST_CASE("Test HtsFile","[htsfile]") {
   file->set_uri("http://www.example.org");
   htsfilepb.set_allocated_file(file);
   HtsFile f5(htsfilepb);
-    validation = f5.validate();
+  validation = f5.validate();
   REQUIRE(validation.empty());
   htsfilepb.release_file();
 }
 
 
 TEST_CASE("Test Resource","[resource]") {
-     org::phenopackets::schema::v1::core::Resource resourcepb;
+  org::phenopackets::schema::v1::core::Resource resourcepb;
   // error -- no data
   Resource r1(resourcepb);
-   vector<Validation> validation = r1.validate();
+  vector<Validation> validation = r1.validate();
   REQUIRE(validation.size()==6);
   Validation v = validation.at(0);
   REQUIRE(v.is_error());
@@ -430,10 +430,10 @@ TEST_CASE("Test Resource","[resource]") {
   v = validation.at(3);
   REQUIRE(v.is_error());
   REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_URL);
-   v = validation.at(4);
+  v = validation.at(4);
   REQUIRE(v.is_error());
   REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_VERSION);
-   v = validation.at(5);
+  v = validation.at(5);
   REQUIRE(v.is_error());
   REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_IRI_PREFIX);
   
@@ -443,11 +443,26 @@ TEST_CASE("Test Resource","[resource]") {
   resourcepb.set_url("http://purl.obolibrary.org/obo/hp.owl");
   resourcepb.set_version("2018-03-08");
   resourcepb.set_iri_prefix("http://purl.obolibrary.org/obo/HP_");
-   Resource r2(resourcepb);
-   validation = r2.validate();
+  Resource r2(resourcepb);
+  validation = r2.validate();
   REQUIRE(validation.empty());
- 
-    
-    
+}
+
+
+TEST_CASE("MetaData","[metadata]") {
+  org::phenopackets::schema::v1::core::MetaData mdpb;
+  // error -- no data
+  // Note that protobuf creates a timestamp automatically and so this is not
+  // lacking in our test
+  MetaData md1(mdpb);
+  vector<Validation> validation = md1.validate();
+  REQUIRE(validation.size()==2);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error());
+  
+  REQUIRE(v.get_cause() == ValidationCause::METADATA_LACKS_CREATED_BY);
+  v = validation.at(1);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::METADATA_LACKS_RESOURCES);
 }
 

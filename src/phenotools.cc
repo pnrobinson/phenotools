@@ -62,7 +62,9 @@ Validation::message() const {
     case ValidationCause::RESOURCE_LACKS_URL: return "resource URL missing";
     case ValidationCause::RESOURCE_LACKS_VERSION: return "resource version missing";
     case ValidationCause::RESOURCE_LACKS_IRI_PREFIX: return "resource IRI prefix missing";
-
+    case ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP: return "metadata timestamp missing";
+ case ValidationCause::METADATA_LACKS_CREATED_BY: return "metadata created-by missing";
+ case ValidationCause::METADATA_LACKS_RESOURCES: return "metadata lacks resources";
     
   }
   // should never happen
@@ -747,20 +749,20 @@ std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
 */
 HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
   switch(htsfile.hts_format()){
-      case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
-          hts_format_=HtsFormat::BAM; break;
-    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_SAM:
-          hts_format_=HtsFormat::SAM; break;
-        case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_CRAM:
-          hts_format_=HtsFormat::CRAM; break;
-    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_VCF:
-          hts_format_=HtsFormat::VCF; break;
-    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BCF:
-          hts_format_=HtsFormat::BCF; break;
-    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_GVCF:
-          hts_format_=HtsFormat::GVCF; break;
-    default:
-        hts_format_ = HtsFormat::UNKNOWN;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
+    hts_format_=HtsFormat::BAM; break;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_SAM:
+    hts_format_=HtsFormat::SAM; break;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_CRAM:
+    hts_format_=HtsFormat::CRAM; break;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_VCF:
+    hts_format_=HtsFormat::VCF; break;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BCF:
+    hts_format_=HtsFormat::BCF; break;
+  case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_GVCF:
+    hts_format_=HtsFormat::GVCF; break;
+  default:
+    hts_format_ = HtsFormat::UNKNOWN;
   }
   genome_assembly_ = htsfile.genome_assembly();
   individual_to_sample_identifiers_ .insert(htsfile.individual_to_sample_identifiers().begin(),
@@ -768,7 +770,15 @@ HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
   if (htsfile.has_file()){
    file_ = make_unique<File>(htsfile.file());   
   }
+}
 
+HtsFile::HtsFile(const HtsFile & hts):
+  hts_format_(hts.hts_format_),
+  genome_assembly_(hts.genome_assembly_)
+{
+  if (hts.file_) {
+    file_ = make_unique<File>(*(hts.file_));
+  }
 }
 
 
@@ -839,8 +849,86 @@ std::ostream &operator<<(std::ostream& ost, const Resource& resource) {
      << ";" << resource.version_  << ";" << resource.iri_prefix_ <<")";
      
     return ost;
-    
 }
+
+
+
+MetaData::MetaData(const org::phenopackets::schema::v1::core::MetaData &md){
+  google::protobuf::Timestamp tstamp = md.created();
+  if (tstamp.IsInitialized()) {
+    created_=google::protobuf::util::TimeUtil::ToString(tstamp);
+  } else {
+    created_= EMPTY_STRING;
+  }
+  created_by_ = md.created_by();
+  submitted_by_ = md.submitted_by();
+  phenopacket_schema_version_ = md.phenopacket_schema_version();
+  
+  if (md.updated_size()>0) {
+    for (auto u : md.updated()  ){
+      if (u.IsInitialized()) {
+	auto utime =google::protobuf::util::TimeUtil::ToString(u);
+	updated_.push_back(utime);
+      }
+    }
+  }
+  
+  if (md.resources_size()>0) {
+    for (auto r : md.resources()) {
+      Resource res(r);
+      resources_.push_back(res);
+    }
+  }
+  if (md.external_references_size()>0) {
+    for (auto er : md.external_references()) {
+      ExternalReference extref(er);
+      external_references_.push_back(extref);
+    }
+  }
+}
+
+MetaData::MetaData(const MetaData & md):
+  created_(md.created_),
+  created_by_(md.created_by_),
+  submitted_by_(md.submitted_by_),
+  updated_(md.updated_),
+  phenopacket_schema_version_(md.phenopacket_schema_version_){
+  for (Resource r : md.resources_) {
+    resources_.push_back(r); // creates copy
+  }
+  for (ExternalReference extref : md.external_references_) {
+    external_references_.push_back(extref);
+  }
+}
+
+
+vector<Validation> 
+MetaData::validate(){
+  vector<Validation> vl;
+  if (created_.empty()) {
+    Validation v = Validation::createError(ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP);
+    vl.push_back(v); 
+  }
+  if (created_by_.empty()) {
+    Validation v = Validation::createError(ValidationCause::METADATA_LACKS_CREATED_BY);
+    vl.push_back(v); 
+  }
+  if (resources_.empty()) {
+    Validation v = Validation::createError(ValidationCause::METADATA_LACKS_RESOURCES);
+    vl.push_back(v); 
+  }
+  // other elements are optional and so we do not validate them
+  return vl; 
+}
+
+std::ostream &operator<<(std::ostream& ost, const MetaData& md){
+  ost << md.created_by_ << "(" << md.created_ << ")\n";
+  for (Resource r : md.resources_) {
+    ost << r << "\n";
+  }
+  return ost;
+}
+
 
 
 
@@ -875,6 +963,15 @@ Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){
       Disease dis(d);
       diseases_.push_back(dis);
     }
+  }
+  if (pp.hts_files_size()>0) {
+    for (auto h : pp.hts_files()) {
+      HtsFile hts(h);
+      htsFiles_.push_back(hts);
+    }
+  }
+  if (pp.has_meta_data()) {
+    metadata_ = make_unique<MetaData>(pp.meta_data());
   }
 }
 
@@ -929,9 +1026,10 @@ std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
     for (Disease d : ppacket.diseases_) {
       ost << "Disease: "<< d <<"\n";
     }
-
   }
-  
-  //ost << *(ppacket.get_subject()) << "\n";
+  if (ppacket.metadata_) {
+    ost<<"Metadata:\n";
+    ost << *(ppacket.metadata_.get()) << "\n";
+  }
   return ost;
 }
