@@ -366,3 +366,48 @@ TEST_CASE("Test File","[file]"){
   REQUIRE(validation.empty()==true);
 }
 
+
+TEST_CASE("Test HtsFile","[htsfile]") {
+     org::phenopackets::schema::v1::core::HtsFile htsfilepb;
+  // error -- no data
+  HtsFile f1(htsfilepb);
+   vector<Validation> validation = f1.validate();
+  REQUIRE(validation.size()==4);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
+  v = validation.at(1);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_GENOME_ASSEMBLY);
+  v = validation.at(2);
+  REQUIRE(v.is_warning()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_SAMPLE_MAP);
+  v = validation.at(3);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::LACKS_HTS_FILE);
+  // set the HTS format to VCF. Then we should only have 3 QC issues
+  htsfilepb.set_hts_format(org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM);
+    HtsFile f2(htsfilepb);
+   validation = f2.validate();
+  REQUIRE(validation.size()==3);
+  // set the genome assembly. Then we should only have 2 Q/C issues
+  htsfilepb.set_genome_assembly("GRCh38");
+    HtsFile f3(htsfilepb);
+   validation = f3.validate();
+  REQUIRE(validation.size()==2);
+  // add an entry to the sample id map. Then we should only have one error
+   (*(htsfilepb.mutable_individual_to_sample_identifiers()))["sample 1"]="file 1";
+  HtsFile f4(htsfilepb);
+   validation = f4.validate();
+  REQUIRE(validation.size()==1);
+  // And a File -- then we should be 100%
+  org::phenopackets::schema::v1::core::File* file =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::File>(&arena);
+  file->set_uri("http://www.example.org");
+  htsfilepb.set_allocated_file(file);
+  HtsFile f5(htsfilepb);
+    validation = f5.validate();
+  REQUIRE(validation.empty());
+  htsfilepb.release_file();
+}
+

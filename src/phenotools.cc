@@ -53,6 +53,9 @@ Validation::message() const {
   case ValidationCause::LACKS_ALLELE: return "allele missing";
   case ValidationCause::DISEASE_LACKS_TERM: return "disease lacks term";
   case ValidationCause::FILE_LACKS_SPECIFICATION: return "File must has path or uri";
+  case ValidationCause::UNIDENTIFIED_HTS_FILETYPE: return "Unidentified HTS file type";
+  case ValidationCause::LACKS_SAMPLE_MAP: return "no sample map for HTS file";
+  case ValidationCause::LACKS_HTS_FILE: return "no HTS file found";
     
   }
   // should never happen
@@ -736,16 +739,50 @@ class HtsFile : public ValidatorI {
 std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
 */
 HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
-  
-
-
+  switch(htsfile.hts_format()){
+      case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
+          hts_format_=HtsFormat::BAM; break;
+    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_SAM:
+          hts_format_=HtsFormat::SAM; break;
+        case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_CRAM:
+          hts_format_=HtsFormat::CRAM; break;
+    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_VCF:
+          hts_format_=HtsFormat::VCF; break;
+    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BCF:
+          hts_format_=HtsFormat::BCF; break;
+    case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_GVCF:
+          hts_format_=HtsFormat::GVCF; break;
+    default:
+        hts_format_ = HtsFormat::UNKNOWN;
+  }
+  genome_assembly_ = htsfile.genome_assembly();
+  individual_to_sample_identifiers_ .insert(htsfile.individual_to_sample_identifiers().begin(),
+                                            htsfile.individual_to_sample_identifiers().end());
+  if (htsfile.has_file()){
+   file_ = make_unique<File>(htsfile.file());   
+  }
 
 }
 
 
 vector<Validation> HtsFile::validate(){
   vector<Validation> vl;
-
+  if (hts_format_ == HtsFormat::UNKNOWN) {
+    Validation v = Validation::createError(ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
+    vl.push_back(v); 
+  }
+  if (genome_assembly_.empty()) {
+    Validation v = Validation::createError(ValidationCause::LACKS_GENOME_ASSEMBLY);
+    vl.push_back(v); 
+  }
+  if (individual_to_sample_identifiers_.empty()) {
+      Validation v = Validation::createWarning(ValidationCause::LACKS_SAMPLE_MAP);
+    vl.push_back(v); 
+  }
+  if (! file_ ){
+      Validation v = Validation::createError(ValidationCause::LACKS_HTS_FILE);
+    vl.push_back(v); 
+  }
   return vl;
 }
 

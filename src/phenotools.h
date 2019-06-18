@@ -40,6 +40,9 @@ enum class ValidationCause {
     LACKS_ALLELE, // "allele missing";
     DISEASE_LACKS_TERM, // "disease lacks term";
     FILE_LACKS_SPECIFICATION, //"File must has path or uri";
+    UNIDENTIFIED_HTS_FILETYPE, //"Unidentified HTS file type";
+    LACKS_SAMPLE_MAP, // "no sample map for HTS file";
+    LACKS_HTS_FILE, // "no HTS file found";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -336,7 +339,7 @@ class File : public ValidatorI {
 std::ostream &operator<<(std::ostream& ost, const File& file);
 
 
-enum class HtsFormat {  SAM, BAM, CRAM, VCF, BCF, GVCF };
+enum class HtsFormat { UNKNOWN, SAM, BAM, CRAM, VCF, BCF, GVCF };
 
 class HtsFile : public ValidatorI {
  private:
