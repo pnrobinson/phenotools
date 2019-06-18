@@ -43,6 +43,12 @@ enum class ValidationCause {
     UNIDENTIFIED_HTS_FILETYPE, //"Unidentified HTS file type";
     LACKS_SAMPLE_MAP, // "no sample map for HTS file";
     LACKS_HTS_FILE, // "no HTS file found";
+    RESOURCE_LACKS_ID, // "resource id missing";
+    RESOURCE_LACKS_NAME, //  "resource name missing";
+    RESOURCE_LACKS_NAMESPACE_PREFIX, //  "resource namespace prefix missing";
+    RESOURCE_LACKS_URL, //  "resource URL missing";
+    RESOURCE_LACKS_VERSION, //  "resource version missing";
+    RESOURCE_LACKS_IRI_PREFIX, // "resource IRI prefix missing";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -355,6 +361,51 @@ class HtsFile : public ValidatorI {
   friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
 };
 std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
+
+
+
+class Resource : public ValidatorI {
+private:
+    string id_;
+    string name_;
+    string namespace_prefix_;
+    string url_;
+    string version_;
+    string iri_prefix_;
+public:
+    Resource(const org::phenopackets::schema::v1::core::Resource & r):
+        id_(r.id()),
+        name_(r.name()),
+        namespace_prefix_(r.namespace_prefix()),
+        url_(r.url()),
+        version_(r.version()),
+        iri_prefix_(r.iri_prefix()){}
+    Resource(const Resource & r):
+        id_(r.id_),
+        name_(r.name_),
+        namespace_prefix_(r.namespace_prefix_),
+        url_(r.url_),
+        version_(r.version_),
+        iri_prefix_(r.iri_prefix_){}
+        vector<Validation> validate();
+        friend std::ostream &operator<<(std::ostream& ost, const Resource& resource);
+};
+std::ostream &operator<<(std::ostream& ost, const Resource& resource);
+
+
+/*
+class MetaData : public ValidatorI {
+//  (timestamp, converted to RFC 3339 date string)
+  string timestamp_;
+  string created_by_;
+  vector<Resource> resources_;
+};
+*/
+
+
+
+
+
 
 class Phenopacket : public ValidatorI {
 private:

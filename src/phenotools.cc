@@ -56,6 +56,13 @@ Validation::message() const {
   case ValidationCause::UNIDENTIFIED_HTS_FILETYPE: return "Unidentified HTS file type";
   case ValidationCause::LACKS_SAMPLE_MAP: return "no sample map for HTS file";
   case ValidationCause::LACKS_HTS_FILE: return "no HTS file found";
+  case ValidationCause::RESOURCE_LACKS_ID: return "resource id missing";
+  case ValidationCause::RESOURCE_LACKS_NAME: return "resource name missing";
+    case ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX: return "resource namespace prefix missing";
+    case ValidationCause::RESOURCE_LACKS_URL: return "resource URL missing";
+    case ValidationCause::RESOURCE_LACKS_VERSION: return "resource version missing";
+    case ValidationCause::RESOURCE_LACKS_IRI_PREFIX: return "resource IRI prefix missing";
+
     
   }
   // should never happen
@@ -784,6 +791,55 @@ vector<Validation> HtsFile::validate(){
     vl.push_back(v); 
   }
   return vl;
+}
+
+
+std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile){
+    
+    
+ return ost;   
+}
+
+
+vector<Validation> 
+Resource::validate()
+{
+    vector<Validation> vl;
+    if (id_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_ID);
+    vl.push_back(v); 
+    }
+     if (name_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_NAME);
+    vl.push_back(v); 
+    }
+     if (namespace_prefix_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX);
+    vl.push_back(v); 
+    }
+     if (url_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_URL);
+    vl.push_back(v); 
+    }
+     if (version_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_VERSION);
+    vl.push_back(v); 
+    }
+     if (iri_prefix_.empty()) {
+         Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_IRI_PREFIX);
+    vl.push_back(v); 
+    }
+    return vl;
+}
+
+
+std::ostream &operator<<(std::ostream& ost, const Resource& resource) {
+ ost << resource.name_ << ": " << resource.id_ 
+    << "(" << resource.namespace_prefix_ << ";" << resource.url_ 
+     << ";" << resource.version_  << ";" << resource.iri_prefix_ <<")";
+     
+    return ost;
+    
 }
 
 

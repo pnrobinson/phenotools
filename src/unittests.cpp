@@ -411,3 +411,43 @@ TEST_CASE("Test HtsFile","[htsfile]") {
   htsfilepb.release_file();
 }
 
+
+TEST_CASE("Test Resource","[resource]") {
+     org::phenopackets::schema::v1::core::Resource resourcepb;
+  // error -- no data
+  Resource r1(resourcepb);
+   vector<Validation> validation = r1.validate();
+  REQUIRE(validation.size()==6);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_ID);
+  v = validation.at(1);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_NAME);
+  v = validation.at(2);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX);
+  v = validation.at(3);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_URL);
+   v = validation.at(4);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_VERSION);
+   v = validation.at(5);
+  REQUIRE(v.is_error());
+  REQUIRE(v.get_cause() == ValidationCause::RESOURCE_LACKS_IRI_PREFIX);
+  
+  resourcepb.set_id("hp");
+  resourcepb.set_name("human phenotype ontology");
+  resourcepb.set_namespace_prefix("HP");
+  resourcepb.set_url("http://purl.obolibrary.org/obo/hp.owl");
+  resourcepb.set_version("2018-03-08");
+  resourcepb.set_iri_prefix("http://purl.obolibrary.org/obo/HP_");
+   Resource r2(resourcepb);
+   validation = r2.validate();
+  REQUIRE(validation.empty());
+ 
+    
+    
+}
+
