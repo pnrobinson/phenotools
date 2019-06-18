@@ -69,3 +69,30 @@ It will input the Phenopacket included in the demo and output this. ::
   id: HP:0012262: Abnormal ciliary motility
   id: HP:0004935: Pulmonary artery atresia
   id: HP:0003363: Abdominal situs inversus
+  Gene: ZIC3[ENTREZ:7547]
+	GRCh37: X:136649818C>T[]
+	Disease: HETEROTAXY, VISCERAL, 1, X-LINKED; HTX1 [OMIM:306955]
+  Metadata:
+  Hpo Case Annotator : 1.0.13-SNAPSHOT(1970-01-01T00:00:00Z)
+  human phenotype ontology: hp(HP;http://purl.obolibrary.org/obo/hp.owl;2018-03-08;http://purl.obolibrary.org/obo/HP_)
+  Phenotype And Trait Ontology: pato(PATO;http://purl.obolibrary.org/obo/pato.owl;2018-03-28;http://purl.obolibrary.org/obo/PATO_)
+  Genotype Ontology: geno(GENO;http://purl.obolibrary.org/obo/geno.owl;19-03-2018;http://purl.obolibrary.org/obo/GENO_)
+  NCBI organismal classification: ncbitaxon(NCBITaxon;http://purl.obolibrary.org/obo/ncbitaxon.owl;2018-03-02;)
+  Evidence and Conclusion Ontology: eco(ECO;http://purl.obolibrary.org/obo/eco.owl;2018-11-10;http://purl.obolibrary.org/obo/ECO_)
+  Online Mendelian Inheritance in Man: omim(OMIM;https://www.omim.org;;)
+
+
+Running the unittests
+~~~~~~~~~~~~~~~~~~~~~
+
+The setup script builds and runs an app called ``unittests`` that runs unit tests. This app can also be built
+and run by the following commands. ::
+
+  $ cd src/
+  $ make unittests
+  g++  -Wall -g -O0 --std=c++17 -I=. -pthread unittests.cpp base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o -o unittests -lprotobuf
+  $ ./unittests 
+  ===============================================================================
+  All tests passed (111 assertions in 16 test cases)
+
+
