@@ -39,20 +39,8 @@ else
 fi
 
 #3 create the C++ code
-GENERATED_CPP_DIR='phenopacket-schema/target/generated-sources/protobuf/cpp'
-
-if [ ! -d $GENERATED_CPP_DIR ]; then
-    cd phenopacket-schema; mvn compile; mvn package
-else
-    echo "[INFO] C++ sources already present"
-    echo
-fi
-
 
 PROTO_PATH='phenopacket-schema/src/main/proto'
-
-
-
 ## Generate the C++ files with protoc
 if [ -e 'src/base.pb.h' ]; then
     echo "[INFO] base.pb.h previously generated"

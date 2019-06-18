@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 
 #include "phenopackets.pb.h"
 #include "base.pb.h"
@@ -11,7 +12,7 @@
 using std::unique_ptr;
 using std::string;
 using std::vector;
-
+using std::map;
 
 
 enum class ValidationType { WARNING, ERROR };

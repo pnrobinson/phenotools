@@ -743,6 +743,12 @@ HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
 }
 
 
+vector<Validation> HtsFile::validate(){
+  vector<Validation> vl;
+
+  return vl;
+}
+
 
 
 

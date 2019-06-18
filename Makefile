@@ -14,6 +14,7 @@ ${TARGET}:
 
 clean:
 	-rm phenotools
+	-rm unittests
 	cd src; make clean
 
 
