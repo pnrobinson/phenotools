@@ -38,6 +38,7 @@ enum class ValidationCause {
     LACKS_ZYGOSITY, // "zygosity missing";
     LACKS_ALLELE, // "allele missing";
     DISEASE_LACKS_TERM, // "disease lacks term";
+    FILE_LACKS_SPECIFICATION, //"File must has path or uri";
 } ;
 static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -319,6 +320,37 @@ class Disease : public ValidatorI {
 };
 std::ostream &operator<<(std::ostream& ost, const Disease& dis);
 
+
+class File : public ValidatorI {
+ private:
+  string path_;
+  string uri_;
+  string description_;
+ public:
+  File(const org::phenopackets::schema::v1::core::File &file);
+  File(const File &file);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const File& file);
+};
+std::ostream &operator<<(std::ostream& ost, const File& file);
+
+
+enum class HtsFormat {  SAM, BAM, CRAM, VCF, BCF, GVCF };
+
+class HtsFile : public ValidatorI {
+ private:
+  HtsFormat hts_format_;
+  string genome_assembly_;
+  map<string,string> individual_to_sample_identifiers_;
+  unique_ptr<File> file_;
+
+ public:
+  HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile);
+  HtsFile(const HtsFile &htsfile);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
+};
+std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
 
 class Phenopacket : public ValidatorI {
 private:

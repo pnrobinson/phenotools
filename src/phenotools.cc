@@ -52,6 +52,7 @@ Validation::message() const {
   case ValidationCause::LACKS_ZYGOSITY: return "zygosity missing";
   case ValidationCause::LACKS_ALLELE: return "allele missing";
   case ValidationCause::DISEASE_LACKS_TERM: return "disease lacks term";
+  case ValidationCause::FILE_LACKS_SPECIFICATION: return "File must has path or uri";
     
   }
   // should never happen
@@ -676,7 +677,73 @@ std::ostream &operator<<(std::ostream& ost, const Variant& var){
   }
       return ost;
 }
+
+
+
+File::File(const org::phenopackets::schema::v1::core::File &file):
+  path_(file.path()),
+  uri_(file.uri()),
+  description_(file.description())
+{}
+
   
+File::File(const File &file):
+  path_(file.path_),
+  uri_(file.uri_),
+  description_(file.description_)
+{}
+
+vector<Validation>
+File::validate(){
+   vector<Validation> vl;
+  if ( path_.empty() && uri_.empty()){
+    Validation v = Validation::createError(ValidationCause::FILE_LACKS_SPECIFICATION);
+    vl.push_back(v);
+  }
+  return vl;
+}
+
+
+std::ostream &operator<<(std::ostream& ost, const File& file){
+ 
+  if (! file.path_.empty()) {
+    ost << file.path_;
+  } else if (file.uri_.empty()) {
+    ost << file.uri_;
+  }
+  if (file.description_.empty()){
+    ost << " [" << file.description_ << "]";
+  }
+  return ost;
+}
+
+/*
+enum class HtsFormat {  SAM, BAM, CRAM, VCF, BCF, GVCF };
+
+class HtsFile : public ValidatorI {
+ private:
+  HtsFormat hts_format_;
+  string genome_assembly_;
+  map<string,string> individual_to_sample_identifiers_;
+  unique_ptr<File> file_;
+
+ public:
+  
+  HtsFile(const HtsFile &htsfile);
+  vector<Validation> validate();
+  friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
+};
+std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
+*/
+HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
+  
+
+
+
+}
+
+
+
 
 
 Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){

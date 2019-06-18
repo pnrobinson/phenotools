@@ -348,6 +348,21 @@ TEST_CASE("Test Disease","[disease]"){
 
   diseasepb.release_term();
   diseasepb.release_class_of_onset();
+}
 
+TEST_CASE("Test File","[file]"){
+  org::phenopackets::schema::v1::core::File filepb;
+  // error -- no data
+  File f1(filepb);
+  vector<Validation> validation = f1.validate();
+  REQUIRE(validation.size()==1);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error()==true);
+  REQUIRE(v.get_cause() == ValidationCause::FILE_LACKS_SPECIFICATION);
+  // add file data
+  filepb.set_uri("http://www.example.org");
+  File f2(filepb);
+  validation = f2.validate();
+  REQUIRE(validation.empty()==true);
 }
 
