@@ -2,7 +2,7 @@
 phenotools
 ==========
 
-A C++ app for working with the GA4GH Phenopackets standard.
+A C++ app for working with the `GA4GH Phenopackets standard <https://github.com/phenopackets/phenopacket-schema>`_.
 
 
 
