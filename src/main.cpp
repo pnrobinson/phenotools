@@ -15,7 +15,6 @@
 using namespace std;
 
 
-
 int main(int argc, char ** argv) {
   if (argc!=2) {
     cerr << "usage: ./phenotools phenopacket-file.json\n";
@@ -45,9 +44,6 @@ int main(int argc, char ** argv) {
   
   cout << ppacket << "\n";
 
-  
-  // cout << "\tsubject.id: "<<phenopacket.subject().id() << "\n";
-  // print age if available
   
 
 }

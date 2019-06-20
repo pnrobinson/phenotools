@@ -58,13 +58,14 @@ Validation::message() const {
   case ValidationCause::LACKS_HTS_FILE: return "no HTS file found";
   case ValidationCause::RESOURCE_LACKS_ID: return "resource id missing";
   case ValidationCause::RESOURCE_LACKS_NAME: return "resource name missing";
-    case ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX: return "resource namespace prefix missing";
-    case ValidationCause::RESOURCE_LACKS_URL: return "resource URL missing";
-    case ValidationCause::RESOURCE_LACKS_VERSION: return "resource version missing";
-    case ValidationCause::RESOURCE_LACKS_IRI_PREFIX: return "resource IRI prefix missing";
-    case ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP: return "metadata timestamp missing";
- case ValidationCause::METADATA_LACKS_CREATED_BY: return "metadata created-by missing";
- case ValidationCause::METADATA_LACKS_RESOURCES: return "metadata lacks resources";
+  case ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX: return "resource namespace prefix missing";
+  case ValidationCause::RESOURCE_LACKS_URL: return "resource URL missing";
+  case ValidationCause::RESOURCE_LACKS_VERSION: return "resource version missing";
+  case ValidationCause::RESOURCE_LACKS_IRI_PREFIX: return "resource IRI prefix missing";
+  case ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP: return "metadata timestamp missing";
+  case ValidationCause::METADATA_LACKS_CREATED_BY: return "metadata created-by missing";
+  case ValidationCause::METADATA_LACKS_RESOURCES: return "metadata lacks resources";
+  case ValidationCause::PROCEDURE_LACKS_CODE: return "procedrure code missing";
     
   }
   // should never happen
@@ -729,24 +730,7 @@ std::ostream &operator<<(std::ostream& ost, const File& file){
   return ost;
 }
 
-/*
-enum class HtsFormat {  SAM, BAM, CRAM, VCF, BCF, GVCF };
 
-class HtsFile : public ValidatorI {
- private:
-  HtsFormat hts_format_;
-  string genome_assembly_;
-  map<string,string> individual_to_sample_identifiers_;
-  unique_ptr<File> file_;
-
- public:
-  
-  HtsFile(const HtsFile &htsfile);
-  vector<Validation> validate();
-  friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
-};
-std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
-*/
 HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
   switch(htsfile.hts_format()){
   case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
@@ -931,6 +915,46 @@ std::ostream &operator<<(std::ostream& ost, const MetaData& md){
 
 
 
+
+Procedure::Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure){
+  if (procedure.has_code()) {
+    code_ = make_unique<OntologyClass>(procedure.code());
+  }
+  if (procedure.has_body_site()) {
+    code_ = make_unique<OntologyClass>(procedure.body_site());
+  }
+}
+Procedure::Procedure(const Procedure & procedure){
+   if (procedure.code_) {
+     code_ = make_unique<OntologyClass>(*(procedure.code_));
+  }
+   if (procedure.body_site_) {
+     code_ = make_unique<OntologyClass>(*(procedure.body_site_));
+   }
+}
+
+
+vector<Validation>
+Procedure:: validate(){
+  vector<Validation> vl;
+  if (! code_) {
+    Validation v = Validation::createError(ValidationCause::PROCEDURE_LACKS_CODE);
+    vl.push_back(v); 
+  } else {
+    vector<Validation> v2 = code_->validate();
+    if (! v2.empty()) {
+      vl.insert(vl.end(),v2.begin(),v2.end() );  
+    }
+  }
+
+  return vl;
+}
+
+std::ostream &operator<<(std::ostream& ost, const Procedure& procedure) {
+  if (procedure.code_) ost << *(procedure.code_.get());
+  if (procedure.body_site_) ost <<"; body site: "<< *(procedure.body_site_.get());
+  return ost;
+}
 
 
 Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp){

@@ -466,3 +466,34 @@ TEST_CASE("MetaData","[metadata]") {
   REQUIRE(v.get_cause() == ValidationCause::METADATA_LACKS_RESOURCES);
 }
 
+
+TEST_CASE("Procedure","[procedure]") {
+  org::phenopackets::schema::v1::core::Procedure procedurepb;
+  // error -- no data
+  Procedure p1(procedurepb);
+  vector<Validation> validation = p1.validate();
+  REQUIRE(validation.size()==1);
+  Validation v = validation.at(0);
+  REQUIRE(v.is_error());
+  
+  REQUIRE(v.get_cause() == ValidationCause::PROCEDURE_LACKS_CODE);
+
+
+  string id = "NCIT:C28743";
+  string label = "Punch Biopsy";
+  org::phenopackets::schema::v1::core::OntologyClass* code =
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
+  code->set_id(id);
+  code->set_label(label);
+
+
+  procedurepb.set_allocated_code(code);
+
+  Procedure p2(procedurepb);
+  validation = p2.validate();
+  REQUIRE(validation.empty());
+
+  procedurepb.release_code();
+
+  
+}
