@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <vector>
 
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
@@ -40,9 +41,19 @@ int main(int argc, char ** argv) {
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
   cout << "\n#### Phenopacket at: " << fileName << " ####\n\n";
   
-  Phenopacket ppacket(phenopacketpb);
+  phenotools::Phenopacket ppacket(phenopacketpb);
   
   cout << ppacket << "\n";
+
+  auto validation = ppacket.validate();
+  if (validation.empty()) {
+    cout << "No Q/C issues identified!\n";
+  } else {
+    for (auto v : validation) {
+      cout << v.message() << "\n";
+    }
+
+  }
 
   
 

@@ -14,6 +14,7 @@ using std::string;
 using std::vector;
 using std::map;
 
+namespace phenotools {
 
   enum class ValidationType { WARNING, ERROR };
   enum class ValidationCause {
@@ -53,6 +54,8 @@ using std::map;
       METADATA_LACKS_CREATED_BY, //  "metadata created-by missing";
       METADATA_LACKS_RESOURCES, // "metadata lacks resources";
       PROCEDURE_LACKS_CODE, // "procedrure code missing":
+      PHENOPACKET_LACKS_ID, // "phenopacket id missing";
+      PHENOPACKET_LACKS_SUBJECT, // "procedrure subject missing";
       } ;
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
   
@@ -414,22 +417,23 @@ using std::map;
   std::ostream &operator<<(std::ostream& ost, const MetaData& md);
 
 
-class Procedure : public ValidatorI  {
- private:  
-  unique_ptr<OntologyClass> code_;
-  unique_ptr<OntologyClass> body_site_;
-
- public:
-  Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure);
-  Procedure(const Procedure & procedure);
-  ~Procedure(){}
-  vector<Validation> validate();
-  friend std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
-};
-std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
-
+  class Procedure : public ValidatorI  {
+  private:  
+    unique_ptr<OntologyClass> code_;
+    unique_ptr<OntologyClass> body_site_;
+    
+  public:
+    Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure);
+    Procedure(const Procedure & procedure);
+    ~Procedure(){}
+    vector<Validation> validate();
+    friend std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
+  };
+  std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
+  
   class Phenopacket : public ValidatorI {
   private:
+    string id_;
     unique_ptr<Individual> subject_;
     vector<PhenotypicFeature> phenotypic_features_;
     vector<Gene> genes_;
@@ -437,7 +441,7 @@ std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
     vector<Disease> diseases_;
     vector<HtsFile> htsFiles_;
     unique_ptr<MetaData> metadata_;
-  
+    
   public:
     Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
     ~Phenopacket(){}
@@ -450,7 +454,7 @@ std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
 
 
 
-
+}
 
 
 #endif
