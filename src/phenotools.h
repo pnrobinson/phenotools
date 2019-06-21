@@ -18,44 +18,45 @@ namespace phenotools {
 
   enum class ValidationType { WARNING, ERROR };
   enum class ValidationCause {
-    ONTOLOGY_ID_EMPTY, // "OntologyClass id not allowed to be empty"
-      INVALID_ONTOLOGY_ID, //OntologyClass id not a valid CURIE"
-      ONTOLOGY_LABEL_EMPTY, // "OntologyClass label not allowed to be empty"
-      AGE_ELEMENT_UNINITIALIZED,//"At least one of age and age_class must be present in Age element",
-      INDIVIDUAL_LACKS_ID,//"id must be present in Individual element"
-      INDIVIDUAL_LACKS_AGE,//"individual lacks age or age range information
-      UNKNOWN_SEX, //"individual sex not known/provided"
-      EXTERNAL_REFERENCE_LACKS_ID, //"evidence must have an id"
-      EVIDENCE_LACKS_CODE, //"Evidence element must contain an ontology code";
-      PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, //"PhenotypicFeature element must contain an ontology term representing the phenotype";
-      PHENOTYPIC_FEATURE_LACKS_EVIDENCE, //"PhenotypicFeature element must contain an evidence element";
-      GENE_LACKS_ID, //"Gene must have id element";
-      GENE_LACKS_SYMBOL, //"Gene must have symbol"
-      ALLELE_LACKS_ID, //"Variant should have an id"
-      ALLELE_LACKS_HGVS, //"HgvsAllele lack HGVS string"
-      LACKS_GENOME_ASSEMBLY, // "Genome assembly missing";
-      LACKS_CHROMOSOME, // return "Chromosome missing";
-      LACKS_REF, //"ref missing";
-      LACKS_ALT, //"alt missing";
-      LACKS_ZYGOSITY, // "zygosity missing";
-      LACKS_ALLELE, // "allele missing";
-      DISEASE_LACKS_TERM, // "disease lacks term";
-      FILE_LACKS_SPECIFICATION, //"File must has path or uri";
-      UNIDENTIFIED_HTS_FILETYPE, //"Unidentified HTS file type";
-      LACKS_SAMPLE_MAP, // "no sample map for HTS file";
-      LACKS_HTS_FILE, // "no HTS file found";
-      RESOURCE_LACKS_ID, // "resource id missing";
-      RESOURCE_LACKS_NAME, //  "resource name missing";
-      RESOURCE_LACKS_NAMESPACE_PREFIX, //  "resource namespace prefix missing";
-      RESOURCE_LACKS_URL, //  "resource URL missing";
-      RESOURCE_LACKS_VERSION, //  "resource version missing";
-      RESOURCE_LACKS_IRI_PREFIX, // "resource IRI prefix missing";
-      METADATA_LACKS_CREATED_TIMESTAMP, //  "metadata timestamp missing";
-      METADATA_LACKS_CREATED_BY, //  "metadata created-by missing";
-      METADATA_LACKS_RESOURCES, // "metadata lacks resources";
-      PROCEDURE_LACKS_CODE, // "procedrure code missing":
-      PHENOPACKET_LACKS_ID, // "phenopacket id missing";
-      PHENOPACKET_LACKS_SUBJECT, // "procedrure subject missing";
+    ONTOLOGY_ID_EMPTY, 
+      INVALID_ONTOLOGY_ID,
+      ONTOLOGY_LABEL_EMPTY, 
+      AGE_ELEMENT_UNINITIALIZED,
+      INDIVIDUAL_LACKS_ID,
+      INDIVIDUAL_LACKS_AGE,
+      UNKNOWN_SEX, 
+      EXTERNAL_REFERENCE_LACKS_ID,
+      EVIDENCE_LACKS_CODE, 
+      PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, 
+      PHENOTYPIC_FEATURE_LACKS_EVIDENCE, 
+      GENE_LACKS_ID, 
+      GENE_LACKS_SYMBOL,
+      ALLELE_LACKS_ID, 
+      ALLELE_LACKS_HGVS, 
+      LACKS_GENOME_ASSEMBLY,
+      LACKS_CHROMOSOME, 
+      LACKS_REF, 
+      LACKS_ALT,
+      LACKS_ZYGOSITY, 
+      LACKS_ALLELE,
+      DISEASE_LACKS_TERM,
+      FILE_LACKS_SPECIFICATION,
+      UNIDENTIFIED_HTS_FILETYPE,
+      LACKS_SAMPLE_MAP, 
+      LACKS_HTS_FILE, 
+      RESOURCE_LACKS_ID,
+      RESOURCE_LACKS_NAME,
+      RESOURCE_LACKS_NAMESPACE_PREFIX, 
+      RESOURCE_LACKS_URL,
+      RESOURCE_LACKS_VERSION,
+      RESOURCE_LACKS_IRI_PREFIX, 
+      METADATA_LACKS_CREATED_TIMESTAMP,
+      METADATA_LACKS_CREATED_BY, 
+      METADATA_LACKS_RESOURCES,
+      PROCEDURE_LACKS_CODE, 
+      PHENOPACKET_LACKS_ID,
+      PHENOPACKET_LACKS_SUBJECT,
+      PHENOPACKET_LACKS_PHENOTYPIC_FEATURES, 
       } ;
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
   
@@ -95,7 +96,9 @@ namespace phenotools {
     bool is_warning() const {  return validation_type_ == ValidationType::WARNING; }
     enum ValidationCause get_cause() const { return cause_; }
     const string message() const;
+    friend std::ostream& operator<<(std::ostream& ost, const Validation& v); 
   };
+  std::ostream& operator<<(std::ostream& ost, const Validation& v); 
   
   class ValidatorI {
   public:

@@ -49,8 +49,12 @@ int main(int argc, char ** argv) {
   if (validation.empty()) {
     cout << "No Q/C issues identified!\n";
   } else {
+    auto N = validation.size();
+    cout << "#### We identified "
+	 << N << " Q/C issue" << (N>1?"s":"")
+	 << " ####\n";
     for (auto v : validation) {
-      cout << v.message() << "\n";
+      cout << v << "\n";
     }
 
   }

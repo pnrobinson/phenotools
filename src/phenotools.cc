@@ -71,9 +71,24 @@ namespace phenotools {
     case ValidationCause::PROCEDURE_LACKS_CODE: return "procedrure code missing";
     case ValidationCause::PHENOPACKET_LACKS_ID: return "phenopacket id missing";
     case ValidationCause::PHENOPACKET_LACKS_SUBJECT: return "phenopacket subject missing";
+    case ValidationCause::PHENOPACKET_LACKS_PHENOTYPIC_FEATURES: return "phenopacket has no phenotypic features";
     }
     // should never happen
     return "unknown error";
+  }
+
+
+  std::ostream& operator<<(std::ostream& ost, const Validation& v){
+    switch (v.validation_type_) {
+    case ValidationType::WARNING:
+      ost << "[WARNING] ";
+      break;
+    case ValidationType::ERROR:
+      ost << "[ERROR] ";
+      break;
+    }
+    ost << v.message();
+    return ost;
   }
   
   
@@ -1018,7 +1033,19 @@ namespace phenotools {
       if (! v2.empty() ){
 	vl.insert(vl.end(),v2.begin(),v2.end());
       }
+    }
+    // phenotypic_features: recommended
+    if (phenotypic_features_.empty()) {
+      Validation v = Validation::createWarning(ValidationCause::PHENOPACKET_LACKS_PHENOTYPIC_FEATURES);
+      vl.push_back(v);
+    } else {
+      for (auto pf : phenotypic_features_) {
+	vector<Validation> v2 = pf.validate();
+	if (! v2.empty() ){
+	  vl.insert(vl.end(),v2.begin(),v2.end());
+	}
 
+      }
     }
   
     return vl;
