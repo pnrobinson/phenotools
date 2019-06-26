@@ -72,9 +72,28 @@ namespace phenotools {
     case ValidationCause::PHENOPACKET_LACKS_ID: return "phenopacket id missing";
     case ValidationCause::PHENOPACKET_LACKS_SUBJECT: return "phenopacket subject missing";
     case ValidationCause::PHENOPACKET_LACKS_PHENOTYPIC_FEATURES: return "phenopacket has no phenotypic features";
+    case ValidationCause::PHENOPACKET_LACKS_METADATA: return "phenopacket has no metadata";
+    case ValidationCause::BIOSAMPLE_LACKS_ID: return "biosample lacks id";
+    case ValidationCause::BIOSAMPLE_LACKS_SAMPLED_TISSUE: return "biosample lacks a sampled tissue";
+    case ValidationCause::BIOSAMPLE_LACKS_PHENOTYPES: return "biosample lacks phenotypic features";
+    case ValidationCause::BIOSAMPLE_LACKS_AGE: return "biosample lacks age";
+    case ValidationCause::BIOSAMPLE_LACKS_HISTOLOGY: return "biosample lacks histological diagnosis";
+    case ValidationCause::BIOSAMPLE_LACKS_TUMOR_PROGRESSION: return "biosample lacks tumor progression data";
+    case ValidationCause::BIOSAMPLE_LACKS_TUMOR_GRADE: return "biosample lacks tumor grade";
+    case ValidationCause::BIOSAMPLE_LACKS_TUMOR_STAGE: return "biosample lacks tumor stage";
+    case ValidationCause::BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS: return "biosample lacks diagnostic markers";
+    
+
     }
     // should never happen
     return "unknown error";
+  }
+  
+  void
+  ValidatorI::validate(vector<Validation> &v) const {
+      vector<Validation> val = validate();
+      if (val.empty()) return;
+      v.insert(v.end(),val.begin(),val.end());
   }
 
 
@@ -93,7 +112,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  OntologyClass::validate(){
+  OntologyClass::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation e = Validation::createError(ValidationCause::ONTOLOGY_ID_EMPTY);
@@ -111,6 +130,18 @@ namespace phenotools {
       vl.push_back(e);
     }
     return vl;
+  }
+  
+  /** 
+   * Convenience function that fills an external vector with Validation objects if there
+   * are errors.
+   * @param validation_vector A vector that typically is derived from the class that contains this object
+   */
+  void 
+  OntologyClass::validate(vector<Validation> &validation_vector) const {
+       vector<Validation> val = validate();
+       if (val.empty()) return; // all is fine!
+       validation_vector.insert(validation_vector.end(),val.begin(),val.end());
   }
 
   std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc){
@@ -130,7 +161,7 @@ namespace phenotools {
     }
   }
 
-  vector<Validation> Age::validate(){
+  vector<Validation> Age::validate() const {
     vector<Validation> vl;
     if (age_.empty() && ! age_class_ ){
       Validation e = Validation::createError(ValidationCause::AGE_ELEMENT_UNINITIALIZED);
@@ -159,7 +190,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  AgeRange::validate(){
+  AgeRange::validate() const {
     vector<Validation> vl;
     vector<Validation> age1 = start_.validate();
     if (age1.size()>0) {
@@ -267,7 +298,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  Individual::validate(){
+  Individual::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation e = Validation::createError(ValidationCause::INDIVIDUAL_LACKS_ID);
@@ -301,7 +332,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  ExternalReference::validate(){
+  ExternalReference::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation e = Validation::createError(ValidationCause::EXTERNAL_REFERENCE_LACKS_ID);
@@ -351,7 +382,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  Evidence::validate(){
+  Evidence::validate() const {
     vector<Validation> vl;
     if (! evidence_code_ ) {
       Validation e = Validation::createError(ValidationCause::EVIDENCE_LACKS_CODE);
@@ -435,7 +466,7 @@ namespace phenotools {
   }
 
   vector<Validation>
-  PhenotypicFeature::validate(){
+  PhenotypicFeature::validate() const {
     vector<Validation> vl;
     // description is optional so we will not check it
     if (! type_ ){
@@ -463,7 +494,7 @@ namespace phenotools {
   }
 
   vector<Validation>
-  Gene::validate(){
+  Gene::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::GENE_LACKS_ID);
@@ -482,7 +513,7 @@ namespace phenotools {
   }
 
   vector<Validation>
-  HgvsAllele::validate(){
+  HgvsAllele::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createWarning(ValidationCause::ALLELE_LACKS_ID);
@@ -523,7 +554,7 @@ namespace phenotools {
     info_(vcf.info_) {}
 
   vector<Validation>
-  VcfAllele::validate(){
+  VcfAllele::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createWarning(ValidationCause::ALLELE_LACKS_ID);
@@ -593,7 +624,7 @@ namespace phenotools {
   }
 
   vector<Validation>
-  Variant::validate() {
+  Variant::validate() const {
     vector<Validation> vl;
     bool has_allele=false;
     if (hgvs_allele_) {
@@ -655,7 +686,7 @@ namespace phenotools {
     }
 }
 
-  vector<Validation> Disease::validate(){
+  vector<Validation> Disease::validate() const {
     vector<Validation> vl;
     if (! term_ ){
       Validation v = Validation::createError(ValidationCause::DISEASE_LACKS_TERM);
@@ -721,7 +752,7 @@ namespace phenotools {
   {}
 
   vector<Validation>
-  File::validate(){
+  File::validate() const {
     vector<Validation> vl;
     if ( path_.empty() && uri_.empty()){
       Validation v = Validation::createError(ValidationCause::FILE_LACKS_SPECIFICATION);
@@ -779,7 +810,7 @@ namespace phenotools {
   }
 
 
-  vector<Validation> HtsFile::validate(){
+  vector<Validation> HtsFile::validate() const {
     vector<Validation> vl;
     if (hts_format_ == HtsFormat::UNKNOWN) {
       Validation v = Validation::createError(ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
@@ -813,7 +844,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  Resource::validate() {
+  Resource::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_ID);
@@ -902,7 +933,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  MetaData::validate(){
+  MetaData::validate() const {
     vector<Validation> vl;
     if (created_.empty()) {
       Validation v = Validation::createError(ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP);
@@ -919,7 +950,7 @@ namespace phenotools {
     // other elements are optional and so we do not validate them
     return vl;
   }
-
+  
   std::ostream &operator<<(std::ostream& ost, const MetaData& md){
     ost << md.created_by_ << "(" << md.created_ << ")\n";
     for (Resource r : md.resources_) {
@@ -951,7 +982,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  Procedure:: validate(){
+  Procedure:: validate() const {
     vector<Validation> vl;
     if (! code_) {
       Validation v = Validation::createError(ValidationCause::PROCEDURE_LACKS_CODE);
@@ -1018,7 +1049,7 @@ namespace phenotools {
 
 
   vector<Validation>
-  Phenopacket::validate(){
+  Phenopacket::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::PHENOPACKET_LACKS_ID);
@@ -1036,18 +1067,42 @@ namespace phenotools {
     }
     // phenotypic_features: recommended
     if (phenotypic_features_.empty()) {
-      Validation v = Validation::createWarning(ValidationCause::PHENOPACKET_LACKS_PHENOTYPIC_FEATURES);
-      vl.push_back(v);
+      vl.push_back(Validation::createWarning(ValidationCause::PHENOPACKET_LACKS_PHENOTYPIC_FEATURES));
     } else {
-      for (auto pf : phenotypic_features_) {
-	vector<Validation> v2 = pf.validate();
-	if (! v2.empty() ){
-	  vl.insert(vl.end(),v2.begin(),v2.end());
-	}
-
-      }
+        for (auto pf : phenotypic_features_) {
+            pf.validate(vl);
+        }
     }
-
+    if (!biosamples_.empty()) {
+        for (const auto &p : biosamples_) {
+          //  p.validate(vl);
+        }
+    }
+    if (!genes_.empty()) {
+         for (const auto &p : genes_) {
+            p.validate(vl);
+        }
+    }
+    if (!variants_.empty()) {
+         for (const auto &p : variants_) {
+            p.validate(vl);
+        }
+    }
+    if (!diseases_.empty()) {
+         for (const auto &p : diseases_) {
+            p.validate(vl);
+        }
+    }
+    if (!htsFiles_.empty()) {
+         for (const auto &p : htsFiles_) {
+            p.validate(vl);
+        }
+    }
+    if (! metadata_) {
+     vl.push_back( Validation::createError(ValidationCause::PHENOPACKET_LACKS_METADATA) );  
+    } else {
+      // metadata_.ValidatorI::validate(vl);
+    }
     return vl;
   }
 
@@ -1099,7 +1154,8 @@ namespace phenotools {
   }
 
 
-  vector<Validation> validate() {
+  vector<Validation> 
+  Biosample::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::BIOSAMPLE_LACKS_ID);
@@ -1127,23 +1183,53 @@ namespace phenotools {
       }
     }
     //taxonomy_ is optional
-/*
+     if (! age_of_individual_at_collection_ && ! age_range_of_individual_at_collection_) {
+        Validation v = Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_AGE);
+        vl.push_back(v);
+    } else if (age_of_individual_at_collection_) {
+         vector<Validation> v2 = age_of_individual_at_collection_->validate();
+         if (! v2.empty() ){
+          vl.insert(vl.end(),v2.begin(),v2.end());
+        }
+    } else {
+        vector<Validation> v2 = age_range_of_individual_at_collection_->validate();
+         if (! v2.empty() ){
+          vl.insert(vl.end(),v2.begin(),v2.end());
+        }
+    }
+    if (! histological_diagnosis_ ) {
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_HISTOLOGY));
+    } else {
+         histological_diagnosis_->validate(vl);
+    }
+    if (! tumor_progression_) {
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_TUMOR_PROGRESSION));
+    } else {
+        tumor_progression_->validate(vl);
+    }
+    if (! tumor_grade_) {
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_TUMOR_GRADE));
+    } else {
+        tumor_grade_->validate(vl);
+    }
+    if (tumor_stage_.empty()) {
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_TUMOR_STAGE));
+    } else {
+        for (const auto & p : tumor_stage_) {
+            p.validate(vl);
+        }
+    }
+    if (diagnostic_markers_.empty()) {
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS));
+    } else {
+        for (const auto &p : diagnostic_markers_) {
+                p.validate(vl);
+        }
+    }
+    // hts_files_ and variants_ are optional
+    // is_control_sample is a bool with default false but it cannot be Q/C'd
 
-
-// one of the following two age elements is required
-unique_ptr<Age> age_of_individual_at_collection_;
-unique_ptr<AgeRange> age_range_of_individual_at_collection_;
-unique_ptr<OntologyClass> histological_diagnosis_;
-unique_ptr<OntologyClass> tumor_progression_;
-unique_ptr<OntologyClass> tumor_grade_;
-vector<OntologyClass> tumor_stage_;
-vector<OntologyClass> diagnostic_markers_;
-unique_ptr<Procedure> procedure_;
-vector<HtsFile> hts_files_;
-vector<Variant> variants_;
-bool is_control_sample_;*/
-
-
+    return vl;
   }
 
 

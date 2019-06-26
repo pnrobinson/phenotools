@@ -57,7 +57,16 @@ namespace phenotools {
       PHENOPACKET_LACKS_ID,
       PHENOPACKET_LACKS_SUBJECT,
       PHENOPACKET_LACKS_PHENOTYPIC_FEATURES,
-      BIOSAMPLE_LACKS_ID
+      PHENOPACKET_LACKS_METADATA,
+      BIOSAMPLE_LACKS_ID,
+      BIOSAMPLE_LACKS_SAMPLED_TISSUE,
+      BIOSAMPLE_LACKS_PHENOTYPES,
+      BIOSAMPLE_LACKS_AGE,
+      BIOSAMPLE_LACKS_HISTOLOGY,
+      BIOSAMPLE_LACKS_TUMOR_PROGRESSION,
+      BIOSAMPLE_LACKS_TUMOR_GRADE,
+      BIOSAMPLE_LACKS_TUMOR_STAGE,
+      BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS
       } ;
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -104,8 +113,10 @@ namespace phenotools {
   class ValidatorI {
   public:
     virtual ~ValidatorI(){}
-    virtual vector<Validation> validate()=0;
-  };
+    virtual vector<Validation> validate() const=0;
+    void validate(vector<Validation> &v) const;
+      
+};
 
   class OntologyClass : public ValidatorI {
   private:
@@ -121,7 +132,8 @@ namespace phenotools {
       label_(ontclz.label()) {}
   OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
     ~OntologyClass(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const;
     const string & get_id() const { return id_; }
     const string & get_label() const { return label_; }
     friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
@@ -140,7 +152,8 @@ namespace phenotools {
     Age(const org::phenopackets::schema::v1::core::Age &a);
     Age(const Age& age);
     ~Age(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+     void validate(vector<Validation> &v) const {}
     friend std::ostream& operator<<(std::ostream& ost, const Age& age);
   };
   std::ostream& operator<<(std::ostream& ost, const Age& age);
@@ -154,7 +167,8 @@ namespace phenotools {
     start_(ar.start()),
       end_(ar.end()) {}
     ~AgeRange(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
   };
   std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
@@ -202,7 +216,8 @@ namespace phenotools {
   public:
     Individual(org::phenopackets::schema::v1::core::Individual individual);
     ~Individual(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     const string & get_id() const { return id_; }
     friend std::ostream& operator<<(std::ostream& ost, const Individual& ind);
   };
@@ -219,7 +234,8 @@ namespace phenotools {
     id_(er.id()),
       description_(er.description()) {}
     ~ExternalReference(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+     void validate(vector<Validation> &v) const {}
   };
 
   class Evidence : public ValidatorI {
@@ -232,7 +248,8 @@ namespace phenotools {
     Evidence(Evidence &&);
     Evidence & operator=(const Evidence &);
     ~Evidence(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
   };
 
 
@@ -253,7 +270,8 @@ namespace phenotools {
     PhenotypicFeature(const PhenotypicFeature & pfeat);
     PhenotypicFeature &operator=(const PhenotypicFeature & pfeat) { std::cerr<<"TODO"; return *this; }
     ~PhenotypicFeature(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     const string &get_id() const { return type_->get_id(); }
     const string &get_label() const { return type_->get_label();}
   };
@@ -269,7 +287,8 @@ namespace phenotools {
       symbol_(gene.symbol())
 	{}
   Gene(const Gene &gene):id_(gene.id_),symbol_(gene.symbol_){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const Gene& gene);
   };
   std::ostream &operator<<(std::ostream& ost, const Gene& gene);
@@ -283,7 +302,8 @@ namespace phenotools {
   HgvsAllele(const org::phenopackets::schema::v1::core::HgvsAllele &ha):id_(ha.id()), hgvs_(ha.hgvs()) {}
   HgvsAllele(const HgvsAllele &ha):id_(ha.id_),hgvs_(ha.hgvs_){}
     HgvsAllele &operator=(const HgvsAllele &ha);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
   };
   std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
@@ -300,7 +320,8 @@ namespace phenotools {
   public:
     VcfAllele(const org::phenopackets::schema::v1::core::VcfAllele &vcf);
     VcfAllele(const VcfAllele &vcf);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
   };
   std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
@@ -317,7 +338,8 @@ namespace phenotools {
   public:
     Variant(const org::phenopackets::schema::v1::core::Variant & var);
     Variant(const Variant & var);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const Variant& var);
   };
   std::ostream &operator<<(std::ostream& ost, const Variant& var);
@@ -333,7 +355,8 @@ namespace phenotools {
   public:
     Disease(const org::phenopackets::schema::v1::core::Disease & dis);
     Disease(const Disease &dis);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const Disease& dis);
   };
   std::ostream &operator<<(std::ostream& ost, const Disease& dis);
@@ -347,7 +370,8 @@ namespace phenotools {
   public:
     File(const org::phenopackets::schema::v1::core::File &file);
     File(const File &file);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const File& file);
   };
   std::ostream &operator<<(std::ostream& ost, const File& file);
@@ -365,7 +389,8 @@ namespace phenotools {
   public:
     HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile);
     HtsFile(const HtsFile &htsfile);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
   };
   std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
@@ -395,7 +420,8 @@ namespace phenotools {
       url_(r.url_),
       version_(r.version_),
       iri_prefix_(r.iri_prefix_){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
     friend std::ostream &operator<<(std::ostream& ost, const Resource& resource);
   };
   std::ostream &operator<<(std::ostream& ost, const Resource& resource);
@@ -415,7 +441,7 @@ namespace phenotools {
   public:
     MetaData(const org::phenopackets::schema::v1::core::MetaData &md);
     MetaData(const MetaData & md);
-    vector<Validation> validate();
+    vector<Validation> validate() const;
     friend std::ostream &operator<<(std::ostream& ost, const MetaData& md);
   };
   std::ostream &operator<<(std::ostream& ost, const MetaData& md);
@@ -430,32 +456,12 @@ namespace phenotools {
     Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure);
     Procedure(const Procedure & procedure);
     ~Procedure(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
     friend std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
   };
   std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
-
-  class Phenopacket : public ValidatorI {
-  private:
-    string id_;
-    unique_ptr<Individual> subject_;
-    vector<PhenotypicFeature> phenotypic_features_;
-    vector<Gene> genes_;
-    vector<Variant> variants_;
-    vector<Disease> diseases_;
-    vector<HtsFile> htsFiles_;
-    unique_ptr<MetaData> metadata_;
-
-  public:
-    Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
-    ~Phenopacket(){}
-    vector<Validation> validate();
-    friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
-  };
-
-  std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
-
-  class Biosample  : public Validator I {
+  
+   class Biosample  : public ValidatorI {
 
   private:
     string id_;
@@ -479,13 +485,37 @@ namespace phenotools {
     bool is_control_sample_;
 
   public:
-    Biosample(const org::phenopackets::schema::v1::core Biosample &bsample);
+    Biosample(const org::phenopackets::schema::v1::core::Biosample &bsample);
     ~Biosample(){}
-    vector<Validation> validate();
+    vector<Validation> validate() const;
     friend std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
   };
 
   std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
+
+  class Phenopacket : public ValidatorI {
+  private:
+    string id_;
+    unique_ptr<Individual> subject_;
+    vector<PhenotypicFeature> phenotypic_features_;
+    vector<Biosample> biosamples_;
+    vector<Gene> genes_;
+    vector<Variant> variants_;
+    vector<Disease> diseases_;
+    vector<HtsFile> htsFiles_;
+    unique_ptr<MetaData> metadata_;
+
+  public:
+    Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
+    ~Phenopacket(){}
+    vector<Validation> validate() const;
+    void validate(vector<Validation> &v) const {}
+    friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
+  };
+
+  std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
+
+ 
 
 
 
