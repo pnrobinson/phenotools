@@ -25,10 +25,10 @@ namespace phenotools {
   static string EMPTY_STRING="";
   static string NOT_AVAILABLE="n/a";
   static string NOT_IMPLEMENTED="NOT IMPLEMENTED"; // TODO -- IMPLEMENT ALL OF THIS
-  
-  
-  
-  const string 
+
+
+
+  const string
   Validation::message() const {
     if (! message_.empty()) return message_;
     switch(cause_) {
@@ -90,9 +90,9 @@ namespace phenotools {
     ost << v.message();
     return ost;
   }
-  
-  
-  vector<Validation> 
+
+
+  vector<Validation>
   OntologyClass::validate(){
     vector<Validation> vl;
     if (id_.empty()) {
@@ -112,24 +112,24 @@ namespace phenotools {
     }
     return vl;
   }
-  
+
   std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc){
     ost <<oc.label_ << " ["<<oc.id_ << "]";
     return ost;
   }
-  
+
   Age::Age(const org::phenopackets::schema::v1::core::Age &a):age_(a.age()){
     if (a.has_age_class()) {
       age_class_ = make_unique<OntologyClass>(a.age_class());
     }
   }
-  
+
   Age::Age(const Age& age):age_(age.age_) {
     if (age.age_class_){
       age_class_ = make_unique<OntologyClass>(*(age.age_class_.get()));
     }
   }
-  
+
   vector<Validation> Age::validate(){
     vector<Validation> vl;
     if (age_.empty() && ! age_class_ ){
@@ -144,8 +144,8 @@ namespace phenotools {
     }
     return vl;
   }
-  
-  
+
+
   std::ostream& operator<<(std::ostream& ost, const Age& age){
     if (! age.age_.empty()) {
       ost << age.age_;
@@ -156,9 +156,9 @@ namespace phenotools {
     }
     return ost;
   }
-  
 
-  vector<Validation> 
+
+  vector<Validation>
   AgeRange::validate(){
     vector<Validation> vl;
     vector<Validation> age1 = start_.validate();
@@ -171,12 +171,12 @@ namespace phenotools {
     }
     return vl;
   }
-  
+
   std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange){
     ost << agerange.start_ << "-" << agerange.end_;
     return ost;
   }
-  
+
   std::ostream& operator<<(std::ostream& ost, const enum Sex& sex){
     switch (sex) {
     case Sex::FEMALE:
@@ -191,8 +191,8 @@ namespace phenotools {
     }
     return ost;
   }
-  
-  
+
+
   Individual::Individual(org::phenopackets::schema::v1::core::Individual individual):
     id_(individual.id()),
     dataset_id_(individual.dataset_id())
@@ -203,13 +203,13 @@ namespace phenotools {
     } else {
       date_of_birth_= EMPTY_STRING;
     }
-    
+
     if (individual.has_age_at_collection()){
       age_ = make_unique<Age>(individual.age_at_collection());
     } else if (individual.has_age_range_at_collection()) {
       age_range_ = make_unique<AgeRange>(individual.age_range_at_collection());
     }
-    
+
     switch(individual.sex()) {
     case org::phenopackets::schema::v1::core::Sex::MALE:
       sex_=Sex::MALE;
@@ -234,39 +234,39 @@ namespace phenotools {
       break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XO:
       karyotypic_sex_=KaryotypicSex::XO;
-      break;   
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XXY:
       karyotypic_sex_=KaryotypicSex::XXY;
-      break;   
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XXX:
       karyotypic_sex_=KaryotypicSex::XXX;
       break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XXYY:
       karyotypic_sex_=KaryotypicSex::XXYY;
-      break;    
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XXXY:
       karyotypic_sex_=KaryotypicSex::XXXY;
-      break;    
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XXXX:
       karyotypic_sex_=KaryotypicSex::XXXX;
-      break;     
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::XYY:
       karyotypic_sex_=KaryotypicSex::XYY;
-      break; 
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::OTHER_KARYOTYPE:
       karyotypic_sex_=KaryotypicSex::OTHER_KARYOTYPE;
-      break; 
+      break;
     case org::phenopackets::schema::v1::core::KaryotypicSex::UNKNOWN_KARYOTYPE:
     default:
       karyotypic_sex_=KaryotypicSex::UNKNOWN_KARYOTYPE;
     }
     if (individual.has_taxonomy()){
       taxonomy_ptr_ = make_unique<OntologyClass>(individual.taxonomy());
-    } 
+    }
   }
-  
-  
-  vector<Validation> 
+
+
+  vector<Validation>
   Individual::validate(){
     vector<Validation> vl;
     if (id_.empty()) {
@@ -277,16 +277,16 @@ namespace phenotools {
     if (age_) {
       vector<Validation> age_validation = age_->validate();
       if (!age_validation.empty()) {
-	vl.insert(vl.end(),age_validation.begin(),age_validation.end() );   
+	vl.insert(vl.end(),age_validation.begin(),age_validation.end() );
       }
     } else if (age_range_) {
       vector<Validation> age_range_validation = age_range_->validate();
       if (!age_range_validation.empty()) {
-	vl.insert(vl.end(),age_range_validation.begin(),age_range_validation.end() );   
+	vl.insert(vl.end(),age_range_validation.begin(),age_range_validation.end() );
       }
-    } else { 
-      // i.e., neither age nor age_range provided. 
-      // It is recommended to have at least one of them so this generates a Warning 
+    } else {
+      // i.e., neither age nor age_range provided.
+      // It is recommended to have at least one of them so this generates a Warning
       Validation e = Validation::createWarning(ValidationCause::INDIVIDUAL_LACKS_AGE);
       vl.push_back(e);
     }
@@ -297,9 +297,9 @@ namespace phenotools {
     // karyotype and taxonomy are option so we do not validate them
     return vl;
   }
-  
-  
-  
+
+
+
   vector<Validation>
   ExternalReference::validate(){
     vector<Validation> vl;
@@ -310,47 +310,47 @@ namespace phenotools {
     // the description is optional so we do not validate it.
     return vl;
   }
-  
+
   Evidence::Evidence(org::phenopackets::schema::v1::core::Evidence evi){
     if (evi.has_evidence_code()) {
-      evidence_code_ = make_unique<OntologyClass>(evi.evidence_code());   
-    } 
+      evidence_code_ = make_unique<OntologyClass>(evi.evidence_code());
+    }
     if (evi.has_reference()) {
       reference_ = make_unique<ExternalReference>(evi.reference());
     }
   }
-  
-  
+
+
   Evidence::Evidence(const Evidence &from){
     if (from.evidence_code_) {
-      evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));   
+      evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));
     }
     if (from.reference_) {
-      reference_.reset(new ExternalReference(*(from.reference_)));   
+      reference_.reset(new ExternalReference(*(from.reference_)));
     }
   }
-  
+
   Evidence::Evidence(Evidence && from){
     if (from.evidence_code_) {
-      evidence_code_ = std::move(from.evidence_code_);   
+      evidence_code_ = std::move(from.evidence_code_);
     }
     if (from.reference_) {
-      reference_= std::move(from.reference_);   
+      reference_= std::move(from.reference_);
     }
   }
-  
+
   Evidence & Evidence::operator=(const Evidence & from){
     if (from.evidence_code_) {
-      evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));   
+      evidence_code_.reset(new OntologyClass(*(from.evidence_code_)));
     }
     if (from.reference_) {
-      reference_.reset(new ExternalReference(*(from.reference_)));   
+      reference_.reset(new ExternalReference(*(from.reference_)));
     }
     return *this;
   }
-  
-  
-  vector<Validation> 
+
+
+  vector<Validation>
   Evidence::validate(){
     vector<Validation> vl;
     if (! evidence_code_ ) {
@@ -359,19 +359,19 @@ namespace phenotools {
     } else {
       vector<Validation> v2 = evidence_code_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     // external reference is optional, if it is absent there is no ERROR/WARNING
     if (reference_) {
       vector<Validation> v2 = reference_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
   }
-  
+
   PhenotypicFeature::PhenotypicFeature(const org::phenopackets::schema::v1::core::PhenotypicFeature &pf):
     description_(pf.description()),
     negated_(pf.negated())
@@ -403,7 +403,7 @@ namespace phenotools {
       }
     }
   }
-  
+
   PhenotypicFeature::PhenotypicFeature(const PhenotypicFeature & pfeat):
     description_(pfeat.description_),
     negated_(pfeat.negated_)
@@ -433,8 +433,8 @@ namespace phenotools {
       }
     }
   }
-  
-  vector<Validation> 
+
+  vector<Validation>
   PhenotypicFeature::validate(){
     vector<Validation> vl;
     // description is optional so we will not check it
@@ -444,7 +444,7 @@ namespace phenotools {
     } else {
       vector<Validation>  v2 =  type_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     // we do not need to check the negated_ field -- it is a primitive bool
@@ -455,13 +455,13 @@ namespace phenotools {
       for (Evidence e : evidence_) {
 	vector<Validation>  v2 =  e.validate();
 	if (v2.size()>0) {
-	  vl.insert(vl.end(),v2.begin(),v2.end() );  
-	}  
+	  vl.insert(vl.end(),v2.begin(),v2.end() );
+	}
       }
-    } 
+    }
     return vl;
   }
-  
+
   vector<Validation>
   Gene::validate(){
     vector<Validation> vl;
@@ -475,12 +475,12 @@ namespace phenotools {
     }
     return vl;
   }
-  
+
   std::ostream& operator<<(std::ostream& ost, const Gene& gene){
     ost <<gene.symbol_<<"["<<gene.id_<<"]";
     return ost;
   }
-  
+
   vector<Validation>
   HgvsAllele::validate(){
     vector<Validation> vl;
@@ -494,7 +494,7 @@ namespace phenotools {
     }
     return vl;
   }
-  
+
   std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs){
     if (! hgvs.id_.empty()) {
       ost << hgvs.id_ <<": ";
@@ -502,8 +502,8 @@ namespace phenotools {
     ost << hgvs.hgvs_;
     return ost;
   }
-  
-  
+
+
   VcfAllele::VcfAllele(const org::phenopackets::schema::v1::core::VcfAllele &vcf):
     genome_assembly_(vcf.genome_assembly()),
     id_(vcf.id()),
@@ -512,7 +512,7 @@ namespace phenotools {
     ref_(vcf.ref()),
     alt_(vcf.alt()),
     info_(vcf.info()) {}
-  
+
   VcfAllele::VcfAllele(const VcfAllele &vcf):
     genome_assembly_(vcf.genome_assembly_),
     id_(vcf.id_),
@@ -521,7 +521,7 @@ namespace phenotools {
     ref_(vcf.ref_),
     alt_(vcf.alt_),
     info_(vcf.info_) {}
-  
+
   vector<Validation>
   VcfAllele::validate(){
     vector<Validation> vl;
@@ -549,7 +549,7 @@ namespace phenotools {
     // info is optional, we do not check it
     return vl;
   }
-  
+
   std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf){
     if (! vcf.id_.empty() ) {
       ost << vcf.id_ <<": ";
@@ -562,20 +562,20 @@ namespace phenotools {
     ost << "]";
     return ost;
   }
-  
-  
-  
+
+
+
   Variant::Variant(const org::phenopackets::schema::v1::core::Variant & var){
     if (var.has_hgvs_allele()) {
       hgvs_allele_ = make_unique<HgvsAllele>(var.hgvs_allele());
     } else if (var.has_vcf_allele()) {
       vcf_allele_ = make_unique<VcfAllele>(var.vcf_allele());
     }
-    
+
     // TODO
     if (var.has_zygosity()) {
       zygosity_ = make_unique<OntologyClass>(var.zygosity());
-    } 
+    }
   }
 
   Variant::Variant(const Variant & var) {
@@ -588,10 +588,10 @@ namespace phenotools {
     if (var.zygosity_) {
       zygosity_ = make_unique<OntologyClass>(*(var.zygosity_));
     }
-    
-    
+
+
   }
-  
+
   vector<Validation>
   Variant::validate() {
     vector<Validation> vl;
@@ -600,13 +600,13 @@ namespace phenotools {
       has_allele=true;
       vector<Validation>  v2 =  hgvs_allele_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else if (vcf_allele_) {
       has_allele=true;
       vector<Validation>  v2 =  vcf_allele_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else {
       std::cout <<"WARNING SOME ALLELE SUBTYPES NOT IMPLEMENTED YET";
@@ -621,14 +621,14 @@ namespace phenotools {
     } else {
       vector<Validation>  v2 =  zygosity_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
   }
 
 
- 
+
   Disease::Disease(const org::phenopackets::schema::v1::core::Disease & dis){
     if (dis.has_term()) {
       term_=make_unique<OntologyClass>(dis.term());
@@ -641,7 +641,7 @@ namespace phenotools {
       class_of_onset_=make_unique<OntologyClass>(dis.class_of_onset());
     }
   }
-  
+
   Disease::Disease(const Disease &dis){
     if (dis.term_) {
       term_=make_unique<OntologyClass>(*(dis.term_.get()));
@@ -654,7 +654,7 @@ namespace phenotools {
       term_=make_unique<OntologyClass>(*(dis.class_of_onset_.get()));
     }
 }
-  
+
   vector<Validation> Disease::validate(){
     vector<Validation> vl;
     if (! term_ ){
@@ -665,22 +665,22 @@ namespace phenotools {
     if (age_of_onset_) {
       vector<Validation>  v2 =  age_of_onset_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else if (age_range_of_onset_) {
       vector<Validation>  v2 =  age_range_of_onset_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else if (class_of_onset_) {
       vector<Validation>  v2 =  class_of_onset_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
   }
-  
+
   std::ostream &operator<<(std::ostream& ost, const Disease& dis){
     if (dis.term_) {
       ost << *(dis.term_);
@@ -706,20 +706,20 @@ namespace phenotools {
   }
 
 
-  
+
   File::File(const org::phenopackets::schema::v1::core::File &file):
     path_(file.path()),
     uri_(file.uri()),
     description_(file.description())
   {}
 
-  
+
   File::File(const File &file):
     path_(file.path_),
     uri_(file.uri_),
     description_(file.description_)
   {}
-  
+
   vector<Validation>
   File::validate(){
     vector<Validation> vl;
@@ -732,7 +732,7 @@ namespace phenotools {
 
 
   std::ostream &operator<<(std::ostream& ost, const File& file){
-    
+
     if (! file.path_.empty()) {
       ost << file.path_;
     } else if (file.uri_.empty()) {
@@ -743,8 +743,8 @@ namespace phenotools {
     }
     return ost;
   }
-  
-  
+
+
   HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
     switch(htsfile.hts_format()){
     case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
@@ -766,10 +766,10 @@ namespace phenotools {
     individual_to_sample_identifiers_ .insert(htsfile.individual_to_sample_identifiers().begin(),
 					      htsfile.individual_to_sample_identifiers().end());
     if (htsfile.has_file()){
-      file_ = make_unique<File>(htsfile.file());   
+      file_ = make_unique<File>(htsfile.file());
     }
   }
-  
+
   HtsFile::HtsFile(const HtsFile & hts):
     hts_format_(hts.hts_format_),
     genome_assembly_(hts.genome_assembly_){
@@ -783,19 +783,19 @@ namespace phenotools {
     vector<Validation> vl;
     if (hts_format_ == HtsFormat::UNKNOWN) {
       Validation v = Validation::createError(ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (genome_assembly_.empty()) {
       Validation v = Validation::createError(ValidationCause::LACKS_GENOME_ASSEMBLY);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (individual_to_sample_identifiers_.empty()) {
       Validation v = Validation::createWarning(ValidationCause::LACKS_SAMPLE_MAP);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (! file_ ){
       Validation v = Validation::createError(ValidationCause::LACKS_HTS_FILE);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     return vl;
   }
@@ -807,51 +807,51 @@ namespace phenotools {
     if (htsfile.file_) {
       ost << *(htsfile.file_.get()) ;
     }
-    return ost;   
+    return ost;
   }
-  
-  
-  
-  vector<Validation> 
+
+
+
+  vector<Validation>
   Resource::validate() {
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_ID);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (name_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_NAME);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (namespace_prefix_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_NAMESPACE_PREFIX);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (url_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_URL);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (version_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_VERSION);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (iri_prefix_.empty()) {
       Validation v = Validation::createError(ValidationCause::RESOURCE_LACKS_IRI_PREFIX);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     return vl;
   }
 
-  
+
   std::ostream &operator<<(std::ostream& ost, const Resource& resource) {
-    ost << resource.name_ << ": " << resource.id_ 
-	<< "(" << resource.namespace_prefix_ << ";" << resource.url_ 
+    ost << resource.name_ << ": " << resource.id_
+	<< "(" << resource.namespace_prefix_ << ";" << resource.url_
 	<< ";" << resource.version_  << ";" << resource.iri_prefix_ <<")";
     return ost;
   }
-  
-  
-  
+
+
+
   MetaData::MetaData(const org::phenopackets::schema::v1::core::MetaData &md){
     google::protobuf::Timestamp tstamp = md.created();
     if (tstamp.IsInitialized()) {
@@ -862,7 +862,7 @@ namespace phenotools {
     created_by_ = md.created_by();
     submitted_by_ = md.submitted_by();
     phenopacket_schema_version_ = md.phenopacket_schema_version();
-    
+
     if (md.updated_size()>0) {
       for (auto u : md.updated()  ){
 	if (u.IsInitialized()) {
@@ -871,7 +871,7 @@ namespace phenotools {
 	}
       }
     }
-    
+
     if (md.resources_size()>0) {
       for (auto r : md.resources()) {
 	Resource res(r);
@@ -885,7 +885,7 @@ namespace phenotools {
       }
     }
   }
-  
+
   MetaData::MetaData(const MetaData & md):
     created_(md.created_),
     created_by_(md.created_by_),
@@ -899,27 +899,27 @@ namespace phenotools {
       external_references_.push_back(extref);
     }
   }
-  
-  
-  vector<Validation> 
+
+
+  vector<Validation>
   MetaData::validate(){
     vector<Validation> vl;
     if (created_.empty()) {
       Validation v = Validation::createError(ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (created_by_.empty()) {
       Validation v = Validation::createError(ValidationCause::METADATA_LACKS_CREATED_BY);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     if (resources_.empty()) {
       Validation v = Validation::createError(ValidationCause::METADATA_LACKS_RESOURCES);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     // other elements are optional and so we do not validate them
-    return vl; 
+    return vl;
   }
-  
+
   std::ostream &operator<<(std::ostream& ost, const MetaData& md){
     ost << md.created_by_ << "(" << md.created_ << ")\n";
     for (Resource r : md.resources_) {
@@ -927,10 +927,10 @@ namespace phenotools {
     }
     return ost;
   }
-  
-  
-  
-  
+
+
+
+
   Procedure::Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure){
     if (procedure.has_code()) {
       code_ = make_unique<OntologyClass>(procedure.code());
@@ -939,7 +939,7 @@ namespace phenotools {
       code_ = make_unique<OntologyClass>(procedure.body_site());
     }
   }
-  
+
   Procedure::Procedure(const Procedure & procedure){
     if (procedure.code_) {
       code_ = make_unique<OntologyClass>(*(procedure.code_));
@@ -948,18 +948,18 @@ namespace phenotools {
       code_ = make_unique<OntologyClass>(*(procedure.body_site_));
     }
   }
-  
+
 
   vector<Validation>
   Procedure:: validate(){
     vector<Validation> vl;
     if (! code_) {
       Validation v = Validation::createError(ValidationCause::PROCEDURE_LACKS_CODE);
-      vl.push_back(v); 
+      vl.push_back(v);
     } else {
       vector<Validation> v2 = code_->validate();
       if (! v2.empty()) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );  
+	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
@@ -970,8 +970,8 @@ namespace phenotools {
     if (procedure.body_site_) ost <<"; body site: "<< *(procedure.body_site_.get());
     return ost;
   }
-  
-  
+
+
   Phenopacket::Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp):
     id_(pp.id()) {
     if (pp.has_subject()){
@@ -984,7 +984,7 @@ namespace phenotools {
       }
     }
     if (pp.biosamples_size()>0) {
-      std::cerr<<"[WARNING] Biosamples not implemented yet\n";   
+      std::cerr<<"[WARNING] Biosamples not implemented yet\n";
     }
     if (pp.genes_size()>0) {
       for (auto g:pp.genes()) {
@@ -1017,12 +1017,12 @@ namespace phenotools {
 
 
 
-  vector<Validation> 
+  vector<Validation>
   Phenopacket::validate(){
     vector<Validation> vl;
     if (id_.empty()) {
       Validation v = Validation::createError(ValidationCause::PHENOPACKET_LACKS_ID);
-      vl.push_back(v); 
+      vl.push_back(v);
     }
     // check the subject
     if (! subject_) {
@@ -1047,10 +1047,10 @@ namespace phenotools {
 
       }
     }
-  
+
     return vl;
   }
-  
+
 
   std::ostream& operator<<(std::ostream& ost, const Individual& ind){
     ost << "ID: "<<ind.id_ << "\n";
@@ -1058,7 +1058,7 @@ namespace phenotools {
     ost << "Sex: "<<ind.sex_<<"\n";
     return ost;
   }
-  
+
   std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket)
   {
     ost<<"Phenopacket:\n";
@@ -1068,7 +1068,7 @@ namespace phenotools {
       ost <<"[ERROR] subject element not initialized\n";
     }
     for (PhenotypicFeature feature: ppacket.phenotypic_features_) {
-      ost << feature.get_label() <<" ["<<feature.get_id()<<"]\n";   
+      ost << feature.get_label() <<" ["<<feature.get_id()<<"]\n";
     }
     if (ppacket.genes_.empty()) {
       ost << "genes: n/a\n";
@@ -1097,6 +1097,54 @@ namespace phenotools {
     }
     return ost;
   }
-  
+
+
+  vector<Validation> validate() {
+    vector<Validation> vl;
+    if (id_.empty()) {
+      Validation v = Validation::createError(ValidationCause::BIOSAMPLE_LACKS_ID);
+      vl.push_back(v);
+    }
+    //dataset_id_, individual_id_, description_ are optional and thus are not validated
+    if (! sampled_tissue_) {
+      Validation v = Validation::createError(ValidationCause::BIOSAMPLE_LACKS_SAMPLED_TISSUE);
+      vl.push_back(v);
+    } else {
+      vector<Validation> v2 = sampled_tissue_->validate();
+      if (! v2.empty() ){
+        vl.insert(vl.end(),v2.begin(),v2.end());
+      }
+    }
+    if (! phenotypic_features_.empty() ){
+      Validation v = Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_PHENOTYPES);
+      vl.push_back(v);
+    } else {
+      for (auto pf : phenotypic_features_){
+        vector<Validation> v2 = pf.validate();
+        if (! v2.empty() ){
+          vl.insert(vl.end(),v2.begin(),v2.end());
+        }
+      }
+    }
+    //taxonomy_ is optional
+/*
+
+
+// one of the following two age elements is required
+unique_ptr<Age> age_of_individual_at_collection_;
+unique_ptr<AgeRange> age_range_of_individual_at_collection_;
+unique_ptr<OntologyClass> histological_diagnosis_;
+unique_ptr<OntologyClass> tumor_progression_;
+unique_ptr<OntologyClass> tumor_grade_;
+vector<OntologyClass> tumor_stage_;
+vector<OntologyClass> diagnostic_markers_;
+unique_ptr<Procedure> procedure_;
+vector<HtsFile> hts_files_;
+vector<Variant> variants_;
+bool is_control_sample_;*/
+
+
+  }
+
 
 } // namespace phenotools

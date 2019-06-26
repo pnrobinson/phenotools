@@ -18,50 +18,51 @@ namespace phenotools {
 
   enum class ValidationType { WARNING, ERROR };
   enum class ValidationCause {
-    ONTOLOGY_ID_EMPTY, 
+    ONTOLOGY_ID_EMPTY,
       INVALID_ONTOLOGY_ID,
-      ONTOLOGY_LABEL_EMPTY, 
+      ONTOLOGY_LABEL_EMPTY,
       AGE_ELEMENT_UNINITIALIZED,
       INDIVIDUAL_LACKS_ID,
       INDIVIDUAL_LACKS_AGE,
-      UNKNOWN_SEX, 
+      UNKNOWN_SEX,
       EXTERNAL_REFERENCE_LACKS_ID,
-      EVIDENCE_LACKS_CODE, 
-      PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM, 
-      PHENOTYPIC_FEATURE_LACKS_EVIDENCE, 
-      GENE_LACKS_ID, 
+      EVIDENCE_LACKS_CODE,
+      PHENOTYPIC_FEATURE_LACKS_ONTOLOGY_TERM,
+      PHENOTYPIC_FEATURE_LACKS_EVIDENCE,
+      GENE_LACKS_ID,
       GENE_LACKS_SYMBOL,
-      ALLELE_LACKS_ID, 
-      ALLELE_LACKS_HGVS, 
+      ALLELE_LACKS_ID,
+      ALLELE_LACKS_HGVS,
       LACKS_GENOME_ASSEMBLY,
-      LACKS_CHROMOSOME, 
-      LACKS_REF, 
+      LACKS_CHROMOSOME,
+      LACKS_REF,
       LACKS_ALT,
-      LACKS_ZYGOSITY, 
+      LACKS_ZYGOSITY,
       LACKS_ALLELE,
       DISEASE_LACKS_TERM,
       FILE_LACKS_SPECIFICATION,
       UNIDENTIFIED_HTS_FILETYPE,
-      LACKS_SAMPLE_MAP, 
-      LACKS_HTS_FILE, 
+      LACKS_SAMPLE_MAP,
+      LACKS_HTS_FILE,
       RESOURCE_LACKS_ID,
       RESOURCE_LACKS_NAME,
-      RESOURCE_LACKS_NAMESPACE_PREFIX, 
+      RESOURCE_LACKS_NAMESPACE_PREFIX,
       RESOURCE_LACKS_URL,
       RESOURCE_LACKS_VERSION,
-      RESOURCE_LACKS_IRI_PREFIX, 
+      RESOURCE_LACKS_IRI_PREFIX,
       METADATA_LACKS_CREATED_TIMESTAMP,
-      METADATA_LACKS_CREATED_BY, 
+      METADATA_LACKS_CREATED_BY,
       METADATA_LACKS_RESOURCES,
-      PROCEDURE_LACKS_CODE, 
+      PROCEDURE_LACKS_CODE,
       PHENOPACKET_LACKS_ID,
       PHENOPACKET_LACKS_SUBJECT,
-      PHENOPACKET_LACKS_PHENOTYPIC_FEATURES, 
+      PHENOPACKET_LACKS_PHENOTYPIC_FEATURES,
+      BIOSAMPLE_LACKS_ID
       } ;
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
-  
+
   class Validation{
-    
+
   private:
     enum ValidationCause cause_;
     ValidationType validation_type_;
@@ -96,21 +97,21 @@ namespace phenotools {
     bool is_warning() const {  return validation_type_ == ValidationType::WARNING; }
     enum ValidationCause get_cause() const { return cause_; }
     const string message() const;
-    friend std::ostream& operator<<(std::ostream& ost, const Validation& v); 
+    friend std::ostream& operator<<(std::ostream& ost, const Validation& v);
   };
-  std::ostream& operator<<(std::ostream& ost, const Validation& v); 
-  
+  std::ostream& operator<<(std::ostream& ost, const Validation& v);
+
   class ValidatorI {
   public:
     virtual ~ValidatorI(){}
     virtual vector<Validation> validate()=0;
   };
-  
+
   class OntologyClass : public ValidatorI {
   private:
     string id_;
     string label_;
-    
+
   public:
   OntologyClass(const string &id, const string &label):
     id_(id),label_(label) {
@@ -123,27 +124,27 @@ namespace phenotools {
     vector<Validation> validate();
     const string & get_id() const { return id_; }
     const string & get_label() const { return label_; }
-    friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);  
+    friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
   };
-  std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc); 
-  
-  
+  std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
+
+
   class Age : public ValidatorI {
   private:
-    /** An ISO8601 string such as P40Y6M (40 years and 6 months old).*/ 
+    /** An ISO8601 string such as P40Y6M (40 years and 6 months old).*/
     string age_;
     unique_ptr<OntologyClass> age_class_;
-    
+
   public:
     Age()=default;
     Age(const org::phenopackets::schema::v1::core::Age &a);
     Age(const Age& age);
     ~Age(){}
     vector<Validation> validate();
-    friend std::ostream& operator<<(std::ostream& ost, const Age& age);   
+    friend std::ostream& operator<<(std::ostream& ost, const Age& age);
   };
-  std::ostream& operator<<(std::ostream& ost, const Age& age);   
-  
+  std::ostream& operator<<(std::ostream& ost, const Age& age);
+
   class AgeRange : public ValidatorI {
   private:
     Age start_;
@@ -154,19 +155,19 @@ namespace phenotools {
       end_(ar.end()) {}
     ~AgeRange(){}
     vector<Validation> validate();
-    friend std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);  
+    friend std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
   };
-  std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);  
-  
-  
+  std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
+
+
   enum class Sex {
     UNKNOWN_SEX,
       FEMALE ,
       MALE,
       OTHER_SEX
       };
-  std::ostream& operator<<(std::ostream& ost, const enum Sex& sex); 
-  
+  std::ostream& operator<<(std::ostream& ost, const enum Sex& sex);
+
   enum class KaryotypicSex {
     UNKNOWN_KARYOTYPE,
       XX,
@@ -180,8 +181,8 @@ namespace phenotools {
       XYY,
       OTHER_KARYOTYPE
       };
-  
-  
+
+
   class Individual : public ValidatorI  {
   private:
     // required
@@ -197,7 +198,7 @@ namespace phenotools {
     enum Sex sex_;
     enum KaryotypicSex karyotypic_sex_;
     unique_ptr<OntologyClass> taxonomy_ptr_;
-   
+
   public:
     Individual(org::phenopackets::schema::v1::core::Individual individual);
     ~Individual(){}
@@ -205,10 +206,10 @@ namespace phenotools {
     const string & get_id() const { return id_; }
     friend std::ostream& operator<<(std::ostream& ost, const Individual& ind);
   };
-  
+
   std::ostream& operator<<(std::ostream& ost, const Individual& ind);
-  
-  
+
+
   class ExternalReference : public ValidatorI {
   private:
     string id_;
@@ -220,7 +221,7 @@ namespace phenotools {
     ~ExternalReference(){}
     vector<Validation> validate();
   };
-  
+
   class Evidence : public ValidatorI {
   private:
     unique_ptr<OntologyClass> evidence_code_;
@@ -233,8 +234,8 @@ namespace phenotools {
     ~Evidence(){}
     vector<Validation> validate();
   };
-  
-  
+
+
   class PhenotypicFeature : public ValidatorI {
   private:
     string description_;
@@ -256,8 +257,8 @@ namespace phenotools {
     const string &get_id() const { return type_->get_id(); }
     const string &get_label() const { return type_->get_label();}
   };
-  
-  
+
+
   class Gene : public ValidatorI {
   private:
     string id_;
@@ -269,11 +270,11 @@ namespace phenotools {
 	{}
   Gene(const Gene &gene):id_(gene.id_),symbol_(gene.symbol_){}
     vector<Validation> validate();
-    friend std::ostream &operator<<(std::ostream& ost, const Gene& gene);   
+    friend std::ostream &operator<<(std::ostream& ost, const Gene& gene);
   };
   std::ostream &operator<<(std::ostream& ost, const Gene& gene);
-  
-  
+
+
   class HgvsAllele : public ValidatorI {
   private:
     string id_;
@@ -286,7 +287,7 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
   };
   std::ostream &operator<<(std::ostream& ost, const HgvsAllele& hgvs);
-  
+
   class VcfAllele : public ValidatorI {
   private:
     string genome_assembly_;
@@ -303,16 +304,16 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
   };
   std::ostream &operator<<(std::ostream& ost, const VcfAllele& vcf);
-  
-  
-  
+
+
+
   class Variant : public ValidatorI {
   private:
     unique_ptr<HgvsAllele> hgvs_allele_;
     unique_ptr<VcfAllele> vcf_allele_;
     // todo spdi, iscn,murine
     unique_ptr<OntologyClass> zygosity_;
-    
+
   public:
     Variant(const org::phenopackets::schema::v1::core::Variant & var);
     Variant(const Variant & var);
@@ -321,14 +322,14 @@ namespace phenotools {
   };
   std::ostream &operator<<(std::ostream& ost, const Variant& var);
 
-  
+
   class Disease : public ValidatorI {
   private:
     unique_ptr<OntologyClass> term_;
     unique_ptr<Age> age_of_onset_;
     unique_ptr<AgeRange> age_range_of_onset_;
     unique_ptr<OntologyClass> class_of_onset_;
-    
+
   public:
     Disease(const org::phenopackets::schema::v1::core::Disease & dis);
     Disease(const Disease &dis);
@@ -336,8 +337,8 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const Disease& dis);
   };
   std::ostream &operator<<(std::ostream& ost, const Disease& dis);
-  
-  
+
+
   class File : public ValidatorI {
   private:
     string path_;
@@ -350,17 +351,17 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const File& file);
   };
   std::ostream &operator<<(std::ostream& ost, const File& file);
-  
-  
+
+
   enum class HtsFormat { UNKNOWN, SAM, BAM, CRAM, VCF, BCF, GVCF };
-  
+
   class HtsFile : public ValidatorI {
   private:
     HtsFormat hts_format_;
     string genome_assembly_;
     map<string,string> individual_to_sample_identifiers_;
     unique_ptr<File> file_;
-    
+
   public:
     HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile);
     HtsFile(const HtsFile &htsfile);
@@ -368,9 +369,9 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
   };
   std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
-  
-  
-  
+
+
+
   class Resource : public ValidatorI {
   private:
     string id_;
@@ -398,9 +399,9 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const Resource& resource);
   };
   std::ostream &operator<<(std::ostream& ost, const Resource& resource);
-  
-  
-  
+
+
+
   class MetaData : public ValidatorI {
   private:
     //  (timestamp, converted to RFC 3339 date string)
@@ -421,10 +422,10 @@ namespace phenotools {
 
 
   class Procedure : public ValidatorI  {
-  private:  
+  private:
     unique_ptr<OntologyClass> code_;
     unique_ptr<OntologyClass> body_site_;
-    
+
   public:
     Procedure(const org::phenopackets::schema::v1::core::Procedure & procedure);
     Procedure(const Procedure & procedure);
@@ -433,7 +434,7 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
   };
   std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
-  
+
   class Phenopacket : public ValidatorI {
   private:
     string id_;
@@ -444,16 +445,47 @@ namespace phenotools {
     vector<Disease> diseases_;
     vector<HtsFile> htsFiles_;
     unique_ptr<MetaData> metadata_;
-    
+
   public:
     Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
     ~Phenopacket(){}
     vector<Validation> validate();
-    friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);   
+    friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
   };
-  
-  std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);   
 
+  std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
+
+  class Biosample  : public Validator I {
+
+  private:
+    string id_;
+    string dataset_id_;
+    string individual_id_;
+    string description_;
+    unique_ptr<OntologyClass> sampled_tissue_;
+    vector<PhenotypicFeature> phenotypic_features_;
+    unique_ptr<OntologyClass> taxonomy_;
+    // one of the following two age elements is required
+    unique_ptr<Age> age_of_individual_at_collection_;
+    unique_ptr<AgeRange> age_range_of_individual_at_collection_;
+    unique_ptr<OntologyClass> histological_diagnosis_;
+    unique_ptr<OntologyClass> tumor_progression_;
+    unique_ptr<OntologyClass> tumor_grade_;
+    vector<OntologyClass> tumor_stage_;
+    vector<OntologyClass> diagnostic_markers_;
+    unique_ptr<Procedure> procedure_;
+    vector<HtsFile> hts_files_;
+    vector<Variant> variants_;
+    bool is_control_sample_;
+
+  public:
+    Biosample(const org::phenopackets::schema::v1::core Biosample &bsample);
+    ~Biosample(){}
+    vector<Validation> validate();
+    friend std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
+  };
+
+  std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
 
 
 
