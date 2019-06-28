@@ -8,39 +8,54 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 
+#include "CLI11.hpp"
 #include "phenopackets.pb.h"
 #include "base.pb.h"
 #include "phenotools.h"
 #include "jsonobo.h"
 
 
-using namespace std;
+
+using std::string;
+using std::cout;
+using std::cerr;
 
 
-void test_jsn() {
-	string path = "../hp.json";
-	JsonOboParser parser{path};
-	
-	
-}
+
 
 
 int main(int argc, char ** argv) {
-  if (argc!=2) {
-    cerr << "usage: ./phenotools phenopacket-file.json\n";
-    exit(EXIT_FAILURE);
-  }
-  string fileName=argv[1];
-	
-	test_jsn();
+    
+    
+    string hp_json_path;
+    string phenopacket_path;
+    
+    CLI::App app("phenotools");
+    CLI::Option* hp_json_path_option = app.add_option("--hp",hp_json_path,"path to hp.json file")->check(CLI::ExistingFile);
+    CLI::Option* phenopacket_path_option = app.add_option("-p,--phenopacket",phenopacket_path,"path to input phenopacket")->check(CLI::ExistingFile);
+    
+    CLI11_PARSE(app, argc, argv);
+    
+    if (*hp_json_path_option) {
+        JsonOboParser parser{hp_json_path};
+        cout << "[INFO] Done JSON demo.\n";
+        return EXIT_SUCCESS;
+    }
+    // if we get here, then we must have the path to a phenopacket
+    if (! *phenopacket_path_option) {
+        cerr << "[FATAL] -p/--phenopacket option required!\n";
+        return EXIT_FAILURE;
+    }
+    
+
   
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   
-  stringstream sstr;
-  ifstream inFile;
-  inFile.open(fileName);
+  std::stringstream sstr;
+  std::ifstream inFile;
+  inFile.open(phenopacket_path);
   if (! inFile.good()) {
-    cerr << "Could not open Phenopacket file at " << fileName <<"\n";
+    cerr << "Could not open Phenopacket file at " << phenopacket_path <<"\n";
     return EXIT_FAILURE;
   }
   sstr << inFile.rdbuf();
@@ -50,7 +65,7 @@ int main(int argc, char ** argv) {
   ::google::protobuf::util::JsonParseOptions options;
   ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
-  cout << "\n#### Phenopacket at: " << fileName << " ####\n\n";
+  cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
   
   phenotools::Phenopacket ppacket(phenopacketpb);
   
