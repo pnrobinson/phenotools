@@ -1075,7 +1075,7 @@ namespace phenotools {
     }
     if (!biosamples_.empty()) {
         for (const auto &p : biosamples_) {
-          //  p.validate(vl);
+			p.ValidatorI::validate(vl);
         }
     }
     if (!genes_.empty()) {
@@ -1101,7 +1101,7 @@ namespace phenotools {
     if (! metadata_) {
      vl.push_back( Validation::createError(ValidationCause::PHENOPACKET_LACKS_METADATA) );  
     } else {
-      // metadata_.ValidatorI::validate(vl);
+		metadata_->ValidatorI::validate(vl);
     }
     return vl;
   }

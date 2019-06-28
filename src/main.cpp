@@ -11,9 +11,18 @@
 #include "phenopackets.pb.h"
 #include "base.pb.h"
 #include "phenotools.h"
+#include "jsonobo.h"
 
 
 using namespace std;
+
+
+void test_jsn() {
+	string path = "../hp.json";
+	JsonOboParser parser{path};
+	
+	
+}
 
 
 int main(int argc, char ** argv) {
@@ -22,6 +31,8 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
   string fileName=argv[1];
+	
+	test_jsn();
   
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   
