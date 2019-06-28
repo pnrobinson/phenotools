@@ -109,6 +109,17 @@ JsonOboParser::add_node(const rapidjson::Value &val){
               }
           }
 				}
+			itr = meta.FindMember("basicPropertyValues");
+			if (itr != meta.MemberEnd()) {
+				const rapidjson::Value &propertyVals = itr->value;
+				if (! propertyVals.IsArray()) {
+					throw JsonParseException("Term property values not array");
+				}
+				for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+					PropertyValue propval = PropertyValue::of(*elem);
+					term.add_property_value(propval);
+				}
+			}
 
 			}
 		}

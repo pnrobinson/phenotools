@@ -16,9 +16,9 @@ private:
     string value_;
     std::size_t separator_pos_;
     TermId(const string &s,std::size_t pos);
-    
+
 public:
-   
+
     TermId(const TermId  &tid);
     TermId(TermId &&tid);
     TermId &operator=(const TermId &tid);
@@ -36,7 +36,7 @@ class Xref {
 private:
     TermId term_id_;
     Xref(const TermId &tid): term_id_(tid){}
-   
+
 public:
     Xref(const Xref &txr);
     Xref(Xref &&txr) = default;
@@ -47,6 +47,26 @@ public:
 };
 std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 
+enum class Property {
+  UNKNOWN,
+  CREATED_BY, //created_by
+  CREATION_DATE, //creation_date
+  HAS_OBO_NAMESPACE, //hasOBONamespace
+};
+/**
+  * A simple class that stores the basicPropertyValues elements about
+  * a Term.
+  */
+class PropertyValue {
+private:
+  Property property_;
+  string value_;
+  PropertyValue(Property p, const string &v):property_(p),value_(v){}
+public:
+  static PropertyValue of(const rapidjson::Value &val);
+  friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
+};
+std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 
 
 class Term {
@@ -56,6 +76,7 @@ private:
   string definition_;
   vector<Xref> definition_xref_list_;
   vector<Xref> term_xref_list_;
+  vector<PropertyValue> property_values_;
   bool is_obsolete = false;
 
 public:
@@ -63,6 +84,7 @@ public:
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
+  void add_property_value(const PropertyValue &pv) { property_values_.push_back(pv);}
 
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };

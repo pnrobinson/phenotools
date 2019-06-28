@@ -36,7 +36,7 @@ TermId::of(const string &s){
 }
 
 TermId TermId::of(const rapidjson::Value &val){
-    printJJ(val);
+    //printJJ(val);
     if (! val.IsString() ) {
         throw JsonParseException("Attempt to construct TermId from non-string");
     }
@@ -99,6 +99,49 @@ std::ostream& operator<<(std::ostream& ost, const Xref& txref){
  return ost;
 }
 
+
+PropertyValue
+PropertyValue::of(const rapidjson::Value &val) {
+	if (! val.IsObject()) {
+		throw JsonParseException("PropertyValue factory expects object");
+	}
+	auto p = val.FindMember("pred");
+	if (p == val.MemberEnd()) {
+		throw JsonParseException("PropertyValue did not contain \'pred\' element");
+	}
+	string pred = val["pred"].GetString();
+	size_t pos = pred.find_last_of('/');
+	if (pos != string::npos) {
+		pred = pred.substr(pos+1);
+	}
+	Property prop = Property::UNKNOWN;
+	if (pred == "oboInOwl#created_by") {
+		prop = Property::CREATED_BY;
+	} else if (pred == "oboInOwl#creation_date") {
+	 	prop = Property::CREATION_DATE;
+	} else if (pred == "oboInOwl#hasOBONamespace") {
+		prop = Property::HAS_OBO_NAMESPACE;
+	} else {
+		throw JsonParseException("PropertyValue unrecognized: " + pred);
+	}
+	p = val.FindMember("val");
+	if (p == val.MemberEnd()) {
+		throw JsonParseException("PropertyValue did not contain \'val\' element");
+	}
+	string valu = val["val"].GetString();
+	PropertyValue pv{prop,valu};
+	return pv;
+}
+std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
+	switch (pv.property_) {
+		case Property::CREATED_BY: ost << "created_by: "; break;
+		case Property::CREATION_DATE: ost << "creation_date: "; break;
+		case Property::HAS_OBO_NAMESPACE: ost << "has_obo_namespace: "; break;
+	}
+	ost << pv.value_;
+	return ost;
+}
+
 Term::Term(const string &id, const string &label):
   id_(id),label_(label) {}
 
@@ -126,5 +169,10 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
       ost << "\tterm-xref:" << p << "\n";
     }
   }
+	if (! term.property_values_.empty()) {
+		for (const auto& p : term.property_values_){
+		 ost << "\tproperty val:" << p << "\n";
+	 }
+	}
   return ost;
 }
