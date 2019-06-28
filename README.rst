@@ -65,7 +65,7 @@ Running the demo
 The software currently just decodes a Phenopacket from JSON format and outputs
 some of the data. To run it, enter ::
 
-  $ ./phenotools Gebbia-1997-ZIC3.json
+  $ ./phenotools -p Gebbia-1997-ZIC3.json
 
 It will input the Phenopacket included in the demo and output this. ::
 
@@ -96,6 +96,16 @@ It will input the Phenopacket included in the demo and output this. ::
   NCBI organismal classification: ncbitaxon(NCBITaxon;http://purl.obolibrary.org/obo/ncbitaxon.owl;2018-03-02;)
   Evidence and Conclusion Ontology: eco(ECO;http://purl.obolibrary.org/obo/eco.owl;2018-11-10;http://purl.obolibrary.org/obo/ECO_)
   Online Mendelian Inheritance in Man: omim(OMIM;https://www.omim.org;;)
+
+Running the JSON obo parser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We are currently implementing support for ingesting JSON-formatted OBO ontologies. We will implement a function that will update an existing phenopacket.
+This feature is current experimental. To try it out, download the ``hp.json`` file from the HPO `GitHub page <https://github.com/obophenotype/human-phenotype-ontology>`_, and
+execute the following command. ::
+
+   $ ./phenotools -hp hp.json
+  
 
 
 Running the unittests

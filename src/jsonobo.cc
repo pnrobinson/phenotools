@@ -89,28 +89,35 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 					std::cerr << "[FATAL] xref not array\n";
 					std::exit(EXIT_FAILURE);
 				}
-				for (rapidjson::Value::ConstValueIterator xrefs_itr = xrefs.Begin(); xrefs_itr != xrefs.End(); ++xrefs_itr)
-    			term.add_definition_xref(xrefs_itr->GetString());
+				printJ(xrefs);
+				for (rapidjson::Value::ConstValueIterator xrefs_itr = xrefs.Begin(); xrefs_itr != xrefs.End(); ++xrefs_itr) {
+                    
+                    Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+                    term.add_definition_xref(xr);
+                }
 			}
-			itr = meta.FindMember("comments");
+			itr = meta.FindMember("xrefs");
 			if (itr != meta.MemberEnd()) {
-				const rapidjson::Value &comments = itr->value;
-				if (! comments.IsArray()) {
+				const rapidjson::Value &xrefs = itr->value;
+				if (! xrefs.IsArray()) {
 					std::cerr << "[ERROR] Comments not array\n";
 				} else {
-					for (auto iterator = comments.Begin();iterator != comments.End(); iterator++) {
-						std::cout << "Comment" << iterator->GetString() << "\n"; std::exit(90);
-					}
+					printJ(xrefs);
+                    for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
+                        auto elem_iter = elem->FindMember("val");
+                        if (elem_iter != elem->MemberEnd()) {
+                            std::cout << " OPOPOP \n";
+                            Xref txr = Xref::of(elem_iter->value);
+                            string term_xref = elem_iter->value.GetString();
+                            //term.add_term_xref(term_xref);
+                        }
+                    }
 				}
 
 			}
 		}
 
-
-std::cout << term <<"\n";
-			//	std::cerr << "META";//itr->value.GetString() << "\n";
-
-
+    term_list_.push_back(term);
 
 	}
 
@@ -147,10 +154,17 @@ path_(path) {
 	}
 
 
-
-	for (auto& v : nodes.GetArray()) {
-		add_node(v);
-	}
+    try {
+        for (auto& v : nodes.GetArray()) {
+            add_node(v);
+        }
+    } catch (const JsonParseException& e) {
+        std::cerr << e.what() << "\n";
+    }
+    
+    for (const auto & p : term_list_) {
+        std::cout << p << "\n";
+    }
 
 
 
