@@ -52,6 +52,12 @@ enum class Property {
   CREATED_BY, //created_by
   CREATION_DATE, //creation_date
   HAS_OBO_NAMESPACE, //hasOBONamespace
+  HAS_ALTERNATIVE_ID, //hasAlternativeId
+  RDF_SCHEMA_COMMENT,//rdf-schema#comment
+  DATE,//"date" -- probably an error
+  OWL_DEPRECATED,//owl#deprecated
+  IS_ANONYMOUS,//oboInOwl#is_anonymous
+
 };
 /**
   * A simple class that stores the basicPropertyValues elements about

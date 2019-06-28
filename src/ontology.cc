@@ -27,12 +27,21 @@ TermId::TermId(const string &s,std::size_t pos):value_(s),separator_pos_(pos){}
 
 TermId
 TermId::of(const string &s){
-    std::size_t found = s.find_first_of(':');
-    if (found == string::npos) {
-        string msg = "Malformed ontology term id: " +s;
-        throw JsonParseException(msg);
-    }
-    return TermId{s,found}; // rely on RVO/move
+    std::size_t i = s.find_first_of(':');
+		if (i != string::npos) {
+			return TermId{s,i}; // rely on RVO/move
+		}
+		i = s.find_first_of('_'); // some terms are with _
+		if (i != string::npos) {
+			return TermId{s,i}; // rely on RVO/move
+		}
+		// orcid.org/0000-0001-5208-3432
+		i = s.find_first_of("orcid.org/");
+		if (i != string::npos) {
+			string orcid= "ORCID:" + s.substr(10);
+			return TermId{orcid,5};
+		}
+    throw JsonParseException("Malformed ontology term id: " +s);
 }
 
 TermId TermId::of(const rapidjson::Value &val){
@@ -121,8 +130,18 @@ PropertyValue::of(const rapidjson::Value &val) {
 	 	prop = Property::CREATION_DATE;
 	} else if (pred == "oboInOwl#hasOBONamespace") {
 		prop = Property::HAS_OBO_NAMESPACE;
+	} else if (pred == "oboInOwl#hasAlternativeId") {
+		prop = Property::HAS_ALTERNATIVE_ID;
+	} else if (pred == "rdf-schema#comment") {
+		prop = Property::RDF_SCHEMA_COMMENT;
+	} else if (pred == "date") {
+		prop = Property::DATE;
+	} else if (pred == "owl#deprecated") {
+		prop = Property::OWL_DEPRECATED;
+	} else if (pred == "oboInOwl#is_anonymous") {
+		prop = Property::IS_ANONYMOUS;
 	} else {
-		throw JsonParseException("PropertyValue unrecognized: " + pred);
+		throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
 	}
 	p = val.FindMember("val");
 	if (p == val.MemberEnd()) {
@@ -137,6 +156,7 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
 		case Property::CREATED_BY: ost << "created_by: "; break;
 		case Property::CREATION_DATE: ost << "creation_date: "; break;
 		case Property::HAS_OBO_NAMESPACE: ost << "has_obo_namespace: "; break;
+		case Property::DATE: ost << "date: "; break;
 	}
 	ost << pv.value_;
 	return ost;

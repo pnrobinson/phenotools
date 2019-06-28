@@ -10,10 +10,6 @@
 #include <iostream>
 #include <fstream>
 
-static const char* kTypeNames[] =
-{ "Null", "False", "True", "Object", "Array", "String", "Number" };
-
-
 void
 printJ(const rapidjson::Value &json)
 {
@@ -28,7 +24,6 @@ printJ(const rapidjson::Value &json)
 
 void
 JsonOboParser::add_node(const rapidjson::Value &val){
-	//printJ(val);
 	string id;
 	string label;
 	if (! val.IsObject()) {
@@ -86,8 +81,7 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 			if (it != definition.MemberEnd()) {
 				const rapidjson::Value& defxrefs = it->value;
 				if (! defxrefs.IsArray()) {
-					std::cerr << "[FATAL] xref not array\n";
-					std::exit(EXIT_FAILURE);
+					throw JsonParseException("xref not array");
 				}
 				for (auto xrefs_itr = defxrefs.Begin();
 									xrefs_itr != defxrefs.End(); ++xrefs_itr) {
@@ -141,54 +135,38 @@ path_(path) {
 	d.ParseStream(isw);
 	const rapidjson::Value& a = d["graphs"];
 	if (! a.IsArray()) {
-		std::cerr << "[FATAL] Ontology JSON did not contain graphs element array\n";
-		std::exit(EXIT_FAILURE);
+		throw JsonParseException("Ontology JSON did not contain graphs element array.");
 	}
 	// the first item in the array is an object with a list of nodes
 	if( a.Size() < 1){
-		std::cerr << "[FATAL] Ontology JSON did not contain array of nodes\n";
-		std::exit(EXIT_FAILURE);
+		throw JsonParseException("Ontology JSON did not contain array of nodes.");
 	}
 	const rapidjson::Value& mainObject = a[0];
 	if ( ! mainObject.IsObject()) {
-		std::cerr << "[FATAL] Main object was not object\n";
-		std::exit(EXIT_FAILURE);
+		throw JsonParseException("Main object was not object.");
 	}
 	const rapidjson::Value& nodes = mainObject["nodes"];
 	if (! nodes.IsArray()) {
-		std::cerr << "[FATAL] Ontology nodes not array\n";
-		std::exit(EXIT_FAILURE);
+		throw JsonParseException("Ontology nodes not array");
 	}
 
-
+	string myError;
     try {
         for (auto& v : nodes.GetArray()) {
             add_node(v);
         }
+				std::cout << " Size of nodes array is " << nodes.Size() << "\n";
     } catch (const JsonParseException& e) {
         std::cerr << e.what() << "\n";
+				myError = e.what();
     }
 
+		int c=0;
     for (const auto & p : term_list_) {
-        std::cout << p << "\n";
+        std::cout << ++c << ") " << p << "\n";
     }
 
-
-
-//	for (rapidjson::Value::ConstMemberIterator itr = nodes.MemberBegin();
-//		 itr != nodes.MemberEnd(); ++itr)
-//	{
-//		std::cout << "Type of member " <<
-//			   itr->name.GetString() << " is " << kTypeNames[itr->value.GetType()] << "\n";
-//	}
-
-
-	//rapidjson::StringBuffer buffer;
-	//rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	//d.Accept(writer);
-
-	// Output {"project":"rapidjson","stars":11}
+		std::cout << myError << "\n";
 	std::cout << "DONE:" <<  std::endl;
-	exit(1);
 
 }
