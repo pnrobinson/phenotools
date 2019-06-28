@@ -4,12 +4,15 @@
 #include <string>
 #include <vector>
 #include <rapidjson/document.h>
+#include "ontology.h"
 
 using std::string;
+using std::vector;
 
 class JsonOboParser {
 private:
 	string path_;
+	vector<Term> term_list_;
 
 
 	void add_node(const rapidjson::Value &val);

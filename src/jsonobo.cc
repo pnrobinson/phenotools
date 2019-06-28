@@ -62,8 +62,57 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 	} else {
 		label = val["lbl"].GetString();
 	}
-	std::cout << id << ": " << label <<"\n";
+	Term term{id,label};
+	if (! val.HasMember("meta")) {
+		std::cerr << "[WARN] Term object lacks Meta\n";
+	} else {
+		const rapidjson::Value &meta = val["meta"];
+		if (! meta.IsObject()) {
+			std::cerr << "[ERROR] Attempt to add malformed node (meta is not JSON object). Skipping...\n";
+			return;
+		}
+		rapidjson::Value::ConstMemberIterator itr = meta.FindMember("definition");
+		if (itr != meta.MemberEnd()) {
+			const rapidjson::Value &definition = meta["definition"];
 
+			//printJ(definition);
+			rapidjson::Value::ConstMemberIterator it = definition.FindMember("val");
+			if (it != definition.MemberEnd()) {
+				string definition_value = it->value.GetString();
+			//	std::cout << "ading " << definition_value << "\n";
+				term.add_definition(definition_value);
+			}
+			it = definition.FindMember("xrefs");
+			if (it != definition.MemberEnd()) {
+				const rapidjson::Value& xrefs = it->value;
+				if (! xrefs.IsArray()) {
+					std::cerr << "[FATAL] xref not array\n";
+					std::exit(EXIT_FAILURE);
+				}
+				for (rapidjson::Value::ConstValueIterator xrefs_itr = xrefs.Begin(); xrefs_itr != xrefs.End(); ++xrefs_itr)
+    			term.add_definition_xref(xrefs_itr->GetString());
+			}
+			itr = meta.FindMember("comments");
+			if (itr != meta.MemberEnd()) {
+				const rapidjson::Value &comments = itr->value;
+				if (! comments.IsArray()) {
+					std::cerr << "[ERROR] Comments not array\n";
+				} else {
+					for (auto iterator = comments.Begin();iterator != comments.End(); iterator++) {
+						std::cout << "Comment" << iterator->GetString() << "\n"; std::exit(90);
+					}
+				}
+
+			}
+		}
+
+
+std::cout << term <<"\n";
+			//	std::cerr << "META";//itr->value.GetString() << "\n";
+
+
+
+	}
 
 }
 
@@ -118,7 +167,7 @@ path_(path) {
 	//d.Accept(writer);
 
 	// Output {"project":"rapidjson","stars":11}
-	//std::cout << "JSON:" << buffer.GetString() << std::endl;
-
+	std::cout << "DONE:" <<  std::endl;
+	exit(1);
 
 }
