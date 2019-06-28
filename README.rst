@@ -26,6 +26,19 @@ Following this, download the latest source code, compile and install it. Briefly
   $ make check
   $ sudo make install
   $ sudo ldconfig # refresh shared library cache.
+  
+Installing rapidjson
+~~~~~~~~~~~~~~~~~~~~
+Phenotools uses the `rapidjson C++ JSON library <http://rapidjson.org/>`_ to parse (OBO) ontology files in JSON format.
+See the rapidjson home page for details. Installation on *NIX systems probably will work as follows. ::
+
+	$ git clone https://github.com/Tencent/rapidjson.git
+	$ cd rapidjson
+	$ mkdir build
+	$ cd build
+	$ cmake ..
+	$ make
+	$ make install
 
 
 Building phenotools
@@ -35,6 +48,9 @@ basis of the protobuf file. We use a Makefile to represent this dependency. Foll
 this, g++ is used to compile the code using the C++17 standard. Note that
 the code will not compile with some older version of the protobuf library. Use
 version 3.7.1 or later.
+
+
+
 
 The ``setup.sh`` script downloads the GitHub repository, generates the C++ files from the
 protobuf code, and compiles the ``phenotools`` executable.
