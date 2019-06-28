@@ -36,6 +36,9 @@ this, g++ is used to compile the code using the C++17 standard. Note that
 the code will not compile with some older version of the protobuf library. Use
 version 3.7.1 or later.
 
+phenotools also requires rapidjson to be installed . in the system. See http://rapidjson.org/
+
+
 The ``setup.sh`` script downloads the GitHub repository, generates the C++ files from the
 protobuf code, and compiles the ``phenotools`` executable.
 
