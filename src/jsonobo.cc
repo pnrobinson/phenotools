@@ -84,34 +84,30 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 			}
 			it = definition.FindMember("xrefs");
 			if (it != definition.MemberEnd()) {
-				const rapidjson::Value& xrefs = it->value;
-				if (! xrefs.IsArray()) {
+				const rapidjson::Value& defxrefs = it->value;
+				if (! defxrefs.IsArray()) {
 					std::cerr << "[FATAL] xref not array\n";
 					std::exit(EXIT_FAILURE);
 				}
-				printJ(xrefs);
-				for (rapidjson::Value::ConstValueIterator xrefs_itr = xrefs.Begin(); xrefs_itr != xrefs.End(); ++xrefs_itr) {
-                    
-                    Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
-                    term.add_definition_xref(xr);
-                }
-			}
+				for (auto xrefs_itr = defxrefs.Begin();
+									xrefs_itr != defxrefs.End(); ++xrefs_itr) {
+              Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+              term.add_definition_xref(xr);
+        }
+			} // done with definition
 			itr = meta.FindMember("xrefs");
 			if (itr != meta.MemberEnd()) {
 				const rapidjson::Value &xrefs = itr->value;
 				if (! xrefs.IsArray()) {
-					std::cerr << "[ERROR] Comments not array\n";
+					throw JsonParseException("Term Xrefs not array");
 				} else {
-					printJ(xrefs);
-                    for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
-                        auto elem_iter = elem->FindMember("val");
-                        if (elem_iter != elem->MemberEnd()) {
-                            std::cout << " OPOPOP \n";
-                            Xref txr = Xref::of(elem_iter->value);
-                            string term_xref = elem_iter->value.GetString();
-                            //term.add_term_xref(term_xref);
-                        }
-                    }
+					for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
+              auto elem_iter = elem->FindMember("val");
+              if (elem_iter != elem->MemberEnd()) {
+	                Xref txr = Xref::of(elem_iter->value);
+                  term.add_term_xref(txr);
+              }
+          }
 				}
 
 			}
@@ -161,7 +157,7 @@ path_(path) {
     } catch (const JsonParseException& e) {
         std::cerr << e.what() << "\n";
     }
-    
+
     for (const auto & p : term_list_) {
         std::cout << p << "\n";
     }

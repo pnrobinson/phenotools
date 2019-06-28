@@ -115,7 +115,7 @@ namespace phenotools {
     virtual ~ValidatorI(){}
     virtual vector<Validation> validate() const=0;
     void validate(vector<Validation> &v) const;
-      
+
 };
 
   class OntologyClass : public ValidatorI {
@@ -460,7 +460,7 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
   };
   std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
-  
+
    class Biosample  : public ValidatorI {
 
   private:
@@ -515,7 +515,7 @@ namespace phenotools {
 
   std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
 
- 
+
 
 
 

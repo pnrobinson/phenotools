@@ -38,7 +38,7 @@ TermId::of(const string &s){
 TermId TermId::of(const rapidjson::Value &val){
     printJJ(val);
     if (! val.IsString() ) {
-        throw JsonParseException("Attempt to construct TermId from non-string");   
+        throw JsonParseException("Attempt to construct TermId from non-string");
     }
     return TermId::of(val.GetString());
 }
@@ -74,12 +74,12 @@ Xref::of(const rapidjson::Value &val){
     if (val.IsString() ) {
         return Xref::fromCurieString(val);
     } else {
-        throw JsonParseException("Could not construct Xref");   
+        throw JsonParseException("Could not construct Xref");
     }
 }
 
 
-Xref 
+Xref
 Xref::fromCurieString(const rapidjson::Value &val){
     TermId tid = TermId::of(val);
     Xref xr{tid};
@@ -101,8 +101,8 @@ std::ostream& operator<<(std::ostream& ost, const Xref& txref){
 
 Term::Term(const string &id, const string &label):
   id_(id),label_(label) {}
-  
-  
+
+
 void
 Term::add_definition(const string &def) {
   definition_.assign(def);
@@ -115,7 +115,7 @@ Term::add_definition_xref(const Xref &txref){
 
 std::ostream& operator<<(std::ostream& ost, const Term& term){
   ost << term.label_ << " [" << term.id_ << "]\n";
-  ost << "def: " << term.definition_ << "\n";
+  ost << "def: " << (term.definition_.empty() ? "n/a":term.definition_) << "\n";
   if (! term.definition_xref_list_.empty()) {
     for (const auto& p : term.definition_xref_list_){
       ost << "\tdef-xref:" << p << "\n";
@@ -124,7 +124,7 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
   if (! term.definition_xref_list_.empty()) {
      for (const auto& p : term.term_xref_list_){
       ost << "\tterm-xref:" << p << "\n";
-    }   
+    }
   }
   return ost;
 }
