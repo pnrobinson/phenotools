@@ -209,6 +209,20 @@ Term::add_definition_xref(const Xref &txref){
   definition_xref_list_.push_back(txref);
 }
 
+/**
+	* Add a PropertyValue to this term. Some property values
+	* encode alt_ids, and we put them into a separate list.
+	*/
+void
+Term::add_property_value(const PropertyValue &pv){
+	if (pv.is_alternate_id()){
+		TermId alt_id = TermId::of(pv.get_value());
+		alternative_id_list_.push_back(alt_id);
+	} else {
+		property_values_.push_back(pv);
+	}
+}
+
 std::ostream& operator<<(std::ostream& ost, const Term& term){
   ost << term.label_ << " [" << term.id_ << "]\n";
   ost << "def: " << (term.definition_.empty() ? "n/a":term.definition_) << "\n";
@@ -275,7 +289,8 @@ std::ostream& operator<<(std::ostream& ost, const Edge& edge){
 
 void
 Ontology::add_property_value(const PropertyValue &propval){
-	property_values_.push_back(propval);
+		property_values_.push_back(propval);
+
 }
 
 void
@@ -287,5 +302,12 @@ Ontology::add_all_terms(const vector<Term> &terms){
 		} else {
 			current_term_ids_.push_back(tid);
 		}
+		if (t.has_alternative_ids()) {
+			vector<TermId> alt_ids = t.get_alternative_ids();
+			for (auto atid : alt_ids) {
+				std::shared_ptr<Term> = std::make_shared<Term>(t);
+			}
+		}
+
 	}
 }

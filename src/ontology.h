@@ -84,6 +84,8 @@ private:
 public:
   static PropertyValue of(const rapidjson::Value &val);
   friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
+  bool is_alternate_id() const { return property == Property::HAS_ALTERNATIVE_ID; }
+  string get_value() const { return value_; }
 };
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 
@@ -95,6 +97,7 @@ private:
   string definition_;
   vector<Xref> definition_xref_list_;
   vector<Xref> term_xref_list_;
+  vector<TermId> alternative_id_list_;
   vector<PropertyValue> property_values_;
   bool is_obsolete_ = false;
 
@@ -103,9 +106,11 @@ public:
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
-  void add_property_value(const PropertyValue &pv) { property_values_.push_back(pv);}
+  void add_property_value(const PropertyValue &pv);
 
   TermId get_term_id() const { return id_; }
+  bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }
+  vector<TermId> get_alternative_ids() const { return alternative_id_list_; }
   bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
