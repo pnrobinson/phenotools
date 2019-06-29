@@ -3,11 +3,13 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <rapidjson/document.h>
 #include "jsonparse_exception.h"
 
 using std::string;
 using std::vector;
+using std::map;
 
 
 
@@ -60,7 +62,15 @@ enum class Property {
   IS_ANONYMOUS,//oboInOwl#is_anonymous
   CONSIDER,//oboInOwl#consider
   EDITOR_NOTES,//hsapdv#editor_notes
-
+  CREATOR, //creator
+  DESCRIPTION, //description
+  LICENSE, //license
+  RIGHTS,//rights
+  SUBJECT,//subject
+  TITLE,//title
+  DEFAULT_NAMESPACE,//oboInOwl#default-namespace
+  LOGICAL_DEFINITION_VIEW_RELATION,//oboInOwl#logical-definition-view-relation
+  SAVED_BY,//oboInOwl#saved-by
 };
 /**
   * A simple class that stores the basicPropertyValues elements about
@@ -80,21 +90,23 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 
 class Term {
 private:
-  string id_;
+  TermId id_;
   string label_;
   string definition_;
   vector<Xref> definition_xref_list_;
   vector<Xref> term_xref_list_;
   vector<PropertyValue> property_values_;
-  bool is_obsolete = false;
+  bool is_obsolete_ = false;
 
 public:
-  Term(const string &id, const string &label);
+  Term(const TermId &id, const string &label);
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
   void add_property_value(const PropertyValue &pv) { property_values_.push_back(pv);}
 
+  TermId get_term_id() const { return id_; }
+  bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
 std::ostream& operator<<(std::ostream& ost, const Term& term);
@@ -118,5 +130,33 @@ public:
   friend std::ostream& operator<<(std::ostream& ost, const Edge& edge);
 };
 std::ostream& operator<<(std::ostream& ost, const Edge& edge);
+
+
+class Ontology {
+private:
+  string id_;
+  vector<PropertyValue> property_values_;
+  map<TermId,Term> term_map_;
+  /** Current primary TermId's. */
+  vector<TermId> current_term_ids_;
+  /** obsoleted and alt ids. */
+  vector<TermId> obsolete_term_ids_;
+
+  vector<Edge> edge_list_;
+  friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
+
+public:
+  Ontology() = default;
+  void set_id(const string &id) { id_ = id; }
+  void add_property_value(const PropertyValue &propval);
+  void add_all_terms(const vector<Term> &terms);
+
+
+  Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
+
+
+
+};
+std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 
 #endif

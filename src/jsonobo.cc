@@ -48,14 +48,6 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 		return;
 	} else {
 		id = val["id"].GetString();
-		size_t pos = id.find_last_of("/");
-		if (pos != string::npos) {
-			id = id.substr(pos+1);
-		}
-		pos = id.find_first_of("_");
-		if (pos != string::npos) {
-			id[pos]=':';
-		}
 	}
 	if (! val.HasMember("lbl")) {
 		std::cerr << "[ERROR] Attempt to add malformed node (no label). Skipping...\n";
@@ -63,7 +55,8 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 	} else {
 		label = val["lbl"].GetString();
 	}
-	Term term{id,label};
+	TermId tid = TermId::of(id);
+	Term term{tid,label};
 	if (! val.HasMember("meta")) {
 		std::cerr << "[WARN] Term object lacks Meta\n";
 	} else {
@@ -123,16 +116,32 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 
 			}
 		}
-
     term_list_.push_back(term);
-
 	}
-
 }
+
+void
+JsonOboParser::add_meta(const rapidjson::Value &val){
+	if (! val.IsObject()) {
+		throw JsonParseException("Attempt to add malformed meta (not JSON object).");
+	}
+	auto itr = val.FindMember("basicPropertyValues");
+	if (itr != val.MemberEnd()) {
+		const rapidjson::Value &propertyVals = itr->value;
+		if (! propertyVals.IsArray()) {
+			throw JsonParseException("Ontology property values not array");
+		}
+		for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+			PropertyValue propval = PropertyValue::of(*elem);
+			ontology_ptr_->add_property_value(propval);
+		}
+	}
+}
+
 
 JsonOboParser::JsonOboParser(const string path):
 path_(path) {
-
+	ontology_ptr_ = std::make_unique<Ontology>();
 	rapidjson::Document d;
 	std::cout << " Parsing " << path_ << "\n";
 	std::ifstream ifs(path_);
@@ -181,8 +190,20 @@ path_(path) {
 		}
 	}
 		std::cout << " Size of edges array is " << edges.Size() << "\n";
-
-
+		itr = mainObject.FindMember("id");
+		if (itr == mainObject.MemberEnd()){
+			throw JsonParseException("Did not find id element");
+		} else {
+			string id = itr->value.GetString();
+			ontology_ptr_->set_id(id);
+		}
+		itr = mainObject.FindMember("meta");
+		if (itr == mainObject.MemberEnd()){
+			throw JsonParseException("Did not find meta element");
+		} else {
+			const rapidjson::Value& meta = mainObject["meta"];
+			add_meta(meta);
+		}
 
 		int c=0;
     for (const auto & p : term_list_) {

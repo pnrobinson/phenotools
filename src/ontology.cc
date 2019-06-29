@@ -155,6 +155,24 @@ PropertyValue::of(const rapidjson::Value &val) {
 		prop = Property::CONSIDER;
 	} else if (pred == "hsapdv#editor_notes") {
 		prop = Property::EDITOR_NOTES;
+	} else if (pred == "creator") {
+		prop = Property::CREATOR;
+	} else if (pred == "description") {
+		prop = Property::DESCRIPTION;
+	} else if (pred == "license") {
+		prop = Property::LICENSE;
+	} else if (pred == "rights") {
+		prop = Property::RIGHTS;
+	} else if (pred == "subject") {
+		prop = Property::SUBJECT;
+	} else if (pred == "title") {
+		prop = Property::TITLE;
+	} else if (pred == "oboInOwl#default-namespace") {
+		prop = Property::DEFAULT_NAMESPACE;
+	} else if (pred == "oboInOwl#logical-definition-view-relation") {
+		prop = Property::LOGICAL_DEFINITION_VIEW_RELATION;
+	} else if (pred == "oboInOwl#saved-by") {
+		prop = Property::	SAVED_BY;
 	} else {
 		throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
 	}
@@ -177,7 +195,7 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
 	return ost;
 }
 
-Term::Term(const string &id, const string &label):
+Term::Term(const TermId &id, const string &label):
   id_(id),label_(label) {}
 
 
@@ -252,4 +270,22 @@ std::ostream& operator<<(std::ostream& ost, const Edge& edge){
 	}
 	ost << edge.dest_;
 	return ost;
+}
+
+
+void
+Ontology::add_property_value(const PropertyValue &propval){
+	property_values_.push_back(propval);
+}
+
+void
+Ontology::add_all_terms(const vector<Term> &terms){
+	for (auto t : terms) {
+		TermId tid = t.get_term_id();
+		if (t.obsolete()){
+			obsolete_term_ids_.push_back(tid);
+		} else {
+			current_term_ids_.push_back(tid);
+		}
+	}
 }
