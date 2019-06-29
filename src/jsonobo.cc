@@ -133,7 +133,7 @@ JsonOboParser::add_meta(const rapidjson::Value &val){
 		}
 		for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
 			PropertyValue propval = PropertyValue::of(*elem);
-			ontology_ptr_->add_property_value(propval);
+			ontology_.add_property_value(propval);
 		}
 	}
 }
@@ -141,7 +141,6 @@ JsonOboParser::add_meta(const rapidjson::Value &val){
 
 JsonOboParser::JsonOboParser(const string path):
 path_(path) {
-	ontology_ptr_ = std::make_unique<Ontology>();
 	rapidjson::Document d;
 	std::cout << " Parsing " << path_ << "\n";
 	std::ifstream ifs(path_);
@@ -195,7 +194,7 @@ path_(path) {
 			throw JsonParseException("Did not find id element");
 		} else {
 			string id = itr->value.GetString();
-			ontology_ptr_->set_id(id);
+			ontology_.set_id(id);
 		}
 		itr = mainObject.FindMember("meta");
 		if (itr == mainObject.MemberEnd()){
@@ -213,6 +212,9 @@ path_(path) {
 		for (const auto & p : edge_list_) {
         std::cout << ++c << ") " << p << "\n";
     }
+
+		ontology_.add_all_terms(term_list_);
+		ontology_.add_all_edges(edge_list_);
 
 		std::cout << myError << "\n";
 	std::cout << "DONE:" <<  std::endl;

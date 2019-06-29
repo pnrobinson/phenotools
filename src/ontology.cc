@@ -1,6 +1,7 @@
 
 #include "ontology.h"
 #include <iostream>
+#include <utility> // make_pair
 
 
 /// remove the following after development
@@ -27,18 +28,24 @@ TermId::TermId(const string &s,std::size_t pos):value_(s),separator_pos_(pos){}
 
 TermId
 TermId::of(const string &s){
-    std::size_t i = s.find_first_of(':');
+		string cp = s;
+		std::size_t i = cp.find_last_of('/');
 		if (i != string::npos) {
-			return TermId{s,i}; // rely on RVO/move
+			cp = cp.substr(i+1);
 		}
-		i = s.find_first_of('_'); // some terms are with _
+    i = cp.find_first_of(':');
 		if (i != string::npos) {
-			return TermId{s,i}; // rely on RVO/move
+			return TermId{cp,i}; // rely on RVO/move
+		}
+		i = cp.find_first_of('_'); // some terms are with _
+		if (i != string::npos) {
+			cp[i] = ':';
+			return TermId{cp,i}; // rely on RVO/move
 		}
 		// orcid.org/0000-0001-5208-3432
 		i = s.find_first_of("orcid.org/");
 		if (i != string::npos) {
-			string orcid= "ORCID:" + s.substr(10);
+			string orcid= "ORCID:" + cp;
 			return TermId{orcid,5};
 		}
     throw JsonParseException("Malformed ontology term id: " +s);
@@ -82,7 +89,11 @@ std::ostream& operator<<(std::ostream& ost, const TermId& tid){
  ost << tid.value_;
  return ost;
 }
-
+/** Comparison operator is used when we use TermId as a key for std::map */
+bool
+TermId::operator<(const TermId& rhs) const {
+		return value_ < rhs.value_;
+}
 
 
 Xref::Xref(const Xref &txr)
@@ -190,6 +201,17 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
 		case Property::CREATION_DATE: ost << "creation_date: "; break;
 		case Property::HAS_OBO_NAMESPACE: ost << "has_obo_namespace: "; break;
 		case Property::DATE: ost << "date: "; break;
+		case Property::CREATOR: ost << "creator: "; break;
+		case Property::DESCRIPTION: ost << "description: "; break;
+		case Property::LICENSE: ost << "license: "; break;
+		case Property::RIGHTS: ost << "rights: "; break;
+		case Property::SUBJECT: ost << "subject: "; break;
+		case Property::TITLE: ost << "title: "; break;
+		case Property::DEFAULT_NAMESPACE: ost << "default-namespace: "; break;
+		case Property::LOGICAL_DEFINITION_VIEW_RELATION: ost << "logical-definition-view-relation: "; break;
+		case Property::SAVED_BY: ost << "saved-by: "; break;
+
+		default: ost <<"other property value: "; break;
 	}
 	ost << pv.value_;
 	return ost;
@@ -286,6 +308,49 @@ std::ostream& operator<<(std::ostream& ost, const Edge& edge){
 	return ost;
 }
 
+Ontology::Ontology(const Ontology &other):
+	id_(other.id_),
+	property_values_(other.property_values_),
+	term_map_(other.term_map_),
+	current_term_ids_(other.current_term_ids_),
+	obsolete_term_ids_(other.obsolete_term_ids_),
+	edge_list_(other.edge_list_)
+	 {
+		// no-op
+	 }
+Ontology::Ontology(Ontology &other): 	id_(other.id_){
+	property_values_ = std::move(other.property_values_);
+	term_map_ = std::move(other.term_map_);
+	current_term_ids_ = std::move(other.current_term_ids_);
+	obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
+	edge_list_ = std::move(other.edge_list_);
+}
+Ontology&
+Ontology::operator=(const Ontology &other){
+	if (this != &other) {
+		id_ = other.id_;
+		property_values_ = other.property_values_;
+		term_map_ = other.term_map_;
+		current_term_ids_ = other.current_term_ids_;
+		obsolete_term_ids_ = other.obsolete_term_ids_;
+		edge_list_ = other.edge_list_;
+	}
+	return *this;
+}
+Ontology&
+Ontology::operator=(Ontology &&other){
+	if (this != &other) {
+		id_ = std::move(other.id_);
+		property_values_ = std::move(other.property_values_);
+		term_map_ = std::move(other.term_map_);
+		current_term_ids_ = std::move(other.current_term_ids_);
+		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
+		edge_list_ = std::move(other.edge_list_);
+	}
+	return *this;
+}
+
+
 
 void
 Ontology::add_property_value(const PropertyValue &propval){
@@ -296,7 +361,9 @@ Ontology::add_property_value(const PropertyValue &propval){
 void
 Ontology::add_all_terms(const vector<Term> &terms){
 	for (auto t : terms) {
+		std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
 		TermId tid = t.get_term_id();
+		term_map_.insert(std::make_pair(tid,sptr));
 		if (t.obsolete()){
 			obsolete_term_ids_.push_back(tid);
 		} else {
@@ -305,9 +372,41 @@ Ontology::add_all_terms(const vector<Term> &terms){
 		if (t.has_alternative_ids()) {
 			vector<TermId> alt_ids = t.get_alternative_ids();
 			for (auto atid : alt_ids) {
-				std::shared_ptr<Term> = std::make_shared<Term>(t);
+					term_map_.insert(std::make_pair(atid,sptr));
 			}
 		}
-
 	}
+}
+
+/**
+	* Figure out how to be more efficient later.
+	*/
+void
+Ontology::add_all_edges(const vector<Edge> &edges){
+	edge_list_ = edges;
+	for (const auto &e : edges) {
+		auto src = term_map_.find(e.get_source());
+		if (src == term_map_.end() ) {
+			for (auto f : term_map_) {
+				std::cerr << f.first << "\n";
+			}
+			throw JsonParseException("Attempt to add edge with " + e.get_source().get_value() +" not in ontology");
+		}
+	}
+}
+
+std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
+	ost << "### Ontology ###\n"
+		<< "id: " << ontology.id_ << "\n";
+	for (const auto &pv : ontology.property_values_) {
+		ost << pv << "\n";
+	}
+	ost << "### Terms ###\n"
+			<< "total current terms: " << ontology.current_term_count() << "\n"
+			<< "total term ids (including obsolete/alternative term ids): " <<
+				ontology.total_term_id_count() << "\n";
+	ost << "### Edges ###\n"
+			<< "total edges: " << ontology.edge_count() << "\n";
+		return ost;
+
 }

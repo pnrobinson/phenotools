@@ -17,8 +17,8 @@ private:
 
 	vector<Term> term_list_;
 	vector<Edge> edge_list_;
-	
-	unique_ptr<Ontology> ontology_ptr_;
+
+	Ontology ontology_;
 
 
 	void add_node(const rapidjson::Value &val);
@@ -27,7 +27,7 @@ private:
 
 public:
 	JsonOboParser(const string path);
-	std::unique_ptr<Ontology> get_ontology() const;
+	Ontology get_ontology() const { return ontology_; }
 
 
 

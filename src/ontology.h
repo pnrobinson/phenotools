@@ -24,6 +24,7 @@ public:
     TermId(const TermId  &tid);
     TermId(TermId &&tid);
     TermId &operator=(const TermId &tid);
+    bool operator<(const TermId& rhs) const;
     ~TermId(){}
     static TermId of(const string &s);
     static TermId from_url(const string &s);
@@ -31,6 +32,7 @@ public:
     string get_value() const { return value_; }
     string get_prefix() const { return value_.substr(0,separator_pos_); }
     string get_id() const { return value_.substr(separator_pos_+1); }
+
     friend std::ostream& operator<<(std::ostream& ost, const TermId& tid);
 };
 std::ostream& operator<<(std::ostream& ost, const TermId& tid);
@@ -84,7 +86,7 @@ private:
 public:
   static PropertyValue of(const rapidjson::Value &val);
   friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
-  bool is_alternate_id() const { return property == Property::HAS_ALTERNATIVE_ID; }
+  bool is_alternate_id() const { return property_ == Property::HAS_ALTERNATIVE_ID; }
   string get_value() const { return value_; }
 };
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
@@ -131,7 +133,8 @@ private:
     edge_type_(et) {}
 public:
   static Edge of(const rapidjson::Value &val);
-
+  TermId get_source() const { return source_; }
+  TermId get_destination() const { return dest_; }
   friend std::ostream& operator<<(std::ostream& ost, const Edge& edge);
 };
 std::ostream& operator<<(std::ostream& ost, const Edge& edge);
@@ -141,26 +144,34 @@ class Ontology {
 private:
   string id_;
   vector<PropertyValue> property_values_;
-  map<TermId,Term> term_map_;
+  map<TermId, std::shared_ptr<Term> > term_map_;
   /** Current primary TermId's. */
   vector<TermId> current_term_ids_;
   /** obsoleted and alt ids. */
   vector<TermId> obsolete_term_ids_;
 
   vector<Edge> edge_list_;
-  friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
+
 
 public:
   Ontology() = default;
+  Ontology(const Ontology &other);
+  Ontology(Ontology &other);
+  Ontology& operator=(const Ontology &other);
+  Ontology& operator=(Ontology &&other);
+  ~Ontology(){}
   void set_id(const string &id) { id_ = id; }
   void add_property_value(const PropertyValue &propval);
   void add_all_terms(const vector<Term> &terms);
-
+  void add_all_edges(const vector<Edge> &edges);
+  int current_term_count() const { return current_term_ids_.size(); }
+  int total_term_id_count() const { return term_map_.size(); }
+  int edge_count() const { return edge_list_.size(); }
 
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
 
 
-
+  friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 

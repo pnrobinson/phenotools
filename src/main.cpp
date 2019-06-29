@@ -25,20 +25,22 @@ using std::cerr;
 
 
 int main(int argc, char ** argv) {
-    
-    
+
+
     string hp_json_path;
     string phenopacket_path;
-    
+
     CLI::App app("phenotools");
     CLI::Option* hp_json_path_option = app.add_option("--hp",hp_json_path,"path to hp.json file")->check(CLI::ExistingFile);
     CLI::Option* phenopacket_path_option = app.add_option("-p,--phenopacket",phenopacket_path,"path to input phenopacket")->check(CLI::ExistingFile);
-    
+
     CLI11_PARSE(app, argc, argv);
-    
+
     if (*hp_json_path_option) {
         JsonOboParser parser{hp_json_path};
         cout << "[INFO] Done JSON demo.\n";
+        Ontology ontology = parser.get_ontology();
+        cout << ontology << "\n";
         return EXIT_SUCCESS;
     }
     // if we get here, then we must have the path to a phenopacket
@@ -46,11 +48,11 @@ int main(int argc, char ** argv) {
         cerr << "[FATAL] -p/--phenopacket option required!\n";
         return EXIT_FAILURE;
     }
-    
 
-  
+
+
   GOOGLE_PROTOBUF_VERIFY_VERSION;
-  
+
   std::stringstream sstr;
   std::ifstream inFile;
   inFile.open(phenopacket_path);
@@ -61,14 +63,14 @@ int main(int argc, char ** argv) {
   sstr << inFile.rdbuf();
   string JSONstring = sstr.str();
   //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
-  
+
   ::google::protobuf::util::JsonParseOptions options;
   ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
   ::google::protobuf::util::JsonStringToMessage(JSONstring,&phenopacketpb,options);
   cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
-  
+
   phenotools::Phenopacket ppacket(phenopacketpb);
-  
+
   cout << ppacket << "\n";
 
   auto validation = ppacket.validate();
@@ -85,6 +87,6 @@ int main(int argc, char ** argv) {
 
   }
 
-  
+
 
 }
