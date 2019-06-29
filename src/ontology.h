@@ -24,6 +24,7 @@ public:
     TermId &operator=(const TermId &tid);
     ~TermId(){}
     static TermId of(const string &s);
+    static TermId from_url(const string &s);
     static TermId of(const rapidjson::Value &val);
     string get_value() const { return value_; }
     string get_prefix() const { return value_.substr(0,separator_pos_); }
@@ -57,6 +58,8 @@ enum class Property {
   DATE,//"date" -- probably an error
   OWL_DEPRECATED,//owl#deprecated
   IS_ANONYMOUS,//oboInOwl#is_anonymous
+  CONSIDER,//oboInOwl#consider
+  EDITOR_NOTES,//hsapdv#editor_notes
 
 };
 /**
@@ -95,5 +98,25 @@ public:
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
 std::ostream& operator<<(std::ostream& ost, const Term& term);
+
+enum class EdgeType {
+  IS_A,
+};
+
+class Edge {
+private:
+  TermId source_;
+  TermId dest_;
+  EdgeType edge_type_;
+  Edge(TermId s,EdgeType et,TermId o):
+    source_(s),
+    dest_(o),
+    edge_type_(et) {}
+public:
+  static Edge of(const rapidjson::Value &val);
+
+  friend std::ostream& operator<<(std::ostream& ost, const Edge& edge);
+};
+std::ostream& operator<<(std::ostream& ost, const Edge& edge);
 
 #endif

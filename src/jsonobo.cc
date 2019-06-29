@@ -23,6 +23,12 @@ printJ(const rapidjson::Value &json)
 }
 
 void
+JsonOboParser::add_edge(const rapidjson::Value &val){
+	Edge e = Edge::of(val);
+	edge_list_.push_back(e);
+}
+
+void
 JsonOboParser::add_node(const rapidjson::Value &val){
 	string id;
 	string label;
@@ -151,18 +157,39 @@ path_(path) {
 	}
 
 	string myError;
-    try {
-        for (auto& v : nodes.GetArray()) {
-            add_node(v);
-        }
-				std::cout << " Size of nodes array is " << nodes.Size() << "\n";
+	for (auto& v : nodes.GetArray()) {
+		try {
+    	add_node(v);
     } catch (const JsonParseException& e) {
-        std::cerr << e.what() << "\n";
-				myError = e.what();
+    	std::cerr << e.what() << "\n";
+			myError += e.what();
     }
+	}
+	std::cout << " Size of nodes array is " << nodes.Size() << "\n";
+
+	rapidjson::Value::ConstMemberIterator itr = mainObject.FindMember("edges");
+	if (itr == mainObject.MemberEnd()){
+		throw JsonParseException("Did not find edges element");
+	}
+	const rapidjson::Value& edges = mainObject["edges"];
+	for (auto& v : edges.GetArray()) {
+		try {
+			add_edge(v);
+		} catch (const JsonParseException& e) {
+				std::cerr << e.what() << "\n";
+				myError += e.what();
+		}
+	}
+		std::cout << " Size of edges array is " << edges.Size() << "\n";
+
+
 
 		int c=0;
     for (const auto & p : term_list_) {
+        std::cout << ++c << ") " << p << "\n";
+    }
+
+		for (const auto & p : edge_list_) {
         std::cout << ++c << ") " << p << "\n";
     }
 

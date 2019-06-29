@@ -13,9 +13,11 @@ class JsonOboParser {
 private:
 	string path_;
 	vector<Term> term_list_;
+	vector<Edge> edge_list_;
 
 
 	void add_node(const rapidjson::Value &val);
+	void add_edge(const rapidjson::Value &val);
 
 public:
 	JsonOboParser(const string path);

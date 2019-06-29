@@ -44,6 +44,17 @@ TermId::of(const string &s){
     throw JsonParseException("Malformed ontology term id: " +s);
 }
 
+TermId
+TermId::from_url(const string &s){
+	  std::size_t i = s.find_last_of('/');
+		if (i == string::npos){
+			throw JsonParseException("Malformed TermId URL");
+		}
+		string st = s.substr(i+1);
+		TermId t = TermId::of(st);
+		return t;
+}
+
 TermId TermId::of(const rapidjson::Value &val){
     //printJJ(val);
     if (! val.IsString() ) {
@@ -140,6 +151,10 @@ PropertyValue::of(const rapidjson::Value &val) {
 		prop = Property::OWL_DEPRECATED;
 	} else if (pred == "oboInOwl#is_anonymous") {
 		prop = Property::IS_ANONYMOUS;
+	} else if (pred == "oboInOwl#consider") {
+		prop = Property::CONSIDER;
+	} else if (pred == "hsapdv#editor_notes") {
+		prop = Property::EDITOR_NOTES;
 	} else {
 		throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
 	}
@@ -195,4 +210,46 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
 	 }
 	}
   return ost;
+}
+
+Edge
+Edge::of(const rapidjson::Value &val){
+	if (! val.IsObject()) {
+		throw JsonParseException("Edge element not JSON object");
+	}
+	auto p = val.FindMember("sub");
+	if (p == val.MemberEnd()) {
+		throw JsonParseException("Edge did not contain \'sub\' element");
+	}
+	TermId subj = TermId::from_url(p->value.GetString());
+	p = val.FindMember("obj");
+	if (p == val.MemberEnd()) {
+		throw JsonParseException("Edge did not contain \'obj\' element");
+	}
+	TermId obj = TermId::from_url(p->value.GetString());
+	p = val.FindMember("pred");
+	if (p == val.MemberEnd()) {
+		throw JsonParseException("Edge did not contain \'pred\' element");
+	}
+	string etype = p->value.GetString();
+	EdgeType edgetype = EdgeType::IS_A;
+	if (etype == "is_a") {
+		edgetype = EdgeType::IS_A;
+	} else {
+		throw JsonParseException("TODO -- finish up.Could not find edge type "+etype);
+	}
+	// todo etc.
+	Edge e{subj,edgetype,obj};
+	return e;
+
+}
+
+std::ostream& operator<<(std::ostream& ost, const Edge& edge){
+	ost << edge.source_;
+	switch (edge.edge_type_){
+		case EdgeType::IS_A: ost << " is_a ";break;
+		default: ost << " unknown_edge_type ";
+	}
+	ost << edge.dest_;
+	return ost;
 }
