@@ -2,9 +2,8 @@
 phenotools
 ==========
 
-A C++ app for working with the `GA4GH Phenopackets standard <https://github.com/phenopackets/phenopacket-schema>`_.
-
-
+A C++ app for working with phenotype ontologies as well as the `GA4GH Phenopackets standard
+<https://github.com/phenopackets/phenopacket-schema>`_.
 
 Installing protoc
 ~~~~~~~~~~~~~~~~~
@@ -26,7 +25,7 @@ Following this, download the latest source code, compile and install it. Briefly
   $ make check
   $ sudo make install
   $ sudo ldconfig # refresh shared library cache.
-  
+
 Installing rapidjson
 ~~~~~~~~~~~~~~~~~~~~
 Phenotools uses the `rapidjson C++ JSON library <http://rapidjson.org/>`_ to parse (OBO) ontology files in JSON format.
@@ -60,12 +59,17 @@ This software can be built simply with ::
 
   $ ./setup.sh
 
-Running the demo
-~~~~~~~~~~~~~~~~
-The software currently just decodes a Phenopacket from JSON format and outputs
-some of the data. To run it, enter ::
+Running the app
+~~~~~~~~~~~~~~~
+Phenotools is now in a preliminary stage, but it can validate phenopackets
+and THE JSON version of HPO.
 
-  $ ./phenotools -p Gebbia-1997-ZIC3.json
+phenopacket validation
+~~~~~~~~~~~~~~~~~~~~~~
+The software currently decodes a Phenopacket from JSON format, does some Q/C,
+and outputs a summary of the phenopacket to the shell. To run it, enter ::
+
+  $ ./phenotools phenopacket -p Gebbia-1997-ZIC3.json
 
 It will input the Phenopacket included in the demo and output this. ::
 
@@ -97,6 +101,12 @@ It will input the Phenopacket included in the demo and output this. ::
   Evidence and Conclusion Ontology: eco(ECO;http://purl.obolibrary.org/obo/eco.owl;2018-11-10;http://purl.obolibrary.org/obo/ECO_)
   Online Mendelian Inheritance in Man: omim(OMIM;https://www.omim.org;;)
 
+  #### We identified 1 Q/C issue ####
+  [ERROR] phenopacket id missing
+
+In this case, our example phenopacket was missing the ``id`` element but otherwise
+was well-formed.
+
 Running the JSON obo parser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -104,8 +114,8 @@ We are currently implementing support for ingesting JSON-formatted OBO ontologie
 This feature is current experimental. To try it out, download the ``hp.json`` file from the HPO `GitHub page <https://github.com/obophenotype/human-phenotype-ontology>`_, and
 execute the following command. ::
 
-   $ ./phenotools -hp hp.json
-  
+   $ ./phenotools validate -hp hp.json
+
 
 
 Running the unittests
@@ -117,8 +127,6 @@ and run by the following commands. ::
   $ cd src/
   $ make unittests
   g++  -Wall -g -O0 --std=c++17 -I=. -pthread unittests.cpp base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o -o unittests -lprotobuf
-  $ ./unittests 
+  $ ./unittests
   ===============================================================================
   All tests passed (111 assertions in 16 test cases)
-
-

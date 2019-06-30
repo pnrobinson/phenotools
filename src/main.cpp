@@ -31,30 +31,25 @@ int main(int argc, char ** argv) {
     string phenopacket_path;
 
     CLI::App app("phenotools");
-    CLI::Option* hp_json_path_option = app.add_option("--hp",hp_json_path,"path to hp.json file")->check(CLI::ExistingFile);
-    CLI::Option* phenopacket_path_option = app.add_option("-p,--phenopacket",phenopacket_path,"path to input phenopacket")->check(CLI::ExistingFile);
+    CLI::App* phenopacket_command = app.add_subcommand("phenopacket", "work with GA4GH phenopackets");
+    CLI::App* validate_command = app.add_subcommand("validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)");
+    CLI::Option* hp_json_path_option = validate_command->add_option("--hp",hp_json_path,"path to hp.json file")->check(CLI::ExistingFile);
+    CLI::Option* phenopacket_path_option = phenopacket_command->add_option("-p,--phenopacket",phenopacket_path,"path to input phenopacket")->check(CLI::ExistingFile);
 
     CLI11_PARSE(app, argc, argv);
 
-    if (*hp_json_path_option) {
+    if (validate_command->parsed()) {
         JsonOboParser parser{hp_json_path};
         cout << "[INFO] Done JSON demo.\n";
         Ontology ontology = parser.get_ontology();
         cout << ontology << "\n";
-
-        
-
-
         return EXIT_SUCCESS;
-    }
+    } else if (phenopacket_command->parsed())
     // if we get here, then we must have the path to a phenopacket
-    if (! *phenopacket_path_option) {
+      if (! *phenopacket_path_option) {
         cerr << "[FATAL] -p/--phenopacket option required!\n";
         return EXIT_FAILURE;
-    }
-
-
-
+      }
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   std::stringstream sstr;
