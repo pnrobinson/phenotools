@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <optional>
 #include <rapidjson/document.h>
 #include "jsonparse_exception.h"
 
 using std::string;
 using std::vector;
 using std::map;
+
 
 
 
@@ -167,6 +169,7 @@ public:
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return edge_list_.size(); }
+  std::optional<Term> get_term(const TermId &tid) const;
 
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
 

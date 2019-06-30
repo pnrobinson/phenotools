@@ -55,7 +55,9 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 	} else {
 		label = val["lbl"].GetString();
 	}
+
 	TermId tid = TermId::of(id);
+
 	Term term{tid,label};
 	if (! val.HasMember("meta")) {
 		std::cerr << "[WARN] Term object lacks Meta\n";
@@ -116,8 +118,8 @@ JsonOboParser::add_node(const rapidjson::Value &val){
 
 			}
 		}
-    term_list_.push_back(term);
 	}
+	term_list_.push_back(term);
 }
 
 void

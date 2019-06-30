@@ -363,6 +363,7 @@ Ontology::add_all_terms(const vector<Term> &terms){
 	for (auto t : terms) {
 		std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
 		TermId tid = t.get_term_id();
+		string id = tid.get_id();
 		term_map_.insert(std::make_pair(tid,sptr));
 		if (t.obsolete()){
 			obsolete_term_ids_.push_back(tid);
@@ -384,14 +385,27 @@ Ontology::add_all_terms(const vector<Term> &terms){
 void
 Ontology::add_all_edges(const vector<Edge> &edges){
 	edge_list_ = edges;
+	int bad=0;
 	for (const auto &e : edges) {
 		auto src = term_map_.find(e.get_source());
 		if (src == term_map_.end() ) {
-			for (auto f : term_map_) {
-				std::cerr << f.first << "\n";
-			}
-			throw JsonParseException("Attempt to add edge with " + e.get_source().get_value() +" not in ontology");
+			std::cerr <<++bad <<") Attempt to add edge with " + e.get_source().get_value() +" not in ontology\n";
 		}
+		auto dest = term_map_.find(e.get_destination());
+		if (dest == term_map_.end() ) {
+			std::cerr <<++bad <<") Attempt to add edge with " + e.get_destination().get_value() +" not in ontology\n";
+		}
+	}
+	std::cout << " Could not find " << bad << "\n";
+}
+
+std::optional<Term>
+Ontology::get_term(const TermId &tid) const{
+	auto p = term_map_.find(tid);
+	if (p != term_map_.end()) {
+		return *(p->second);
+	} else {
+		return std::nullopt;
 	}
 }
 

@@ -41,6 +41,33 @@ int main(int argc, char ** argv) {
         cout << "[INFO] Done JSON demo.\n";
         Ontology ontology = parser.get_ontology();
         cout << ontology << "\n";
+
+        TermId tid = TermId::of("HP:0040307");
+        std::optional<Term> term = ontology.get_term(tid);
+        if (! term){
+          cout <<"Could not find " << tid <<"\n";
+        } else {
+          cout << "Got "  << tid <<"\n";
+        }
+        tid = TermId::of("HP:0100851");
+        term = ontology.get_term(tid);
+        if (! term){
+          cout <<"Could not find " << tid <<"\n";
+        } else {
+          cout << "Got "  << tid <<"\n";
+        }
+
+        tid = TermId::of("HP:0011770");
+        term = ontology.get_term(tid);
+        if (! term){
+          cout <<"Could not find " << tid <<"\n";
+        } else {
+          cout << "Got "  << tid <<"\n";
+        }
+
+
+
+
         return EXIT_SUCCESS;
     }
     // if we get here, then we must have the path to a phenopacket
