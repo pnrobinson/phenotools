@@ -145,45 +145,45 @@ PropertyValue::of(const rapidjson::Value &val) {
 	if (pos != string::npos) {
 		pred = pred.substr(pos+1);
 	}
-	Property prop = Property::UNKNOWN;
+	Prop prop = Prop::UNKNOWN;
 	if (pred == "oboInOwl#created_by") {
-		prop = Property::CREATED_BY;
+		prop = Prop::CREATED_BY;
 	} else if (pred == "oboInOwl#creation_date") {
-	 	prop = Property::CREATION_DATE;
+	 	prop = Prop::CREATION_DATE;
 	} else if (pred == "oboInOwl#hasOBONamespace") {
-		prop = Property::HAS_OBO_NAMESPACE;
+		prop = Prop::HAS_OBO_NAMESPACE;
 	} else if (pred == "oboInOwl#hasAlternativeId") {
-		prop = Property::HAS_ALTERNATIVE_ID;
+		prop = Prop::HAS_ALTERNATIVE_ID;
 	} else if (pred == "rdf-schema#comment") {
-		prop = Property::RDF_SCHEMA_COMMENT;
+		prop = Prop::RDF_SCHEMA_COMMENT;
 	} else if (pred == "date") {
-		prop = Property::DATE;
+		prop = Prop::DATE;
 	} else if (pred == "owl#deprecated") {
-		prop = Property::OWL_DEPRECATED;
+		prop = Prop::OWL_DEPRECATED;
 	} else if (pred == "oboInOwl#is_anonymous") {
-		prop = Property::IS_ANONYMOUS;
+		prop = Prop::IS_ANONYMOUS;
 	} else if (pred == "oboInOwl#consider") {
-		prop = Property::CONSIDER;
+		prop = Prop::CONSIDER;
 	} else if (pred == "hsapdv#editor_notes") {
-		prop = Property::EDITOR_NOTES;
+		prop = Prop::EDITOR_NOTES;
 	} else if (pred == "creator") {
-		prop = Property::CREATOR;
+		prop = Prop::CREATOR;
 	} else if (pred == "description") {
-		prop = Property::DESCRIPTION;
+		prop = Prop::DESCRIPTION;
 	} else if (pred == "license") {
-		prop = Property::LICENSE;
+		prop = Prop::LICENSE;
 	} else if (pred == "rights") {
-		prop = Property::RIGHTS;
+		prop = Prop::RIGHTS;
 	} else if (pred == "subject") {
-		prop = Property::SUBJECT;
+		prop = Prop::SUBJECT;
 	} else if (pred == "title") {
-		prop = Property::TITLE;
+		prop = Prop::TITLE;
 	} else if (pred == "oboInOwl#default-namespace") {
-		prop = Property::DEFAULT_NAMESPACE;
+		prop = Prop::DEFAULT_NAMESPACE;
 	} else if (pred == "oboInOwl#logical-definition-view-relation") {
-		prop = Property::LOGICAL_DEFINITION_VIEW_RELATION;
+		prop = Prop::LOGICAL_DEFINITION_VIEW_RELATION;
 	} else if (pred == "oboInOwl#saved-by") {
-		prop = Property::	SAVED_BY;
+		prop = Prop::	SAVED_BY;
 	} else {
 		throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
 	}
@@ -197,19 +197,19 @@ PropertyValue::of(const rapidjson::Value &val) {
 }
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
 	switch (pv.property_) {
-		case Property::CREATED_BY: ost << "created_by: "; break;
-		case Property::CREATION_DATE: ost << "creation_date: "; break;
-		case Property::HAS_OBO_NAMESPACE: ost << "has_obo_namespace: "; break;
-		case Property::DATE: ost << "date: "; break;
-		case Property::CREATOR: ost << "creator: "; break;
-		case Property::DESCRIPTION: ost << "description: "; break;
-		case Property::LICENSE: ost << "license: "; break;
-		case Property::RIGHTS: ost << "rights: "; break;
-		case Property::SUBJECT: ost << "subject: "; break;
-		case Property::TITLE: ost << "title: "; break;
-		case Property::DEFAULT_NAMESPACE: ost << "default-namespace: "; break;
-		case Property::LOGICAL_DEFINITION_VIEW_RELATION: ost << "logical-definition-view-relation: "; break;
-		case Property::SAVED_BY: ost << "saved-by: "; break;
+		case Prop::CREATED_BY: ost << "created_by: "; break;
+		case Prop::CREATION_DATE: ost << "creation_date: "; break;
+		case Prop::HAS_OBO_NAMESPACE: ost << "has_obo_namespace: "; break;
+		case Prop::DATE: ost << "date: "; break;
+		case Prop::CREATOR: ost << "creator: "; break;
+		case Prop::DESCRIPTION: ost << "description: "; break;
+		case Prop::LICENSE: ost << "license: "; break;
+		case Prop::RIGHTS: ost << "rights: "; break;
+		case Prop::SUBJECT: ost << "subject: "; break;
+		case Prop::TITLE: ost << "title: "; break;
+		case Prop::DEFAULT_NAMESPACE: ost << "default-namespace: "; break;
+		case Prop::LOGICAL_DEFINITION_VIEW_RELATION: ost << "logical-definition-view-relation: "; break;
+		case Prop::SAVED_BY: ost << "saved-by: "; break;
 
 		default: ost <<"other property value: "; break;
 	}
@@ -217,8 +217,176 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
 	return ost;
 }
 
+Property
+Property::of(const rapidjson::Value &val){
+	string id;
+	string label;
+	vector<PropertyValue> propvals;
+	if (! val.IsObject()) {
+		throw JsonParseException("Attempt to add malformed node (not JSON object)");
+	}
+	if (! val.HasMember("type")) {
+		throw JsonParseException("Attempt to add malformed node (no type information).");
+	} else if (strcmp ( val["type"].GetString(),"PROPERTY") ) {
+		string tt =val["type"].GetString();
+		throw JsonParseException("Attempt to add malformed property node (not a PROPERTY): " + tt);
+	}
+	if (! val.HasMember("id")) {
+		throw JsonParseException("Attempt to add malformed node (no id).");
+	} else {
+		id = val["id"].GetString();
+	}
+	if (! val.HasMember("lbl")) {
+		throw JsonParseException("Malformed node ("+id+"): no label.");
+	} else {
+		label = val["lbl"].GetString();
+	}
+	TermId tid = TermId::of(id);
+	if (! val.HasMember("meta")) {
+		throw JsonParseException("Malformed node ("+id+"): no Metainformation");
+	} else {
+		const rapidjson::Value &meta = val["meta"];
+		if (! meta.IsObject()) {
+			throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
+		}
+		auto itr = meta.FindMember("basicPropertyValues");
+		if (itr != meta.MemberEnd()) {
+			const rapidjson::Value &propertyVals = itr->value;
+			if (! propertyVals.IsArray()) {
+				throw JsonParseException("Malformed node ("+id+"): Term property values not array");
+			}
+			for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+				PropertyValue propval = PropertyValue::of(*elem);
+				propvals.push_back(propval);
+			}
+		}
+	}
+	Property p{tid,label,propvals};
+	return p;
+}
+
+Property::Property(const Property &p):
+	id_(p.id_),
+	label_(p.label_),
+	property_values_(p.property_values_)
+	{ }
+
+Property::Property(Property &&p):
+	id_ (std::move(p.id_)),
+	label_( std::move(p.label_) ),
+	property_values_ (std::move(p.property_values_) ) {}
+
+
+Property &
+Property::operator=(const Property &p){
+	id_ = p.id_;
+	label_ = p.label_;
+	property_values_ = p.property_values_;
+	return *this;
+}
+Property &
+Property::operator=(Property &&p){
+	id_ = std::move(p.id_);
+	label_ = std::move(p.label_);
+	property_values_ = std::move(p.property_values_);
+	return *this;
+}
+
+std::ostream& operator<<(std::ostream& ost, const Property& prop){
+	ost << prop.label_ << "[" << prop.id_ << "] ";
+	for (auto pv : prop.property_values_ ) {
+		ost << pv <<"; ";
+	}
+	return ost;
+}
+
+
+
 Term::Term(const TermId &id, const string &label):
   id_(id),label_(label) {}
+
+
+Term Term::of(const rapidjson::Value &val){
+	string id;
+	string label;
+	if (! val.IsObject()) {
+		throw JsonParseException("Attempt to add malformed node (not JSON object)");
+	}
+	if (! val.HasMember("type")) {
+		throw JsonParseException("Attempt to add malformed node (no type information).");
+	} else if (strcmp ( val["type"].GetString(),"CLASS") ) {
+		string tt =val["type"].GetString();
+		throw JsonParseException("Attempt to add malformed node (not a CLASS): " + tt);
+	}
+	if (! val.HasMember("id")) {
+		throw JsonParseException("Attempt to add malformed node (no id).");
+	} else {
+		id = val["id"].GetString();
+	}
+	if (! val.HasMember("lbl")) {
+		throw JsonParseException("Malformed node ("+id+"): no label.");
+	} else {
+		label = val["lbl"].GetString();
+	}
+	TermId tid = TermId::of(id);
+	Term term{tid,label};
+	if (! val.HasMember("meta")) {
+		throw JsonParseException("Malformed node ("+id+"): no Metainformation");
+	} else {
+		const rapidjson::Value &meta = val["meta"];
+		if (! meta.IsObject()) {
+			throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
+		}
+		rapidjson::Value::ConstMemberIterator itr = meta.FindMember("definition");
+		if (itr != meta.MemberEnd()) {
+			const rapidjson::Value &definition = meta["definition"];
+			rapidjson::Value::ConstMemberIterator it = definition.FindMember("val");
+			if (it != definition.MemberEnd()) {
+				string definition_value = it->value.GetString();
+				term.add_definition(definition_value);
+			}
+			it = definition.FindMember("xrefs");
+			if (it != definition.MemberEnd()) {
+				const rapidjson::Value& defxrefs = it->value;
+				if (! defxrefs.IsArray()) {
+					throw JsonParseException("Malformed node ("+id+"): xref not array");
+				}
+				for (auto xrefs_itr = defxrefs.Begin();
+									xrefs_itr != defxrefs.End(); ++xrefs_itr) {
+              Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+              term.add_definition_xref(xr);
+        }
+			} // done with definition
+			itr = meta.FindMember("xrefs");
+			if (itr != meta.MemberEnd()) {
+				const rapidjson::Value &xrefs = itr->value;
+				if (! xrefs.IsArray()) {
+					throw JsonParseException("Malformed node ("+id+"): Term Xrefs not array");
+				} else {
+					for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
+              auto elem_iter = elem->FindMember("val");
+              if (elem_iter != elem->MemberEnd()) {
+	                Xref txr = Xref::of(elem_iter->value);
+                  term.add_term_xref(txr);
+              }
+          }
+				}
+			itr = meta.FindMember("basicPropertyValues");
+			if (itr != meta.MemberEnd()) {
+				const rapidjson::Value &propertyVals = itr->value;
+				if (! propertyVals.IsArray()) {
+					throw JsonParseException("Malformed node ("+id+"): Term property values not array");
+				}
+				for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+					PropertyValue propval = PropertyValue::of(*elem);
+					term.add_property_value(propval);
+				}
+			}
+			}
+		}
+	}
+	return term;
+}
 
 
 void
@@ -355,7 +523,12 @@ Ontology::operator=(Ontology &&other){
 void
 Ontology::add_property_value(const PropertyValue &propval){
 		property_values_.push_back(propval);
+}
 
+void
+Ontology::add_property(const Property & prop){
+	property_list_.push_back(prop);
+	std::cout << "Added and size is now "<<property_list_.size() << "\n";
 }
 
 void
@@ -421,6 +594,11 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 				ontology.total_term_id_count() << "\n";
 	ost << "### Edges ###\n"
 			<< "total edges: " << ontology.edge_count() << "\n";
+	ost << "### Properties ###\n"
+			<< "total properties: " << ontology.property_count() << "\n";
+		for (auto p : ontology.property_list_) {
+			ost << p << "\n";
+		}
 		return ost;
 
 }

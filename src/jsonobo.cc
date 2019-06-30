@@ -28,98 +28,29 @@ JsonOboParser::add_edge(const rapidjson::Value &val){
 	edge_list_.push_back(e);
 }
 
-void
-JsonOboParser::add_node(const rapidjson::Value &val){
-	string id;
-	string label;
+bool is_class(const rapidjson::Value &val){
 	if (! val.IsObject()) {
-		std::cerr << "[ERROR] Attempt to add malformed node (not JSON object). Skipping...\n";
-		return;
+		return false;
 	}
 	if (! val.HasMember("type")) {
-		std::cerr << "[ERROR] Attempt to add malformed node (no type information). Skipping...\n";
-		return;
-	} else if (strcmp ( val["type"].GetString(),"CLASS") ) {
-		std::cerr << "[ERROR] Attempt to add malformed node (not a CLASS). Skipping...\n";
-		return;
+		return false;
+	} else if (! strcmp ( val["type"].GetString(),"CLASS") ) {
+		return true;
 	}
-	if (! val.HasMember("id")) {
-		std::cerr << "[ERROR] Attempt to add malformed node (no id). Skipping...\n";
-		return;
-	} else {
-		id = val["id"].GetString();
+	return false;
+}
+
+bool is_property(const rapidjson::Value &val){
+	if (! val.IsObject()) {
+		return false;
 	}
-	if (! val.HasMember("lbl")) {
-		std::cerr << "[ERROR] Attempt to add malformed node (no label). Skipping...\n";
-		return;
-	} else {
-		label = val["lbl"].GetString();
+	if (! val.HasMember("type")) {
+		return false;
+	} else if (! strcmp ( val["type"].GetString(),"PROPERTY") ) {
+		std::cout << "TURURUEUEURUEREURERERE";
+		return true;
 	}
-
-	TermId tid = TermId::of(id);
-
-	Term term{tid,label};
-	if (! val.HasMember("meta")) {
-		std::cerr << "[WARN] Term object lacks Meta\n";
-	} else {
-		const rapidjson::Value &meta = val["meta"];
-		if (! meta.IsObject()) {
-			std::cerr << "[ERROR] Attempt to add malformed node (meta is not JSON object). Skipping...\n";
-			return;
-		}
-		rapidjson::Value::ConstMemberIterator itr = meta.FindMember("definition");
-		if (itr != meta.MemberEnd()) {
-			const rapidjson::Value &definition = meta["definition"];
-
-			//printJ(definition);
-			rapidjson::Value::ConstMemberIterator it = definition.FindMember("val");
-			if (it != definition.MemberEnd()) {
-				string definition_value = it->value.GetString();
-			//	std::cout << "ading " << definition_value << "\n";
-				term.add_definition(definition_value);
-			}
-			it = definition.FindMember("xrefs");
-			if (it != definition.MemberEnd()) {
-				const rapidjson::Value& defxrefs = it->value;
-				if (! defxrefs.IsArray()) {
-					throw JsonParseException("xref not array");
-				}
-				for (auto xrefs_itr = defxrefs.Begin();
-									xrefs_itr != defxrefs.End(); ++xrefs_itr) {
-              Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
-              term.add_definition_xref(xr);
-        }
-			} // done with definition
-			itr = meta.FindMember("xrefs");
-			if (itr != meta.MemberEnd()) {
-				const rapidjson::Value &xrefs = itr->value;
-				if (! xrefs.IsArray()) {
-					throw JsonParseException("Term Xrefs not array");
-				} else {
-					for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
-              auto elem_iter = elem->FindMember("val");
-              if (elem_iter != elem->MemberEnd()) {
-	                Xref txr = Xref::of(elem_iter->value);
-                  term.add_term_xref(txr);
-              }
-          }
-				}
-			itr = meta.FindMember("basicPropertyValues");
-			if (itr != meta.MemberEnd()) {
-				const rapidjson::Value &propertyVals = itr->value;
-				if (! propertyVals.IsArray()) {
-					throw JsonParseException("Term property values not array");
-				}
-				for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-					PropertyValue propval = PropertyValue::of(*elem);
-					term.add_property_value(propval);
-				}
-			}
-
-			}
-		}
-	}
-	term_list_.push_back(term);
+	return false;
 }
 
 void
@@ -168,15 +99,25 @@ path_(path) {
 
 	string myError;
 	for (auto& v : nodes.GetArray()) {
-		try {
-    	add_node(v);
-    } catch (const JsonParseException& e) {
-    	std::cerr << e.what() << "\n";
-			myError += e.what();
-    }
+		if (is_class(v)) {
+			try {
+				Term term = Term::of(v);
+				term_list_.push_back(term);
+    	} catch (const JsonParseException& e) {
+    		std::cerr << e.what() << "\n";
+				myError += e.what();
+    	}
+		}
+		else if (is_property(v)){
+			try{
+				Property prop = Property::of(v);
+				ontology_.add_property(prop);
+			} catch (const JsonParseException& e) {
+    		std::cerr << e.what() << "\n";
+				myError += e.what();
+    	}
+		}
 	}
-	std::cout << " Size of nodes array is " << nodes.Size() << "\n";
-
 	rapidjson::Value::ConstMemberIterator itr = mainObject.FindMember("edges");
 	if (itr == mainObject.MemberEnd()){
 		throw JsonParseException("Did not find edges element");
@@ -187,10 +128,11 @@ path_(path) {
 			add_edge(v);
 		} catch (const JsonParseException& e) {
 				std::cerr << e.what() << "\n";
-				myError += e.what();
+				myError += e.what() ;
+				myError += "\n";
 		}
 	}
-		std::cout << " Size of edges array is " << edges.Size() << "\n";
+
 		itr = mainObject.FindMember("id");
 		if (itr == mainObject.MemberEnd()){
 			throw JsonParseException("Did not find id element");
@@ -206,14 +148,6 @@ path_(path) {
 			add_meta(meta);
 		}
 
-		int c=0;
-    for (const auto & p : term_list_) {
-        std::cout << ++c << ") " << p << "\n";
-    }
-
-		for (const auto & p : edge_list_) {
-        std::cout << ++c << ") " << p << "\n";
-    }
 
 		ontology_.add_all_terms(term_list_);
 		ontology_.add_all_edges(edge_list_);

@@ -54,7 +54,7 @@ public:
 };
 std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 
-enum class Property {
+enum class Prop {
   UNKNOWN,
   CREATED_BY, //created_by
   CREATION_DATE, //creation_date
@@ -82,17 +82,35 @@ enum class Property {
   */
 class PropertyValue {
 private:
-  Property property_;
+  Prop property_;
   string value_;
-  PropertyValue(Property p, const string &v):property_(p),value_(v){}
+  PropertyValue(Prop p, const string &v):property_(p),value_(v){}
 public:
   static PropertyValue of(const rapidjson::Value &val);
   friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
-  bool is_alternate_id() const { return property_ == Property::HAS_ALTERNATIVE_ID; }
+  bool is_alternate_id() const { return property_ == Prop::HAS_ALTERNATIVE_ID; }
   string get_value() const { return value_; }
 };
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 
+
+class Property {
+private:
+  TermId id_;
+  string label_;
+  vector<PropertyValue> property_values_;
+  Property(TermId id,string label,vector<PropertyValue> vals):
+    id_(std::move(id)),label_(std::move(label)),property_values_(std::move(vals)){}
+public:
+  static Property of(const rapidjson::Value &val);
+  Property(const Property &p);
+  Property(Property &&p);
+  ~Property(){}
+  Property &operator=(const Property &p);
+  Property &operator=(Property &&p);
+  friend std::ostream& operator<<(std::ostream& ost, const Property& prop);
+};
+std::ostream& operator<<(std::ostream& ost, const Property& prop);
 
 class Term {
 private:
@@ -107,6 +125,7 @@ private:
 
 public:
   Term(const TermId &id, const string &label);
+  static Term of(const rapidjson::Value &val);
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
@@ -146,6 +165,7 @@ class Ontology {
 private:
   string id_;
   vector<PropertyValue> property_values_;
+  vector<Property> property_list_;
   map<TermId, std::shared_ptr<Term> > term_map_;
   /** Current primary TermId's. */
   vector<TermId> current_term_ids_;
@@ -164,11 +184,13 @@ public:
   ~Ontology(){}
   void set_id(const string &id) { id_ = id; }
   void add_property_value(const PropertyValue &propval);
+  void add_property(const Property & prop);
   void add_all_terms(const vector<Term> &terms);
   void add_all_edges(const vector<Edge> &edges);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return edge_list_.size(); }
+  int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
 
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
