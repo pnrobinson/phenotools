@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include <optional>
 #include <rapidjson/document.h>
 #include "jsonparse_exception.h"
