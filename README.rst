@@ -20,6 +20,8 @@ On an Ubuntu system, one can install the requirements as follows. ::
 
 Following this, download the latest source code, compile and install it. Briefly ::
 
+  $ tar xvfz protobuf-cpp-3.8.0.tar.gz
+  $ cd protobuf-3.8.0/
   $ ./configure
   $ make
   $ make check
