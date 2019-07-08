@@ -7,38 +7,14 @@
 #include <memory>
 #include <optional>
 #include <rapidjson/document.h>
+#include "termid.h"
+#include "property.h"
 #include "jsonparse_exception.h"
 
 using std::string;
 using std::vector;
 using std::map;
 
-
-
-
-class TermId {
-private:
-    string value_;
-    std::size_t separator_pos_;
-    TermId(const string &s,std::size_t pos);
-
-public:
-
-    TermId(const TermId  &tid);
-    TermId(TermId &&tid);
-    TermId &operator=(const TermId &tid);
-    bool operator<(const TermId& rhs) const;
-    ~TermId(){}
-    static TermId of(const string &s);
-    static TermId from_url(const string &s);
-    static TermId of(const rapidjson::Value &val);
-    string get_value() const { return value_; }
-    string get_prefix() const { return value_.substr(0,separator_pos_); }
-    string get_id() const { return value_.substr(separator_pos_+1); }
-
-    friend std::ostream& operator<<(std::ostream& ost, const TermId& tid);
-};
-std::ostream& operator<<(std::ostream& ost, const TermId& tid);
 
 class Xref {
 private:
@@ -54,64 +30,6 @@ public:
     friend std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 };
 std::ostream& operator<<(std::ostream& ost, const Xref& txref);
-
-enum class Prop {
-  UNKNOWN,
-  CREATED_BY, //created_by
-  CREATION_DATE, //creation_date
-  HAS_OBO_NAMESPACE, //hasOBONamespace
-  HAS_ALTERNATIVE_ID, //hasAlternativeId
-  RDF_SCHEMA_COMMENT,//rdf-schema#comment
-  DATE,//"date" -- probably an error
-  OWL_DEPRECATED,//owl#deprecated
-  IS_ANONYMOUS,//oboInOwl#is_anonymous
-  CONSIDER,//oboInOwl#consider
-  EDITOR_NOTES,//hsapdv#editor_notes
-  CREATOR, //creator
-  DESCRIPTION, //description
-  LICENSE, //license
-  RIGHTS,//rights
-  SUBJECT,//subject
-  TITLE,//title
-  DEFAULT_NAMESPACE,//oboInOwl#default-namespace
-  LOGICAL_DEFINITION_VIEW_RELATION,//oboInOwl#logical-definition-view-relation
-  SAVED_BY,//oboInOwl#saved-by
-};
-/**
-  * A simple class that stores the basicPropertyValues elements about
-  * a Term.
-  */
-class PropertyValue {
-private:
-  Prop property_;
-  string value_;
-  PropertyValue(Prop p, const string &v):property_(p),value_(v){}
-public:
-  static PropertyValue of(const rapidjson::Value &val);
-  friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
-  bool is_alternate_id() const { return property_ == Prop::HAS_ALTERNATIVE_ID; }
-  string get_value() const { return value_; }
-};
-std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
-
-
-class Property {
-private:
-  TermId id_;
-  string label_;
-  vector<PropertyValue> property_values_;
-  Property(TermId id,string label,vector<PropertyValue> vals):
-    id_(std::move(id)),label_(std::move(label)),property_values_(std::move(vals)){}
-public:
-  static Property of(const rapidjson::Value &val);
-  Property(const Property &p);
-  Property(Property &&p);
-  ~Property(){}
-  Property &operator=(const Property &p);
-  Property &operator=(Property &&p);
-  friend std::ostream& operator<<(std::ostream& ost, const Property& prop);
-};
-std::ostream& operator<<(std::ostream& ost, const Property& prop);
 
 class Term {
 private:
