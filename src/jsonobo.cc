@@ -125,9 +125,14 @@ JsonOboParser::JsonOboParser(const string path):
 	n++;
 	cout << "\n" << n << std::flush;
       } catch (const JsonParseException& e) {
-	std::cerr << e.what() << "\n";
 	std::cerr << get_json_string(v) << "\n";
+	std::cerr << e.what() << "\n";
 	myError += e.what();
+	string s = e.what();
+	std::size_t f = s.find("BOAD");
+	if (f != string::npos) continue;
+	f = s.find("EXACTS");
+	if (f != string::npos) continue;
 	std::exit(1);
       }
     }

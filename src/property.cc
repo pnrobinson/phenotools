@@ -20,24 +20,62 @@ PropertyValue::of(const rapidjson::Value &val) {
 	  pred = pred.substr(pos+1);
 	}
 	Prop prop = Prop::UNKNOWN;
-	if (pred == "oboInOwl#created_by") {
-	  prop = Prop::CREATED_BY;
-	} else if (pred == "oboInOwl#creation_date") {
-	  prop = Prop::CREATION_DATE;
-	} else if (pred == "oboInOwl#hasOBONamespace") {
-	  prop = Prop::HAS_OBO_NAMESPACE;
-	} else if (pred == "oboInOwl#hasAlternativeId") {
-	  prop = Prop::HAS_ALTERNATIVE_ID;
-	} else if (pred == "rdf-schema#comment") {
-	  prop = Prop::RDF_SCHEMA_COMMENT;
+	if ((pos = pred.find("oboInOwl"))==0) {
+	  if (pred == "oboInOwl#created_by") {
+	    prop = Prop::CREATED_BY;
+	  } else if (pred == "oboInOwl#creation_date") {
+	    prop = Prop::CREATION_DATE;
+	  } else if (pred == "oboInOwl#hasOBONamespace") {
+	    prop = Prop::HAS_OBO_NAMESPACE;
+	  } else if (pred == "oboInOwl#hasAlternativeId") {
+	     prop = Prop::HAS_ALTERNATIVE_ID;
+	  } else if (pred == "oboInOwl#is_class_level") {
+	    prop = Prop::IS_CLASS_LEVEL;
+	  } else if (pred == "oboInOwl#is_anonymous") {
+	    prop = Prop::IS_ANONYMOUS;
+	  } else if (pred == "oboInOwl#consider") {
+	    prop = Prop::CONSIDER;
+	  } else if (pred == "oboInOwl#default-namespace") {
+	    prop = Prop::DEFAULT_NAMESPACE;
+	  } else if (pred == "oboInOwl#logical-definition-view-relation") {
+	    prop = Prop::LOGICAL_DEFINITION_VIEW_RELATION;
+	  } else if (pred == "oboInOwl#saved-by") {
+	    prop = Prop::SAVED_BY;
+	  } else if (pred == "oboInOwl#is_metadata_tag") {
+	    prop = Prop::IS_METADATA_TAG;
+	  } else if (pred == "oboInOwl#shorthand") {
+	    prop = Prop::SHORT_HAND;
+	  }
+	} else if ((pos = pred.find("core"))==0) {
+	  if (pos == 0) {
+	    if (pred == "core#closeMatch"){
+	      prop = Prop::CLOSE_MATCH;
+	    } else if (pred == "core#exactMatch"){
+	      prop = Prop::EXACT_MATCH;
+	    } else if (pred == "core#broadMatch"){
+	      prop = Prop::BROAD_MATCH;
+	    } else if (pred == "core#narrowMatch"){
+	      prop = Prop::NARROW_MATCH;
+	    }
+	  }
+	} else if ((pos = pred.find("rdf-schema"))==0) {
+       	  if (pred == "rdf-schema#comment") {
+	    prop = Prop::RDF_SCHEMA_COMMENT;
+	  } else if (pred == "rdf-schema#seeAlso") {
+	    prop = Prop::SEE_ALSO;
+	  }
+	} else if ((pos == pred.find("mondo"))==0) {
+	  if (pred == "mondo#related") {
+	    prop = Prop::RELATED;
+	  } else if (pred == "mondo#excluded_subClassOf") {
+	    prop = Prop::EXCLUDED_SUBCLASS_OF;
+	  } else if (pred == "mondo#pathogenesis") {
+	    prop = Prop::PATHOGENESIS;
+	  }
 	} else if (pred == "date") {
 	  prop = Prop::DATE;
 	} else if (pred == "owl#deprecated") {
 	  prop = Prop::OWL_DEPRECATED;
-	} else if (pred == "oboInOwl#is_anonymous") {
-	  prop = Prop::IS_ANONYMOUS;
-	} else if (pred == "oboInOwl#consider") {
-	  prop = Prop::CONSIDER;
 	} else if (pred == "hsapdv#editor_notes") {
 	  prop = Prop::EDITOR_NOTES;
 	} else if (pred == "creator") {
@@ -52,32 +90,10 @@ PropertyValue::of(const rapidjson::Value &val) {
 	  prop = Prop::SUBJECT;
 	} else if (pred == "title") {
 	  prop = Prop::TITLE;
-	} else if (pred == "oboInOwl#default-namespace") {
-	  prop = Prop::DEFAULT_NAMESPACE;
-	} else if (pred == "oboInOwl#logical-definition-view-relation") {
-	  prop = Prop::LOGICAL_DEFINITION_VIEW_RELATION;
-	} else if (pred == "oboInOwl#saved-by") {
-	  prop = Prop::SAVED_BY;
-	} else if (pred == "core#closeMatch"){
-	  prop = Prop::CLOSE_MATCH;
-	} else if (pred == "core#exactMatch"){
-	  prop = Prop::EXACT_MATCH;
-	} else if (pred == "core#broadMatch"){
-	  prop = Prop::BROAD_MATCH;
-	} else if (pred == "core#narrowMatch"){
-	  prop = Prop::NARROW_MATCH;
-	} else if (pred == "mondo#excluded_subClassOf") {
-	  prop = Prop::EXCLUDED_SUBCLASS_OF;
-	} else if (pred == "rdf-schema#seeAlso") {
-	  prop = Prop::SEE_ALSO;
-	} else if (pred == "oboInOwl#is_metadata_tag") {
-	  prop = Prop::IS_METADATA_TAG;
-	} else if (pred == "oboInOwl#shorthand") {
-	  prop = Prop::SHORT_HAND;
 	} else if (pred == "IAO_0100001") {
 	  prop = Prop::TERM_REPLACED_BY;
-	} else if (pred == "mondo#related") {
-	  prop = Prop::RELATED;
+	} else if (pred == "RO_0002161") {
+	  prop = Prop::NEVER_IN_TAXON;
 	} else if (pred == "mondo#excluded_synonym") {
 	  prop = Prop::EXCLUDED_SYNONYM;
 	} else {
@@ -85,8 +101,9 @@ PropertyValue::of(const rapidjson::Value &val) {
 	}
 	p = val.FindMember("val");
 	if (p == val.MemberEnd()) {
-		throw JsonParseException("PropertyValue did not contain \'val\' element");
+	  throw JsonParseException("PropertyValue did not contain \'val\' element");
 	}
+	
 	string valu = val["val"].GetString();
 	PropertyValue pv{prop,valu};
 	return pv;

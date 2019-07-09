@@ -42,6 +42,9 @@ enum class Prop {
   TERM_REPLACED_BY, // IAO_0100001
   RELATED, //mondo#related
   EXCLUDED_SYNONYM, // mondo#excluded_synonym
+  IS_CLASS_LEVEL, //oboInOwl#is_class_level
+  PATHOGENESIS, //mondo#pathogenesis
+  NEVER_IN_TAXON, // RO_0002161
 };
 /**
   * A simple class that stores the basicPropertyValues elements about
