@@ -90,11 +90,7 @@ private:
     source_(s),
     dest_(o),
     edge_type_(et) {}
-  static map<string,EdgeType> edgetype_registry_; /*= {
-						    {"is_a",EdgeType::IS_A},
-						    {"RO_0004026",EdgeType::DISEASE_HAS_LOCATION}
-						    };*/
-  
+  static map<string,EdgeType> edgetype_registry_;   
 public:
   static Edge of(const rapidjson::Value &val);
   TermId get_source() const { return source_; }

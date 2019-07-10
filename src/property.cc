@@ -5,109 +5,102 @@
 using std::cerr;
 
 
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/prettywriter.h>
+/**
+ * generate a printable String from an arbitrary RAPIDJSON value object.
+ * @param json A rapid json object
+ * @return a String representation of the JSON.
+ */
+string get_json_string42(const rapidjson::Value &json)
+{
+  using namespace rapidjson;
+  StringBuffer sb;
+  PrettyWriter<StringBuffer> writer(sb);
+  json.Accept(writer);
+  return sb.GetString();
+}
+
+/**
+ * map from String to value, static initialization.
+ */
+map<string,Prop>
+property_registry_ = {
+		   {"oboInOwl#created_by", Prop::CREATED_BY},
+		   {"oboInOwl#creation_date", Prop::CREATION_DATE},
+		   {"oboInOwl#hasOBONamespace",Prop::HAS_OBO_NAMESPACE},
+		   {"oboInOwl#hasAlternativeId",Prop::HAS_ALTERNATIVE_ID},
+		   {"oboInOwl#is_class_level",Prop::IS_CLASS_LEVEL},
+		   {"oboInOwl#is_anonymous",Prop::IS_ANONYMOUS},
+		   {"oboInOwl#consider",Prop::CONSIDER},
+		   {"oboInOwl#default-namespace" ,Prop::DEFAULT_NAMESPACE},
+		   {"oboInOwl#logical-definition-view-relation" ,Prop::LOGICAL_DEFINITION_VIEW_RELATION},
+		   {"oboInOwl#saved-by",Prop::SAVED_BY},
+		   {"oboInOwl#is_metadata_tag",Prop::IS_METADATA_TAG},
+		   {"oboInOwl#shorthand",Prop::SHORT_HAND},
+		   {"oboInOwl#hasOBOFormatVersion",Prop::HAS_OBO_FORMAT_VERSION},
+		   {"core#closeMatch",Prop::CLOSE_MATCH},
+		   {"core#exactMatch",Prop::EXACT_MATCH},
+		   {"core#broadMatch",Prop::BROAD_MATCH},
+		   {"core#narrowMatch" ,Prop::NARROW_MATCH},
+		   {"rdf-schema#comment",Prop::RDF_SCHEMA_COMMENT},
+		   {"rdf-schema#seeAlso",Prop::SEE_ALSO},
+		   {"mondo#related",Prop::RELATED},
+		   {"mondo#excluded_subClassOf",Prop::EXCLUDED_SUBCLASS_OF},
+		   {"mondo#pathogenesis",Prop::PATHOGENESIS},
+		   {"date",Prop::DATE},
+		   {"owl#deprecated",Prop::OWL_DEPRECATED},
+		   {"hsapdv#editor_notes",Prop::EDITOR_NOTES},
+		   {"creator",Prop::CREATOR},
+		   {"description",Prop::DESCRIPTION},
+		   {"license",Prop::LICENSE},
+		   {"rights",Prop::RIGHTS},
+		   {"subject",Prop::SUBJECT},
+		   {"title",Prop::TITLE},
+		   {"IAO_0100001",Prop::TERM_REPLACED_BY},
+		   {"RO_0002161",Prop::NEVER_IN_TAXON},
+		   {"mondo#excluded_synonym",Prop::EXCLUDED_SYNONYM},
+		   {"source",Prop::SOURCE},
+		   {"homepage",Prop::HOMEPAGE},
+};
+
+/**
+ * construct a PropertyValue from a JSON object
+ */
 PropertyValue
 PropertyValue::of(const rapidjson::Value &val) {
-	if (! val.IsObject()) {
-		throw JsonParseException("PropertyValue factory expects object");
-	}
-	auto p = val.FindMember("pred");
-	if (p == val.MemberEnd()) {
-		throw JsonParseException("PropertyValue did not contain \'pred\' element");
-	}
-	string pred = val["pred"].GetString();
-	size_t pos = pred.find_last_of('/');
-	if (pos != string::npos) {
-	  pred = pred.substr(pos+1);
-	}
-	Prop prop = Prop::UNKNOWN;
-	if ((pos = pred.find("oboInOwl"))==0) {
-	  if (pred == "oboInOwl#created_by") {
-	    prop = Prop::CREATED_BY;
-	  } else if (pred == "oboInOwl#creation_date") {
-	    prop = Prop::CREATION_DATE;
-	  } else if (pred == "oboInOwl#hasOBONamespace") {
-	    prop = Prop::HAS_OBO_NAMESPACE;
-	  } else if (pred == "oboInOwl#hasAlternativeId") {
-	     prop = Prop::HAS_ALTERNATIVE_ID;
-	  } else if (pred == "oboInOwl#is_class_level") {
-	    prop = Prop::IS_CLASS_LEVEL;
-	  } else if (pred == "oboInOwl#is_anonymous") {
-	    prop = Prop::IS_ANONYMOUS;
-	  } else if (pred == "oboInOwl#consider") {
-	    prop = Prop::CONSIDER;
-	  } else if (pred == "oboInOwl#default-namespace") {
-	    prop = Prop::DEFAULT_NAMESPACE;
-	  } else if (pred == "oboInOwl#logical-definition-view-relation") {
-	    prop = Prop::LOGICAL_DEFINITION_VIEW_RELATION;
-	  } else if (pred == "oboInOwl#saved-by") {
-	    prop = Prop::SAVED_BY;
-	  } else if (pred == "oboInOwl#is_metadata_tag") {
-	    prop = Prop::IS_METADATA_TAG;
-	  } else if (pred == "oboInOwl#shorthand") {
-	    prop = Prop::SHORT_HAND;
-	  }
-	} else if ((pos = pred.find("core"))==0) {
-	  if (pos == 0) {
-	    if (pred == "core#closeMatch"){
-	      prop = Prop::CLOSE_MATCH;
-	    } else if (pred == "core#exactMatch"){
-	      prop = Prop::EXACT_MATCH;
-	    } else if (pred == "core#broadMatch"){
-	      prop = Prop::BROAD_MATCH;
-	    } else if (pred == "core#narrowMatch"){
-	      prop = Prop::NARROW_MATCH;
-	    }
-	  }
-	} else if ((pos = pred.find("rdf-schema"))==0) {
-       	  if (pred == "rdf-schema#comment") {
-	    prop = Prop::RDF_SCHEMA_COMMENT;
-	  } else if (pred == "rdf-schema#seeAlso") {
-	    prop = Prop::SEE_ALSO;
-	  }
-	} else if ((pos == pred.find("mondo"))==0) {
-	  if (pred == "mondo#related") {
-	    prop = Prop::RELATED;
-	  } else if (pred == "mondo#excluded_subClassOf") {
-	    prop = Prop::EXCLUDED_SUBCLASS_OF;
-	  } else if (pred == "mondo#pathogenesis") {
-	    prop = Prop::PATHOGENESIS;
-	  }
-	} else if (pred == "date") {
-	  prop = Prop::DATE;
-	} else if (pred == "owl#deprecated") {
-	  prop = Prop::OWL_DEPRECATED;
-	} else if (pred == "hsapdv#editor_notes") {
-	  prop = Prop::EDITOR_NOTES;
-	} else if (pred == "creator") {
-	  prop = Prop::CREATOR;
-	} else if (pred == "description") {
-	  prop = Prop::DESCRIPTION;
-	} else if (pred == "license") {
-	  prop = Prop::LICENSE;
-	} else if (pred == "rights") {
-	  prop = Prop::RIGHTS;
-	} else if (pred == "subject") {
-	  prop = Prop::SUBJECT;
-	} else if (pred == "title") {
-	  prop = Prop::TITLE;
-	} else if (pred == "IAO_0100001") {
-	  prop = Prop::TERM_REPLACED_BY;
-	} else if (pred == "RO_0002161") {
-	  prop = Prop::NEVER_IN_TAXON;
-	} else if (pred == "mondo#excluded_synonym") {
-	  prop = Prop::EXCLUDED_SYNONYM;
-	} else {
-	  throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
-	}
-	p = val.FindMember("val");
-	if (p == val.MemberEnd()) {
-	  throw JsonParseException("PropertyValue did not contain \'val\' element");
-	}
-	
-	string valu = val["val"].GetString();
-	PropertyValue pv{prop,valu};
-	return pv;
+  if (! val.IsObject()) {
+    throw JsonParseException("PropertyValue factory expects object");
+  }
+  auto p = val.FindMember("pred");
+  if (p == val.MemberEnd()) {
+    throw JsonParseException("PropertyValue did not contain \'pred\' element");
+  }
+  string pred = val["pred"].GetString();
+  size_t pos = pred.find_last_of('/');
+  if (pos != string::npos) {
+    pred = pred.substr(pos+1);
+  }
+ 
+  auto it = property_registry_.find(pred);
+  if (it == property_registry_.end()) {
+    std::cerr << get_json_string42(val);
+    throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
+  } 
+  Prop prop = it->second;
+   
+  p = val.FindMember("val");
+  if (p == val.MemberEnd()) {
+    throw JsonParseException("PropertyValue did not contain \'val\' element");
+  }
+  
+  string valu = val["val"].GetString();
+  PropertyValue pv{prop,valu};
+  return pv;
 }
+
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
   switch (pv.property_) {
   case Prop::CREATED_BY: ost << "created_by: "; break;
@@ -123,8 +116,8 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
   case Prop::DEFAULT_NAMESPACE: ost << "default-namespace: "; break;
   case Prop::LOGICAL_DEFINITION_VIEW_RELATION: ost << "logical-definition-view-relation: "; break;
   case Prop::SAVED_BY: ost << "saved-by: "; break;
-    
-  default: ost <<"other property value: "; break;
+  case Prop::SOURCE: ost << "source: "; break;
+  default: ost <<"other property value(todo): "; break;
   }
   ost << pv.value_;
   return ost;

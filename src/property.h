@@ -3,11 +3,13 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include <rapidjson/document.h>
 #include "termid.h"
 #include "jsonparse_exception.h"
 
 using std::vector;
+using std::map;
 using std::string;
 
 enum class Prop {
@@ -45,6 +47,9 @@ enum class Prop {
   IS_CLASS_LEVEL, //oboInOwl#is_class_level
   PATHOGENESIS, //mondo#pathogenesis
   NEVER_IN_TAXON, // RO_0002161
+  SOURCE, //http://purl.org/dc/terms/source
+  HAS_OBO_FORMAT_VERSION,
+  HOMEPAGE,
 };
 /**
   * A simple class that stores the basicPropertyValues elements about
@@ -73,6 +78,7 @@ private:
     id_(id),
     label_(label),
     property_values_(vals){}
+  static map<string,Prop> property_registry_;
 public:
   static Property of(const rapidjson::Value &val);
   Property(const Property &p);

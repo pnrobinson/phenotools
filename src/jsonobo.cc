@@ -65,7 +65,6 @@ bool is_property(const rapidjson::Value &val){
   if (! val.HasMember("type")) {
     return false;
   } else if (! strcmp ( val["type"].GetString(),"PROPERTY") ) {
-    std::cout << "TURURUEUEURUEREURERERE";
     return true;
   }
   return false;
@@ -133,6 +132,9 @@ JsonOboParser::JsonOboParser(const string path):
 	if (f != string::npos) continue;
 	f = s.find("EXACTS");
 	if (f != string::npos) continue;
+	std::cerr << get_json_string(v) << "\n";
+
+
 	std::exit(1);
       }
     }
@@ -142,7 +144,7 @@ JsonOboParser::JsonOboParser(const string path):
 	ontology_.add_property(prop);
       } catch (const JsonParseException& e) {
 	std::cerr << e.what() << "\n";
-	std::cerr << get_json_string(v) << "\n";
+	std::cerr << get_json_string(v) << "\n";	
 	myError += e.what();
 	std::exit(1);
       }
