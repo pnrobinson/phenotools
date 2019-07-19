@@ -479,9 +479,9 @@ namespace phenotools {
       }
     }
     // we do not need to check the negated_ field -- it is a primitive bool
-    // The only other field that is not optional is the evidence.
+    // The only other field that is not optional is the evidence (recommended).
     if (evidence_.empty() ){
-      Validation v = Validation::createError(ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE);
+      Validation v = Validation::createWarning(ValidationCause::PHENOTYPIC_FEATURE_LACKS_EVIDENCE);
     } else  {
       for (Evidence e : evidence_) {
 	vector<Validation>  v2 =  e.validate();

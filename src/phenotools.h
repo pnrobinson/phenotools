@@ -13,6 +13,7 @@ using std::unique_ptr;
 using std::string;
 using std::vector;
 using std::map;
+using std::ostream;
 
 namespace phenotools {
 
@@ -106,9 +107,9 @@ namespace phenotools {
     bool is_warning() const {  return validation_type_ == ValidationType::WARNING; }
     enum ValidationCause get_cause() const { return cause_; }
     const string message() const;
-    friend std::ostream& operator<<(std::ostream& ost, const Validation& v);
+    friend ostream& operator<<(ostream& ost, const Validation& v);
   };
-  std::ostream& operator<<(std::ostream& ost, const Validation& v);
+  ostream& operator<<(ostream& ost, const Validation& v);
 
   class ValidatorI {
   public:
@@ -138,7 +139,7 @@ namespace phenotools {
     const string & get_label() const { return label_; }
     friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
   };
-  std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
+  ostream& operator<<(ostream& ost, const OntologyClass& oc);
 
 
   class Age : public ValidatorI {
@@ -154,9 +155,9 @@ namespace phenotools {
     ~Age(){}
     vector<Validation> validate() const;
      void validate(vector<Validation> &v) const {}
-    friend std::ostream& operator<<(std::ostream& ost, const Age& age);
+    friend ostream& operator<<(ostream& ost, const Age& age);
   };
-  std::ostream& operator<<(std::ostream& ost, const Age& age);
+  ostream& operator<<(ostream& ost, const Age& age);
 
   class AgeRange : public ValidatorI {
   private:
@@ -169,9 +170,9 @@ namespace phenotools {
     ~AgeRange(){}
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const {}
-    friend std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
+    friend ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
   };
-  std::ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
+  ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
 
 
   enum class Sex {
@@ -180,7 +181,7 @@ namespace phenotools {
       MALE,
       OTHER_SEX
       };
-  std::ostream& operator<<(std::ostream& ost, const enum Sex& sex);
+  ostream& operator<<(ostream& ost, const enum Sex& sex);
 
   enum class KaryotypicSex {
     UNKNOWN_KARYOTYPE,
@@ -219,10 +220,10 @@ namespace phenotools {
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const {}
     const string & get_id() const { return id_; }
-    friend std::ostream& operator<<(std::ostream& ost, const Individual& ind);
+    friend ostream& operator<<(ostream& ost, const Individual& ind);
   };
 
-  std::ostream& operator<<(std::ostream& ost, const Individual& ind);
+  ostream& operator<<(ostream& ost, const Individual& ind);
 
 
   class ExternalReference : public ValidatorI {
