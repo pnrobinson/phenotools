@@ -18,7 +18,7 @@ void
 printJJ(const rapidjson::Value &json)
 {
   using namespace rapidjson;
-  
+
   StringBuffer sb;
   PrettyWriter<StringBuffer> writer(sb);
   json.Accept(writer);
@@ -256,6 +256,24 @@ Edge::of(const rapidjson::Value &val){
   }
   Edge e{subj,edgetype,obj};
   return e;
+}
+
+bool
+Edge::operator<(const Edge& rhs) const
+{/**
+  TermId source_;
+  TermId dest_;
+  EdgeType edge_type_;
+  */
+  if (source_ == rhs.source_) {
+    // sort of dest if the source is the same
+    // do not bother sorting on EdgeType because multiple edges between the
+    // same to vertices are rarely found in our OBO ontologies
+    return dest_ < rhs.dest_;
+  } else {
+    return source_ < rhs.source_;
+  }
+
 
 }
 
@@ -275,7 +293,8 @@ Ontology::Ontology(const Ontology &other):
 	term_map_(other.term_map_),
 	current_term_ids_(other.current_term_ids_),
 	obsolete_term_ids_(other.obsolete_term_ids_),
-	edge_list_(other.edge_list_)
+  offset_e_(other.offset_e_),
+	e_to_(other.e_to_)
 	 {
 		// no-op
 	 }
@@ -284,7 +303,8 @@ Ontology::Ontology(Ontology &other): 	id_(other.id_){
 	term_map_ = std::move(other.term_map_);
 	current_term_ids_ = std::move(other.current_term_ids_);
 	obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
-	edge_list_ = std::move(other.edge_list_);
+	e_to_ = std::move(other.e_to_);
+  offset_e_ = std::move(other.offset_e_);
 }
 Ontology&
 Ontology::operator=(const Ontology &other){
@@ -294,7 +314,8 @@ Ontology::operator=(const Ontology &other){
 		term_map_ = other.term_map_;
 		current_term_ids_ = other.current_term_ids_;
 		obsolete_term_ids_ = other.obsolete_term_ids_;
-		edge_list_ = other.edge_list_;
+		e_to_ = other.e_to_;
+    offset_e_ = other.offset_e_;
 	}
 	return *this;
 }
@@ -306,7 +327,8 @@ Ontology::operator=(Ontology &&other){
 		term_map_ = std::move(other.term_map_);
 		current_term_ids_ = std::move(other.current_term_ids_);
 		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
-		edge_list_ = std::move(other.edge_list_);
+		e_to_ = std::move(other.e_to_);
+    offset_e_ = std::move(other.offset_e_);
 	}
 	return *this;
 }
@@ -321,11 +343,11 @@ Ontology::add_property_value(const PropertyValue &propval){
 void
 Ontology::add_property(const Property & prop){
 	property_list_.push_back(prop);
-	std::cout << "Added and size is now "<<property_list_.size() << "\n";
 }
 
 void
 Ontology::add_all_terms(const vector<Term> &terms){
+  int N = terms.size();
 	for (auto t : terms) {
 		std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
 		TermId tid = t.get_term_id();
@@ -343,26 +365,95 @@ Ontology::add_all_terms(const vector<Term> &terms){
 			}
 		}
 	}
+  std::sort(current_term_ids_.begin(), current_term_ids_.end());
+  if (current_term_ids_.size() != N) {
+    // sanity check
+    // should never ever happen. TODO add exception
+    cerr << "[FATAL] Number of term ids not equal to number of terms";
+    std::exit(1);
+  }
+  for (int i=0; i<current_term_ids_.size(); ++i) {
+    termid_to_index_[current_term_ids_[i]] = i;
+  }
 }
 
 /**
 	* Figure out how to be more efficient later.
 	*/
 void
-Ontology::add_all_edges(const vector<Edge> &edges){
-	edge_list_ = edges;
-	int bad=0;
-	for (const auto &e : edges) {
-		auto src = term_map_.find(e.get_source());
-		if (src == term_map_.end() ) {
-			std::cerr <<++bad <<") Attempt to add edge with " + e.get_source().get_value() +" not in ontology\n";
-		}
-		auto dest = term_map_.find(e.get_destination());
-		if (dest == term_map_.end() ) {
-			std::cerr <<++bad <<") Attempt to add edge with " + e.get_destination().get_value() +" not in ontology\n";
-		}
-	}
-	std::cout << " Could not find " << bad << "\n";
+Ontology::add_all_edges(vector<Edge> &edges){
+  // First sort the edges on their source element
+  // this will mean that edges has the same oder of source
+  // TermIds as the current_term_ids_ list.
+  std::sort(edges.begin(),edges.end());
+  int n_vertices = current_term_ids_.size();
+  e_to_.reserve(edges.size());
+  offset_e_.reserve(n_vertices+1);
+  // We perform two passes
+  // In the first pass, we count how many edges emanate from each
+  // source
+  map<int,int> index2edge_count;
+  for (const auto &e : edges) {
+    TermId source = e.get_source();
+    auto it = termid_to_index_.find(source);
+    if (it == termid_to_index_.end()) {
+      // sanity check, should never happen unless input file is corrupted
+      // todo -- write Exception
+      cerr << "[FATAL] counld not find TermId for source node:" << source << "\n";
+      std::exit(1);
+    }
+    int idx = it->second;
+    auto p = index2edge_count.find(idx);
+    if (p == index2edge_count.end()) {
+      index2edge_count[idx] = 1; // first edge from this source index
+    } else {
+      index2edge_count[idx] =  1 + p->second; // increment
+    }
+  }
+  // second pass -- set the offset_e_ according to the number of edges
+  // emanating from each source ids.
+  offset_e_[0] = 0; // offset of zeroth source TermId is zero
+  int offset = 0;
+  for (int i=0; i < current_term_ids_.size(); ++i) {
+    // these i's are the indices of all of the TermIds
+    auto p = index2edge_count.find(i);
+    if (p != index2edge_count.end()) {
+      int n_edges = p->second;
+      offset += n_edges;
+    }
+    // note if we cannot find anything for i, then the i'th TermId
+    // has no outgoing edges
+    offset_e_[i+1] = offset;
+  }
+  // third pass -- add the actual edges
+  // reuse the offset variable to keep track of how many edges we have already
+  // entered for a given source index
+  int current_source_index = -1;
+  offset = 0;
+  for (const auto &e : edges) {
+    TermId source = e.get_source();
+    TermId destination = e.get_destination();
+    // note we have already checked all of the source id's above
+    auto it = termid_to_index_.find(source);
+    int source_index = it->second;
+    auto p = termid_to_index_.find(destination);
+    if (p == termid_to_index_.end()) {
+      std::cerr <<"[ERROR] Could not find index of destination TermId " << destination << "\n";
+      continue;
+    }
+    int destination_index = p->second;
+    if (source_index != current_source_index) {
+      current_source_index = source_index;
+      offset = 0; // start a new block
+    } else {
+      offset++; // go to next index (for a new destination of the previous source)
+    }
+    e_to_[source_index + offset] = destination_index;
+  }
+  // When we get here, we are done! Print a message
+  cout << "[INFO] We entered " << e_to_.size()
+        << " edges for " << n_vertices << " terms\n";
+
 }
 
 std::optional<Term>
@@ -379,7 +470,7 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Ontology ###\n"
 		<< "id: " << ontology.id_ << "\n";
 	for (const auto &pv : ontology.property_values_) {
-		ost << pv << "\n";
+		ost << "property value: " << pv << "\n";
 	}
 	ost << "### Terms ###\n"
 			<< "total current terms: " << ontology.current_term_count() << "\n"

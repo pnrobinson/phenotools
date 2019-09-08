@@ -83,9 +83,14 @@ std::ostream& operator<<(std::ostream& ost, const TermId& tid){
  ost << tid.value_;
  return ost;
 }
+
+bool
+operator==(const TermId& lhs, const TermId& rhs)
+{
+  return lhs.value_ == rhs.value_;
+}
 /** Comparison operator is used when we use TermId as a key for std::map */
 bool
 TermId::operator<(const TermId& rhs) const {
 		return value_ < rhs.value_;
 }
-

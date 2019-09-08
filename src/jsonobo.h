@@ -14,20 +14,33 @@ using std::unique_ptr;
 class JsonOboParser {
 private:
 	string path_;
-
+	/** The identifier of the ontology we are parsing. */
+	string ontology_id_;
+	/** List of all terms (classes) of the ontlogy we are parsing. */
 	vector<Term> term_list_;
+	/** List of all edges of the ontology we are parsing. */
 	vector<Edge> edge_list_;
+	/** List of all property values of the ontology we are parsing. */
+	vector<PropertyValue> property_value_list_;
+	/** A list of errors, if any, encountered while parsing the input file.*/
+	vector<string> error_list_;
 
 	Ontology ontology_;
 
+	void process_metadata(const rapidjson::Value &val);
+	/** Ingest vertices from the JSON file */
+	void process_nodes(const rapidjson::Value& nodes);
+	/** Ingest edges from the JSON file */
+	void process_edges(const rapidjson::Value& edges);
 
-	void add_node(const rapidjson::Value &val);
-	void add_edge(const rapidjson::Value &val);
-	void add_meta(const rapidjson::Value &val);
+	void transform_input_data_to_ontology();
 
 public:
 	JsonOboParser(const string path);
-	Ontology get_ontology() const { return ontology_; }
+	/** Transform the nodes and edges into an Ontology object
+			with CLR graph. When this method is called, the CTOR
+			has ingested data to the term_list and the edge_list.*/
+	Ontology get_ontology();// { return ontology_; }
 
 
 

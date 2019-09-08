@@ -90,11 +90,12 @@ private:
     source_(s),
     dest_(o),
     edge_type_(et) {}
-  static map<string,EdgeType> edgetype_registry_;   
+  static map<string,EdgeType> edgetype_registry_;
 public:
   static Edge of(const rapidjson::Value &val);
   TermId get_source() const { return source_; }
   TermId get_destination() const { return dest_; }
+  bool operator<(const Edge& rhs) const;
   friend std::ostream& operator<<(std::ostream& ost, const Edge& edge);
 };
 std::ostream& operator<<(std::ostream& ost, const Edge& edge);
@@ -110,8 +111,16 @@ private:
   vector<TermId> current_term_ids_;
   /** obsoleted and alt ids. */
   vector<TermId> obsolete_term_ids_;
+  /** Key: a TermId object. Value: Correspodning index in current_term_ids_. */
+  map<TermId, int > termid_to_index_;
+  //vector<Edge> edge_list_;
 
-  vector<Edge> edge_list_;
+  /**  offset_e stores offsets into e_to that indicate where the adjacency lists begin.
+  The list for an arbitrary vertex begins at e_to[offset_e[v]] and ends at
+  e_to[offset_e[v+1]]-1. */
+  vector<int> offset_e_;
+  /** CSR (Compressed Storage Format) Adjacency list. */
+  vector<int> e_to_;
 
 
 public:
@@ -125,16 +134,16 @@ public:
   void add_property_value(const PropertyValue &propval);
   void add_property(const Property & prop);
   void add_all_terms(const vector<Term> &terms);
-  void add_all_edges(const vector<Edge> &edges);
+  void add_all_edges(vector<Edge> &edges);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
-  int edge_count() const { return edge_list_.size(); }
+  int edge_count() const { return e_to_.size(); }
   int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
 
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
-
-
+  vector<TermId> get_current_term_ids() const { return current_term_ids_; }
+//  vector<Edge> get_edge_list() const { return edge_list_; }
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
