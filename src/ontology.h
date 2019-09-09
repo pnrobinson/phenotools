@@ -27,6 +27,7 @@ public:
     Xref &operator=(const Xref &txr);
     static Xref of(const rapidjson::Value &val);
     static Xref fromCurieString(const rapidjson::Value &val);
+    TermId get_termid() const { return term_id_; }
     friend std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 };
 std::ostream& operator<<(std::ostream& ost, const Xref& txref);
@@ -52,8 +53,12 @@ public:
 
   TermId get_term_id() const { return id_; }
   string get_label() const { return label_; }
+  string get_definition() const { return definition_; }
+  vector<Xref> get_definition_xref_list() const { return definition_xref_list_;}
+  vector<Xref> get_term_xref_list() const {return term_xref_list_;}
   bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }
   vector<TermId> get_alternative_ids() const { return alternative_id_list_; }
+  vector<PropertyValue> get_property_values() const { return property_values_; }
   vector<TermId> get_isa_parents(const TermId &child) const;
   bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);

@@ -64,6 +64,7 @@ public:
   static PropertyValue of(const rapidjson::Value &val);
   friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
   bool is_alternate_id() const { return property_ == Prop::HAS_ALTERNATIVE_ID; }
+  Prop get_property() const { return property_; }
   string get_value() const { return value_; }
 };
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);

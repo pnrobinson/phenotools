@@ -505,7 +505,23 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   REQUIRE(1 == parents.size());
   TermId par = TermId::of("HP:0000001");
   REQUIRE(par == parents.at(0));
-
+  string def = "Definition for HP:0000002.";
+  REQUIRE(def ==  term.get_definition());
+  vector<Xref> def_xrefs = term.get_definition_xref_list();
+  REQUIRE(1 == def_xrefs.size());
+  Xref dxref1 = def_xrefs.at(0);
+  TermId expectedXref = TermId::of("HPO:fake2");
+  REQUIRE(expectedXref == dxref1.get_termid());
+  vector<PropertyValue> provals = term.get_property_values();
+  REQUIRE(3 == provals.size());
+  PropertyValue proval_a = provals.at(0);
+  REQUIRE(Prop::HAS_OBO_NAMESPACE == proval_a.get_property());
+  REQUIRE("human_phenotype" == proval_a.get_value());
+  vector<Xref> xrefs = term.get_term_xref_list();
+  REQUIRE(1 == xrefs.size());
+  Xref xref1 = xrefs.at(0);
+  TermId expectedXreft = TermId::of("UMLS:C4024355");
+  REQUIRE(expectedXreft == xref1.get_termid());
 
 
 }
