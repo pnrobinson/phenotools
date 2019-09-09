@@ -51,8 +51,10 @@ public:
   void add_property_value(const PropertyValue &pv);
 
   TermId get_term_id() const { return id_; }
+  string get_label() const { return label_; }
   bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }
   vector<TermId> get_alternative_ids() const { return alternative_id_list_; }
+  vector<TermId> get_isa_parents(const TermId &child) const;
   bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
@@ -112,9 +114,7 @@ private:
   /** obsoleted and alt ids. */
   vector<TermId> obsolete_term_ids_;
   /** Key: a TermId object. Value: Correspodning index in current_term_ids_. */
-  map<TermId, int > termid_to_index_;
-  //vector<Edge> edge_list_;
-
+  map<TermId, int> termid_to_index_;
   /**  offset_e stores offsets into e_to that indicate where the adjacency lists begin.
   The list for an arbitrary vertex begins at e_to[offset_e[v]] and ends at
   e_to[offset_e[v+1]]-1. */
@@ -140,10 +140,9 @@ public:
   int edge_count() const { return e_to_.size(); }
   int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
-
+  vector<TermId> get_isa_parents(const TermId &child) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
-//  vector<Edge> get_edge_list() const { return edge_list_; }
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);

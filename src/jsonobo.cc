@@ -83,7 +83,7 @@ JsonOboParser::process_metadata(const rapidjson::Value &val){
     for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
       PropertyValue propval = PropertyValue::of(*elem);
       property_value_list_.push_back(propval);
-      //ontology_.add_property_value(propval);
+      ontology_.add_property_value(propval);
     }
   }
 }
@@ -193,11 +193,14 @@ JsonOboParser::JsonOboParser(const string path):
     const rapidjson::Value& meta = mainObject["meta"];
     process_metadata(meta);
   }
-
-
-
-  std::cout << myError << "\n";
   std::cout << "DONE:" <<  std::endl;
+  if (error_list_.size()>0) {
+    for (string e : error_list_) {
+      std::cout << "\t" << e << "\n";
+    }
+  } else {
+    std::cout << "[INFO] No errors encountered\n";
+  }
 }
 
 
@@ -210,9 +213,26 @@ vector<int> offset_e_;
 
 }
 
-	Ontology JsonOboParser::get_ontology() {
-    ontology_.set_id(ontology_id_);
-    ontology_.add_all_terms(term_list_);
-    ontology_.add_all_edges(edge_list_);
-    return ontology_;
+void
+JsonOboParser::dump_errors() const
+{
+  if (error_list_.size() == 0) {
+    std::cout <<"[INFO] No errors enounted in JSON parse\n";
+    return;
   }
+  std::cout << "[ERRORS]:\n";
+  for (string e : error_list_) {
+    std::cout << e << "\n";
+  }
+}
+
+
+Ontology
+JsonOboParser::get_ontology()
+{
+  dump_errors();
+  ontology_.set_id(ontology_id_);
+  ontology_.add_all_terms(term_list_);
+  ontology_.add_all_edges(edge_list_);
+  return ontology_;
+}

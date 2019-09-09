@@ -1,7 +1,6 @@
 #define CATCH_CONFIG_MAIN
 
 #include <memory>
-
 #include <iostream>
 
 #include "catch.hpp"
@@ -9,11 +8,13 @@
 #include "phenopackets.pb.h"
 #include "interpretation.pb.h"
 #include "phenotools.h"
+#include "ontology.h"
+#include "jsonobo.h"
+
+using std::cout;
 
 // The arena object is used to allocate certain protobuf objects
 google::protobuf::Arena arena;
-
-
 
 TEST_CASE("test OntologyClass basics","[ontologyclass]") {
   org::phenopackets::schema::v1::core::OntologyClass ontclz;
@@ -58,13 +59,13 @@ TEST_CASE("test Age with string and empty","[age]") {
   phenotools::Age age2(agepb);
   validation = age2.validate();
   REQUIRE( validation.size() == 1 );
-  phenotools::Validation v1 = validation.at(0); 
+  phenotools::Validation v1 = validation.at(0);
   REQUIRE( v1.is_error() == true );
   REQUIRE( v1.message() == "At least one of age and age_class must be present in Age element" );
   // Now make an Age that has an ontology class
   string id = "HsapDv:0000236";
   string label = "second decade human stage";
-  
+
   org::phenopackets::schema::v1::core::OntologyClass* c =
     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
   c->set_id(id);
@@ -82,21 +83,21 @@ TEST_CASE("AgeRange","[agerange]") {
     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
   string age40 = "P40Y"; // 40 years old
   agepb1->set_age(age40);
-  
+
   org::phenopackets::schema::v1::core::Age* agepb2 =
     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::Age>(&arena);
   string age50 = "P50Y"; // 40 years old
   agepb2->set_age(age50);
-  
+
   org::phenopackets::schema::v1::core::AgeRange agerangepb;
-  agerangepb.set_allocated_start(agepb1); 
+  agerangepb.set_allocated_start(agepb1);
   agerangepb.set_allocated_end(agepb2);
-  
+
   phenotools::AgeRange ar(agerangepb);
-  
+
   vector<phenotools::Validation> validation = ar.validate();
   REQUIRE(validation.size()==0);
-  
+
   // Now make one of the elements invalid
   agepb1->set_age("");
   agerangepb.release_start();
@@ -115,7 +116,7 @@ TEST_CASE("test Individual","[individual]") {
   // warnings are generated.
   org::phenopackets::schema::v1::core::Individual individualpb;
   individualpb.set_id("42");
-  
+
   phenotools::Individual ind(individualpb);
   vector<phenotools::Validation> validation = ind.validate();
   REQUIRE(validation.size()==2);
@@ -139,7 +140,7 @@ TEST_CASE("test Individual","[individual]") {
 
 TEST_CASE("test ExternalReference element","[externalreference]") {
   org::phenopackets::schema::v1::core::ExternalReference extrefpb;
-  
+
   phenotools::ExternalReference er(extrefpb);
   // no id, this is an error
   vector<phenotools::Validation> validation = er.validate();
@@ -156,22 +157,22 @@ TEST_CASE("test ExternalReference element","[externalreference]") {
 
 
 TEST_CASE("test Evidence","[evidence]") {
-  
+
   org::phenopackets::schema::v1::core::Evidence evipb;
   // error -- Evidence needs to have an Ontology class evidence release_evidence_code
-  
+
   phenotools::Evidence evi1(evipb);
   vector<phenotools::Validation> validation = evi1.validate();
   REQUIRE(validation.size()==1);
   phenotools::Validation v1 = validation.at(0);
   REQUIRE(v1.is_error()==true);
   REQUIRE(v1.get_cause() == phenotools::ValidationCause::EVIDENCE_LACKS_CODE);
-  
+
   string eco_id = "ECO:0006017";
   string eco_label = "author statement from published clinical study used in manual assertion";
-  
+
   org::phenopackets::schema::v1::core::OntologyClass* eco =
-    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena); 
+    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
   eco->set_id(eco_id);
   eco->set_label(eco_label);
   // now add an ontology term -- all should be OK
@@ -179,7 +180,7 @@ TEST_CASE("test Evidence","[evidence]") {
   phenotools::Evidence evi2(evipb);
   validation = evi2.validate();
   REQUIRE(validation.size()==0);
-  evipb.release_evidence_code();  
+  evipb.release_evidence_code();
 }
 
 TEST_CASE("test Gene","[gene]") {
@@ -308,7 +309,7 @@ TEST_CASE("Test Variant","[variant]"){
   phenotools::Variant var2(variantpb);
   validation = var2.validate();
   REQUIRE(validation.empty()==true); // we expect no errors/warnings here.
-  
+
   variantpb.release_vcf_allele();
   variantpb.release_zygosity();
 }
@@ -323,7 +324,7 @@ TEST_CASE("Test Disease","[disease]"){
   phenotools::Validation v = validation.at(0);
   REQUIRE(v.is_error()==true);
   REQUIRE(v.get_cause() == phenotools::ValidationCause::DISEASE_LACKS_TERM);
-  
+
   // add a term and an onset with one error
   string id = "OMIM:101600";
   string label = "Pfeiffer syndrome";
@@ -436,7 +437,7 @@ TEST_CASE("Test Resource","[resource]") {
   v = validation.at(5);
   REQUIRE(v.is_error());
   REQUIRE(v.get_cause() == phenotools::ValidationCause::RESOURCE_LACKS_IRI_PREFIX);
-  
+
   resourcepb.set_id("hp");
   resourcepb.set_name("human phenotype ontology");
   resourcepb.set_namespace_prefix("HP");
@@ -459,7 +460,7 @@ TEST_CASE("MetaData","[metadata]") {
   REQUIRE(validation.size()==2);
   phenotools::Validation v = validation.at(0);
   REQUIRE(v.is_error());
-  
+
   REQUIRE(v.get_cause() == phenotools::ValidationCause::METADATA_LACKS_CREATED_BY);
   v = validation.at(1);
   REQUIRE(v.is_error());
@@ -475,25 +476,36 @@ TEST_CASE("Procedure","[procedure]") {
   REQUIRE(validation.size()==1);
   phenotools::Validation v = validation.at(0);
   REQUIRE(v.is_error());
-  
   REQUIRE(v.get_cause() == phenotools::ValidationCause::PROCEDURE_LACKS_CODE);
-
-
   string id = "NCIT:C28743";
   string label = "Punch Biopsy";
   org::phenopackets::schema::v1::core::OntologyClass* code =
     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
   code->set_id(id);
   code->set_label(label);
-
-
   procedurepb.set_allocated_code(code);
-
   phenotools::Procedure p2(procedurepb);
   validation = p2.validate();
   REQUIRE(validation.empty());
-
   procedurepb.release_code();
+}
 
-  
+TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
+{
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  Ontology ontology = parser.get_ontology();
+  TermId t1 = TermId::of("HP:0000002");
+  std::optional<Term> t1opt = ontology.get_term(t1);
+  REQUIRE(t1opt);
+  cout << ontology << "\n";
+  Term term = *t1opt;
+  REQUIRE("Fake term 2" == term.get_label());
+  vector<TermId> parents = ontology.get_isa_parents(t1);
+  REQUIRE(1 == parents.size());
+  TermId par = TermId::of("HP:0000001");
+  REQUIRE(par == parents.at(0));
+
+
+
 }

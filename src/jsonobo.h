@@ -37,13 +37,13 @@ private:
 
 public:
 	JsonOboParser(const string path);
+	~JsonOboParser(){}
 	/** Transform the nodes and edges into an Ontology object
 			with CLR graph. When this method is called, the CTOR
 			has ingested data to the term_list and the edge_list.*/
-	Ontology get_ontology();// { return ontology_; }
+	Ontology get_ontology();
 
-
-
+	void dump_errors() const;
 };
 
 

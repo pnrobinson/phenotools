@@ -10,7 +10,7 @@ TARGET_EXEC=phenotools
 ALL=$(TARGET_EXEC)
 
 OBJS =  base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o \
-jsonobo.o ontology.o jsonparse_exception.o termid.o property.o graph.o
+jsonobo.o ontology.o jsonparse_exception.o termid.o property.o
 
 $(TARGET_EXEC): $(OBJS) main.cpp
 	$(CXX) $(OBJS) main.cpp $(CXXFLAGS) -o $@ $(LIBS)

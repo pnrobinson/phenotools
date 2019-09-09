@@ -38,9 +38,9 @@ int main (int argc, char ** argv) {
   CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
   CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
-  
+
   CLI11_PARSE ( app, argc, argv );
-  
+
   if ( validate_command->parsed() ) {
     if (*hp_json_path_option) {
       JsonOboParser parser {hp_json_path};
@@ -53,7 +53,7 @@ int main (int argc, char ** argv) {
       cout << ontology << "\n";
       return EXIT_SUCCESS;
     } else {
-      std::cerr << "[ERROR] -hp or --mondo option required for validate command!\n";
+      std::cerr << "[ERROR] --hp or --mondo option required for validate command!\n";
     }
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
@@ -62,7 +62,7 @@ int main (int argc, char ** argv) {
       return EXIT_FAILURE;
     }
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    
+
     std::stringstream sstr;
     std::ifstream inFile;
     inFile.open ( phenopacket_path );
@@ -73,16 +73,16 @@ int main (int argc, char ** argv) {
     sstr << inFile.rdbuf();
     string JSONstring = sstr.str();
     //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
-    
+
     ::google::protobuf::util::JsonParseOptions options;
     ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
     ::google::protobuf::util::JsonStringToMessage ( JSONstring,&phenopacketpb,options );
     cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
-    
+
     phenotools::Phenopacket ppacket ( phenopacketpb );
-    
+
     cout << ppacket << "\n";
-    
+
     auto validation = ppacket.validate();
     if ( validation.empty() ) {
       cout << "No Q/C issues identified!\n";
@@ -94,7 +94,7 @@ int main (int argc, char ** argv) {
       for ( auto v : validation ) {
 	cout << v << "\n";
       }
-      
+
     }
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";

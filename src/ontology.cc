@@ -293,6 +293,7 @@ Ontology::Ontology(const Ontology &other):
 	term_map_(other.term_map_),
 	current_term_ids_(other.current_term_ids_),
 	obsolete_term_ids_(other.obsolete_term_ids_),
+  termid_to_index_(other.termid_to_index_),
   offset_e_(other.offset_e_),
 	e_to_(other.e_to_)
 	 {
@@ -302,6 +303,7 @@ Ontology::Ontology(Ontology &other): 	id_(other.id_){
 	property_values_ = std::move(other.property_values_);
 	term_map_ = std::move(other.term_map_);
 	current_term_ids_ = std::move(other.current_term_ids_);
+  termid_to_index_ = std::move(other.termid_to_index_);
 	obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
 	e_to_ = std::move(other.e_to_);
   offset_e_ = std::move(other.offset_e_);
@@ -312,6 +314,7 @@ Ontology::operator=(const Ontology &other){
 		id_ = other.id_;
 		property_values_ = other.property_values_;
 		term_map_ = other.term_map_;
+    termid_to_index_ = other.termid_to_index_;
 		current_term_ids_ = other.current_term_ids_;
 		obsolete_term_ids_ = other.obsolete_term_ids_;
 		e_to_ = other.e_to_;
@@ -327,6 +330,7 @@ Ontology::operator=(Ontology &&other){
 		term_map_ = std::move(other.term_map_);
 		current_term_ids_ = std::move(other.current_term_ids_);
 		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
+    termid_to_index_ = std::move(other.termid_to_index_);
 		e_to_ = std::move(other.e_to_);
     offset_e_ = std::move(other.offset_e_);
 	}
@@ -399,7 +403,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
     if (it == termid_to_index_.end()) {
       // sanity check, should never happen unless input file is corrupted
       // todo -- write Exception
-      cerr << "[FATAL] counld not find TermId for source node:" << source << "\n";
+      cerr << "[FATAL] could not find TermId for source node:" << source << "\n";
       std::exit(1);
     }
     int idx = it->second;
@@ -412,7 +416,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
   }
   // second pass -- set the offset_e_ according to the number of edges
   // emanating from each source ids.
-  offset_e_[0] = 0; // offset of zeroth source TermId is zero
+  offset_e_.push_back(0); // offset of zeroth source TermId is zero
   int offset = 0;
   for (int i=0; i < current_term_ids_.size(); ++i) {
     // these i's are the indices of all of the TermIds
@@ -423,10 +427,10 @@ Ontology::add_all_edges(vector<Edge> &edges){
     }
     // note if we cannot find anything for i, then the i'th TermId
     // has no outgoing edges
-    offset_e_[i+1] = offset;
+    offset_e_.push_back(offset);
   }
   // third pass -- add the actual edges
-  // reuse the offset variable to keep track of how many edges we have already
+  // use the offset variable to keep track of how many edges we have already
   // entered for a given source index
   int current_source_index = -1;
   offset = 0;
@@ -448,12 +452,12 @@ Ontology::add_all_edges(vector<Edge> &edges){
     } else {
       offset++; // go to next index (for a new destination of the previous source)
     }
-    e_to_[source_index + offset] = destination_index;
+    //e_to_[source_index + offset] = destination_index;
+    e_to_.push_back(destination_index);
   }
   // When we get here, we are done! Print a message
-  cout << "[INFO] We entered " << e_to_.size()
-        << " edges for " << n_vertices << " terms\n";
-
+  cout << "[INFO] edges: n=" << e_to_.size()
+        << " terms: n=" << n_vertices << "\n";
 }
 
 std::optional<Term>
@@ -464,6 +468,23 @@ Ontology::get_term(const TermId &tid) const{
 	} else {
 		return std::nullopt;
 	}
+}
+
+vector<TermId>
+Ontology::get_isa_parents(const TermId &child) const
+{
+  vector<TermId> parents;
+  auto p = termid_to_index_.find(child);
+  if (p == termid_to_index_.end()) {
+    // not found, return empty vector
+    return parents;
+  }
+  int idx = p->second;
+  for (int i = offset_e_[idx]; i < offset_e_[1+idx]; i++) {
+    TermId par = current_term_ids_.at(i);
+    parents.push_back(par);
+  }
+  return parents;
 }
 
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){

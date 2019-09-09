@@ -10,7 +10,7 @@ class TermId {
  private:
   string value_;
   std::size_t separator_pos_;
-  TermId(const string &s,std::size_t pos);
+  TermId(const string &s, std::size_t pos);
 
  public:
 
