@@ -7,6 +7,7 @@
 #include <rapidjson/document.h>
 #include "ontology.h"
 
+
 using std::string;
 using std::vector;
 using std::unique_ptr;
