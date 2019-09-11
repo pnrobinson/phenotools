@@ -115,7 +115,7 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
     } else if (is_property(v)){
       try{
 	       Property prop = json_to_property(v);
-         cerr << "Making property: " << prop <<"\n";
+         cerr << "Making property and exiting, jsonobo118: \"" << prop <<"\"\n";
          exit(1);
 	       ontology_.add_property(prop);
       } catch (const JsonParseException& e) {
@@ -263,7 +263,7 @@ JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
     pred = pred.substr(pos+1);
   }
   //We keep a list of properties in
-  Prop prop = Property::string_to_predicate(pred);
+  Predicate predicate = Property::string_to_predicate(pred);
 
   p = val.FindMember("val");
   if (p == val.MemberEnd()) {
@@ -271,7 +271,7 @@ JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
   }
 
   string valu = val["val"].GetString();
-  PropertyValue pv{prop,valu};
+  PropertyValue pv{predicate,valu};
   return pv;
 }
 
