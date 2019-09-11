@@ -96,14 +96,11 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
     throw JsonParseException("rapidjson nodes object is not array");
   }
   string myError;
-  int n=0;
   for (auto& v : nodes.GetArray()) {
     if (is_class(v)) {
       try {
 	       Term term = json_to_term(v);
 	       term_list_.push_back(term);
-	       n++;
-	       //cout << "\n" << n << std::flush;
       } catch (const JsonParseException& e) {
 	       string json_stanza = get_json_string(v);
          string message = e.what();
@@ -113,6 +110,10 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
          error_list_.push_back(sstr.str());
         }
     } else if (is_property(v)){
+      // This is a PROPERTY element (these are mixed with the CLASS elements
+      // in the JSON file), such as "UK spelling", "abbreviation" and so on.
+      // These elements introduce properties that can be used elsewhere, for
+      // instance, some synonyms have the property "UK spelling"
       try{
 	       Property prop = json_to_property(v);
          cerr << "Making property and exiting, jsonobo118: \"" << prop <<"\"\n";
@@ -263,7 +264,7 @@ JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
     pred = pred.substr(pos+1);
   }
   //We keep a list of properties in
-  Predicate predicate = Property::string_to_predicate(pred);
+  Predicate predicate = PropertyValue::string_to_predicate(pred);
 
   p = val.FindMember("val");
   if (p == val.MemberEnd()) {

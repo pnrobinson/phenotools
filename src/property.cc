@@ -27,7 +27,7 @@ string get_json_string42(const rapidjson::Value &json)
  * map from String to value, static initialization.
  */
 map<string, Predicate>
-Property::predicate_registry_ = {
+PropertyValue::predicate_registry_ = {
 		   {"oboInOwl#created_by", Predicate::CREATED_BY},
 		   {"oboInOwl#creation_date", Predicate::CREATION_DATE},
 		   {"oboInOwl#hasOBONamespace", Predicate::HAS_OBO_NAMESPACE},
@@ -67,10 +67,10 @@ Property::predicate_registry_ = {
 };
 
 Predicate
-Property::string_to_predicate(const string &s)
+PropertyValue::string_to_predicate(const string &s)
 {
-  auto p = Property::predicate_registry_.find(s);
-  if (p == Property::predicate_registry_.end()) {
+  auto p = PropertyValue::predicate_registry_.find(s);
+  if (p == PropertyValue::predicate_registry_.end()) {
     cerr<< "[WARNING] Unrecognized property: " << s << "\n";
     return Predicate::UNKNOWN;
   }
