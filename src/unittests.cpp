@@ -512,9 +512,9 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   Xref dxref1 = def_xrefs.at(0);
   TermId expectedXref = TermId::of("HPO:fake2");
   REQUIRE(expectedXref == dxref1.get_termid());
-  vector<PropertyValue> provals = term.get_property_values();
+  vector<PredicateValue> provals = term.get_property_values();
   REQUIRE(3 == provals.size());
-  PropertyValue proval_a = provals.at(0);
+  PredicateValue proval_a = provals.at(0);
   REQUIRE(Predicate::HAS_OBO_NAMESPACE == proval_a.get_property());
   REQUIRE("human_phenotype" == proval_a.get_value());
   vector<Xref> xrefs = term.get_term_xref_list();

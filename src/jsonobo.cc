@@ -82,9 +82,9 @@ JsonOboParser::process_metadata(const rapidjson::Value &val){
       throw JsonParseException("Ontology property values not array");
     }
     for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-      PropertyValue propval = json_to_property_value(*elem);
-      property_value_list_.push_back(propval);
-      ontology_.add_property_value(propval);
+      PredicateValue predval = json_to_property_value(*elem);
+      property_value_list_.push_back(predval);
+      ontology_.add_predicate_value(predval);
     }
   }
 }
@@ -246,7 +246,7 @@ JsonOboParser::get_ontology()
 /**
  * construct a PropertyValue from a JSON object
  */
-PropertyValue
+PredicateValue
 JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
   if (! val.IsObject()) {
     throw JsonParseException("PropertyValue factory expects object");
@@ -264,7 +264,7 @@ JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
     pred = pred.substr(pos+1);
   }
   //We keep a list of properties in
-  Predicate predicate = PropertyValue::string_to_predicate(pred);
+  Predicate predicate = PredicateValue::string_to_predicate(pred);
 
   p = val.FindMember("val");
   if (p == val.MemberEnd()) {
@@ -272,7 +272,7 @@ JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
   }
 
   string valu = val["val"].GetString();
-  PropertyValue pv{predicate,valu};
+  PredicateValue pv{predicate,valu};
   return pv;
 }
 
@@ -352,8 +352,8 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
 	    throw JsonParseException("Malformed node ("+id+"): Term property values not array");
 	  }
 	  for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-	    PropertyValue propval = json_to_property_value(*elem);
-	    term.add_property_value(propval);
+	    PredicateValue propval = json_to_property_value(*elem);
+	    term.add_predicate_value(propval);
 	  }
 	}
       }
@@ -367,7 +367,7 @@ Property
 JsonOboParser::json_to_property(const rapidjson::Value &val){
   string id;
   string label;
-  vector<PropertyValue> propvals;
+  vector<PredicateValue> propvals;
   if (! val.IsObject()) {
     throw JsonParseException("Attempt to add malformed node (not JSON object)");
   }
@@ -403,7 +403,7 @@ JsonOboParser::json_to_property(const rapidjson::Value &val){
 	throw JsonParseException("Malformed node ("+id+"): Term property values not array");
       }
       for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-	PropertyValue propval = json_to_property_value(*elem);
+	PredicateValue propval = json_to_property_value(*elem);
 	propvals.push_back(propval);
       }
     }

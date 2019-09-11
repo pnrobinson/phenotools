@@ -41,7 +41,7 @@ private:
   vector<Xref> definition_xref_list_;
   vector<Xref> term_xref_list_;
   vector<TermId> alternative_id_list_;
-  vector<PropertyValue> property_values_;
+  vector<PredicateValue> property_values_;
   bool is_obsolete_ = false;
 
 public:
@@ -50,7 +50,7 @@ public:
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
-  void add_property_value(const PropertyValue &pv);
+  void add_predicate_value(const PredicateValue &pv);
 
   TermId get_term_id() const { return id_; }
   string get_label() const { return label_; }
@@ -59,7 +59,7 @@ public:
   vector<Xref> get_term_xref_list() const {return term_xref_list_;}
   bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }
   vector<TermId> get_alternative_ids() const { return alternative_id_list_; }
-  vector<PropertyValue> get_property_values() const { return property_values_; }
+  vector<PredicateValue> get_property_values() const { return property_values_; }
   vector<TermId> get_isa_parents(const TermId &child) const;
   bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
@@ -70,7 +70,7 @@ std::ostream& operator<<(std::ostream& ost, const Term& term);
 class Ontology {
 private:
   string id_;
-  vector<PropertyValue> property_values_;
+  vector<PredicateValue> predicate_values_;
   vector<Property> property_list_;
   map<TermId, std::shared_ptr<Term> > term_map_;
   /** Current primary TermId's. */
@@ -95,17 +95,17 @@ public:
   Ontology& operator=(Ontology &&other);
   ~Ontology(){}
   void set_id(const string &id) { id_ = id; }
-  void add_property_value(const PropertyValue &propval);
+  void add_predicate_value(const PredicateValue &propval);
   void add_property(const Property & prop);
   void add_all_terms(const vector<Term> &terms);
   void add_all_edges(vector<Edge> &edges);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return e_to_.size(); }
-  int property_count() const { return property_list_.size(); }
+  int predicate_count() const { return predicate_values_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
-  Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PropertyValue> properties);
+  Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };

@@ -83,7 +83,7 @@ Term::add_definition_xref(const Xref &txref){
 	* encode alt_ids, and we put them into a separate list.
 	*/
 void
-Term::add_property_value(const PropertyValue &pv){
+Term::add_predicate_value(const PredicateValue &pv){
   if (pv.is_alternate_id()){
     TermId alt_id = TermId::of(pv.get_value());
     alternative_id_list_.push_back(alt_id);
@@ -127,7 +127,7 @@ std::ostream& operator<<(std::ostream& ost, const Edge& edge){
 
 Ontology::Ontology(const Ontology &other):
 	id_(other.id_),
-	property_values_(other.property_values_),
+	predicate_values_(other.predicate_values_),
 	term_map_(other.term_map_),
 	current_term_ids_(other.current_term_ids_),
 	obsolete_term_ids_(other.obsolete_term_ids_),
@@ -138,7 +138,7 @@ Ontology::Ontology(const Ontology &other):
 		// no-op
 	 }
 Ontology::Ontology(Ontology &other): 	id_(other.id_){
-	property_values_ = std::move(other.property_values_);
+	predicate_values_ = std::move(other.predicate_values_);
 	term_map_ = std::move(other.term_map_);
 	current_term_ids_ = std::move(other.current_term_ids_);
   termid_to_index_ = std::move(other.termid_to_index_);
@@ -150,7 +150,7 @@ Ontology&
 Ontology::operator=(const Ontology &other){
 	if (this != &other) {
 		id_ = other.id_;
-		property_values_ = other.property_values_;
+		predicate_values_ = other.predicate_values_;
 		term_map_ = other.term_map_;
     termid_to_index_ = other.termid_to_index_;
 		current_term_ids_ = other.current_term_ids_;
@@ -164,7 +164,7 @@ Ontology&
 Ontology::operator=(Ontology &&other){
 	if (this != &other) {
 		id_ = std::move(other.id_);
-		property_values_ = std::move(other.property_values_);
+		predicate_values_ = std::move(other.predicate_values_);
 		term_map_ = std::move(other.term_map_);
 		current_term_ids_ = std::move(other.current_term_ids_);
 		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
@@ -176,10 +176,20 @@ Ontology::operator=(Ontology &&other){
 }
 
 
-
+/**
+  * Add a BasicPropetyValue of the ontology
+  * These elements are stored in the section "basicPropertyValues"
+  * "basicPropertyValues" : [ {
+  *  "pred" : "http://purl.org/dc/elements/1.1/creator",
+  *  "val" : "Human Phenotype Ontology Consortium"
+  *},
+  * Note this is distinct from Property elements, that do not describe the
+  * ontology but instead are designed to be used to describe other elements
+  * (for instance, 'UKL spelling' is used to describe some synonyms).
+  */
 void
-Ontology::add_property_value(const PropertyValue &propval){
-		property_values_.push_back(propval);
+Ontology::add_predicate_value(const PredicateValue &propval){
+		predicate_values_.push_back(propval);
 }
 
 void
@@ -328,7 +338,7 @@ Ontology::get_isa_parents(const TermId &child) const
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Ontology ###\n"
 		<< "id: " << ontology.id_ << "\n";
-	for (const auto &pv : ontology.property_values_) {
+	for (const auto &pv : ontology.predicate_values_) {
 		ost << "property value: " << pv << "\n";
 	}
 	ost << "### Terms ###\n"
@@ -338,10 +348,10 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Edges ###\n"
 			<< "total edges: " << ontology.edge_count() << "\n";
 	ost << "### Properties ###\n"
-			<< "total properties: " << ontology.property_count() << "\n";
-		for (auto p : ontology.property_list_) {
-			ost << p << "\n";
-		}
+			<< "TODO total properties: " << ontology.predicate_count() << "\n";
+	//	for (auto p : ontology.predicate_values_) {
+	//		ost << p << "\n";
+	//	}
 		return ost;
 
 }

@@ -1,14 +1,13 @@
 #include "property.h"
 
 #include <iostream>
-
-using std::cerr;
-
-
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/prettywriter.h>
+using std::cerr;
+
+
 /**
  * generate a printable String from an arbitrary RAPIDJSON value object.
  * @param json A rapid json object
@@ -27,7 +26,7 @@ string get_json_string42(const rapidjson::Value &json)
  * map from String to value, static initialization.
  */
 map<string, Predicate>
-PropertyValue::predicate_registry_ = {
+PredicateValue::predicate_registry_ = {
 		   {"oboInOwl#created_by", Predicate::CREATED_BY},
 		   {"oboInOwl#creation_date", Predicate::CREATION_DATE},
 		   {"oboInOwl#hasOBONamespace", Predicate::HAS_OBO_NAMESPACE},
@@ -67,10 +66,10 @@ PropertyValue::predicate_registry_ = {
 };
 
 Predicate
-PropertyValue::string_to_predicate(const string &s)
+PredicateValue::string_to_predicate(const string &s)
 {
-  auto p = PropertyValue::predicate_registry_.find(s);
-  if (p == PropertyValue::predicate_registry_.end()) {
+  auto p = PredicateValue::predicate_registry_.find(s);
+  if (p == PredicateValue::predicate_registry_.end()) {
     cerr<< "[WARNING] Unrecognized property: " << s << "\n";
     return Predicate::UNKNOWN;
   }
@@ -78,7 +77,7 @@ PropertyValue::string_to_predicate(const string &s)
 }
 
 
-std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
+std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv) {
   switch (pv.predicate_) {
   case Predicate::CREATED_BY: ost << "created_by: "; break;
   case Predicate::CREATION_DATE: ost << "creation_date: "; break;

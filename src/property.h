@@ -52,25 +52,25 @@ enum class Predicate {
   HOMEPAGE,
 };
 /**
-  * A simple class that stores the basicPropertyValues elements about
-  * a Term; each instance of this class represents a predicate and
-  * its value (i.e., object).
+  * A simple class that stores Predicates and their Values. These are used
+  * to add information about a Term; each instance of this class represents
+  * a predicate and its value (i.e., object).
   */
-class PropertyValue {
+class PredicateValue {
 private:
   Predicate predicate_;
   string value_;
   static map<string, Predicate> predicate_registry_;
 public:
-  PropertyValue(Predicate p, const string &v):predicate_(p),value_(v){}
+  PredicateValue(Predicate p, const string &v):predicate_(p),value_(v){}
   //static PropertyValue of(const rapidjson::Value &val);
   bool is_alternate_id() const { return predicate_ == Predicate::HAS_ALTERNATIVE_ID; }
   Predicate get_property() const { return predicate_; }
   string get_value() const { return value_; }
   static Predicate string_to_predicate(const string &s);
-  friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
+  friend std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv);
 };
-std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
+std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv);
 
 /**
   * This class represents items such as "UK spelling" and "abbreviation" that
@@ -81,9 +81,9 @@ class Property {
 private:
   TermId id_;
   string label_;
-  vector<PropertyValue> property_values_;
+  vector<PredicateValue> property_values_;
 public:
-  Property(TermId id,string label,vector<PropertyValue> vals):
+  Property(TermId id,string label,vector<PredicateValue> vals):
     id_(id),
     label_(label),
     property_values_(vals){}
