@@ -72,6 +72,19 @@ public:
 };
 std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv);
 
+
+enum class AllowedPropertyValue {
+  UK_SPELLING,
+  ABBREVIATION,
+  PLURAL_FORM,
+  LAYPERSON_TERM,
+  CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM,//"Consequence of a disorder in another organ system."
+  DISPLAY_LABEL, //"display label"
+  UNKNOWN,
+};
+
+
+
 /**
   * This class represents items such as "UK spelling" and "abbreviation" that
   * are used to indicate properties of other elements such as synonyms. Note
@@ -82,6 +95,7 @@ private:
   TermId id_;
   string label_;
   vector<PredicateValue> property_values_;
+  static map<string, AllowedPropertyValue> property_registry_;
 public:
   Property(TermId id,string label,vector<PredicateValue> vals):
     id_(id),
@@ -92,6 +106,7 @@ public:
   ~Property(){}
   Property &operator=(const Property &p);
   Property &operator=(Property &&p);
+  static AllowedPropertyValue string_to_property(const string &s);
   friend std::ostream& operator<<(std::ostream& ost, const Property& prop);
 };
 std::ostream& operator<<(std::ostream& ost, const Property& prop);

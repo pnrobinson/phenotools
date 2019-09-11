@@ -38,6 +38,7 @@ private:
 	PredicateValue json_to_property_value(const rapidjson::Value &val);
 	Property json_to_property(const rapidjson::Value &val);
 	Term json_to_term(const rapidjson::Value &val);
+	Xref json_to_xref(const rapidjson::Value &val);
 
 public:
 	JsonOboParser(const string path);

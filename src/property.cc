@@ -1,26 +1,8 @@
 #include "property.h"
 
 #include <iostream>
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/prettywriter.h>
 using std::cerr;
 
-
-/**
- * generate a printable String from an arbitrary RAPIDJSON value object.
- * @param json A rapid json object
- * @return a String representation of the JSON.
- */
-string get_json_string42(const rapidjson::Value &json)
-{
-  using namespace rapidjson;
-  StringBuffer sb;
-  PrettyWriter<StringBuffer> writer(sb);
-  json.Accept(writer);
-  return sb.GetString();
-}
 
 /**
  * map from String to value, static initialization.
@@ -99,7 +81,30 @@ std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv) {
   return ost;
 }
 
+/**
+ * map from String to value, static initialization.
+ */
+map<string, AllowedPropertyValue>
+Property::property_registry_ = {
+  {"UK spelling", AllowedPropertyValue::UK_SPELLING},
+  {"abbreviation", AllowedPropertyValue::ABBREVIATION},
+  {"plural form", AllowedPropertyValue::PLURAL_FORM},
+  {"layperson term", AllowedPropertyValue::LAYPERSON_TERM},
+  {"Consequence of a disorder in another organ system.", AllowedPropertyValue::CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM},
+  {"display label", AllowedPropertyValue::DISPLAY_LABEL},
+	{"unknown", AllowedPropertyValue::UNKNOWN},
+};
 
+AllowedPropertyValue
+Property::string_to_property(const string &s)
+{
+  auto p = Property::property_registry_.find(s);
+  if (p == Property ::property_registry_.end()) {
+    cerr<< "[WARNING] Unrecognized property: " << s << "\n";
+    exit(1);
+  }
+  return p->second;
+}
 
 Property::Property(const Property &p):
   id_(p.id_),
@@ -130,7 +135,7 @@ Property::operator=(Property &&p){
 }
 
 std::ostream& operator<<(std::ostream& ost, const Property& prop){
-  ost << prop.label_ << "[" << prop.id_ << "] ";
+  ost << prop.label_ << " [" << prop.id_ << "] ";
   for (auto pv : prop.property_values_ ) {
     ost << pv <<"; ";
   }

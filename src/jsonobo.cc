@@ -116,8 +116,7 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
       // instance, some synonyms have the property "UK spelling"
       try{
 	       Property prop = json_to_property(v);
-         cerr << "Making property and exiting, jsonobo118: \"" << prop <<"\"\n";
-         exit(1);
+         cerr << "Making property: \"" << prop <<"\"\n";
 	       ontology_.add_property(prop);
       } catch (const JsonParseException& e) {
          std::stringstream sstr;
@@ -327,7 +326,7 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
 	}
 	for (auto xrefs_itr = defxrefs.Begin();
 	     xrefs_itr != defxrefs.End(); ++xrefs_itr) {
-	  Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+	  Xref xr = json_to_xref(*xrefs_itr); // xrefs in definitions are simply CURIEs.
 	  term.add_definition_xref(xr);
         }
       } // done with definition
@@ -340,7 +339,7 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
 	  for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
 	    auto elem_iter = elem->FindMember("val");
 	    if (elem_iter != elem->MemberEnd()) {
-	      Xref txr = Xref::of(elem_iter->value);
+	      Xref txr = json_to_xref(elem_iter->value);
 	      term.add_term_xref(txr);
 	    }
           }
@@ -410,4 +409,17 @@ JsonOboParser::json_to_property(const rapidjson::Value &val){
   }
   Property p{tid,label,propvals};
   return p;
+}
+
+Xref
+JsonOboParser::json_to_xref(const rapidjson::Value &val)
+{
+  if (val.IsString() ) {
+    TermId tid = TermId::of(val);
+    Xref xr{tid};
+    return xr;
+  } else {
+    throw JsonParseException("Could not construct Xref");
+  }
+
 }

@@ -8,47 +8,31 @@ using std::cerr;
 using std::cout;
 
 
-/// remove the following after development
 
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/prettywriter.h>
-void
-printJJ(const rapidjson::Value &json)
+Xref::Xref(const Xref &txr):
+  term_id_( txr.term_id_)
 {
-  using namespace rapidjson;
-
-  StringBuffer sb;
-  PrettyWriter<StringBuffer> writer(sb);
-  json.Accept(writer);
-  auto str = sb.GetString();
-  std::cout << "printing element...\n";
-  std::cout << str << "\n";
 }
 
 
-Xref::Xref(const Xref &txr)
-:term_id_( txr.term_id_) {
-}
-
+/*
 Xref
 Xref::of(const rapidjson::Value &val){
-    if (val.IsString() ) {
-        return Xref::fromCurieString(val);
-    } else {
-        throw JsonParseException("Could not construct Xref");
-    }
+  if (val.IsString() ) {
+    return Xref::fromCurieString(val);
+  } else {
+    throw JsonParseException("Could not construct Xref");
+  }
 }
 
 
 Xref
 Xref::fromCurieString(const rapidjson::Value &val){
-    TermId tid = TermId::of(val);
-    Xref xr{tid};
-    return xr;
+  TermId tid = TermId::of(val);
+  Xref xr{tid};
+  return xr;
 }
-
+*/
 
 
 Xref &
@@ -339,7 +323,7 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Ontology ###\n"
 		<< "id: " << ontology.id_ << "\n";
 	for (const auto &pv : ontology.predicate_values_) {
-		ost << "property value: " << pv << "\n";
+		ost << "\t" << pv << "\n";
 	}
 	ost << "### Terms ###\n"
 			<< "total current terms: " << ontology.current_term_count() << "\n"
@@ -348,10 +332,10 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Edges ###\n"
 			<< "total edges: " << ontology.edge_count() << "\n";
 	ost << "### Properties ###\n"
-			<< "TODO total properties: " << ontology.predicate_count() << "\n";
-	//	for (auto p : ontology.predicate_values_) {
-	//		ost << p << "\n";
-	//	}
+			<< "TODO total properties: " << ontology.property_count() << "\n";
+	for (auto p : ontology.property_list_) {
+			ost << p << "\n";
+	}
 		return ost;
 
 }

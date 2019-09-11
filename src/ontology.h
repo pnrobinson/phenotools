@@ -6,11 +6,10 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <rapidjson/document.h>
 #include "termid.h"
 #include "edge.h"
 #include "property.h"
-#include "jsonparse_exception.h"
+
 
 using std::string;
 using std::vector;
@@ -20,14 +19,11 @@ using std::map;
 class Xref {
 private:
     TermId term_id_;
-    Xref(const TermId &tid): term_id_(tid){}
-
 public:
+    Xref(const TermId &tid): term_id_(tid){}
     Xref(const Xref &txr);
     Xref(Xref &&txr) = default;
     Xref &operator=(const Xref &txr);
-    static Xref of(const rapidjson::Value &val);
-    static Xref fromCurieString(const rapidjson::Value &val);
     TermId get_termid() const { return term_id_; }
     friend std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 };
@@ -103,6 +99,7 @@ public:
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return e_to_.size(); }
   int predicate_count() const { return predicate_values_.size(); }
+  int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
