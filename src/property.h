@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <rapidjson/document.h>
+//#include <rapidjson/document.h>
 #include "termid.h"
 #include "jsonparse_exception.h"
 
@@ -59,13 +59,14 @@ class PropertyValue {
 private:
   Prop property_;
   string value_;
-  PropertyValue(Prop p, const string &v):property_(p),value_(v){}
+
 public:
-  static PropertyValue of(const rapidjson::Value &val);
-  friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
+  PropertyValue(Prop p, const string &v):property_(p),value_(v){}
+  //static PropertyValue of(const rapidjson::Value &val);
   bool is_alternate_id() const { return property_ == Prop::HAS_ALTERNATIVE_ID; }
   Prop get_property() const { return property_; }
   string get_value() const { return value_; }
+  friend std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 };
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv);
 
@@ -75,13 +76,13 @@ private:
   TermId id_;
   string label_;
   vector<PropertyValue> property_values_;
+  static map<string, Prop> property_registry_;
+public:
   Property(TermId id,string label,vector<PropertyValue> vals):
     id_(id),
     label_(label),
     property_values_(vals){}
-  static map<string,Prop> property_registry_;
-public:
-  static Property of(const rapidjson::Value &val);
+  static Prop string_to_predicate(const string &s);
   Property(const Property &p);
   Property(Property &&p);
   ~Property(){}

@@ -43,6 +43,7 @@ private:
   static map<string,EdgeType> edgetype_registry_;
 public:
   static Edge of(const rapidjson::Value &val);
+  static EdgeType string_to_edgetype(const string &s);
   TermId get_source() const { return source_; }
   TermId get_destination() const { return dest_; }
   bool operator<(const Edge& rhs) const;

@@ -27,34 +27,34 @@ string get_json_string42(const rapidjson::Value &json)
  * map from String to value, static initialization.
  */
 map<string,Prop>
-property_registry_ = {
+Property::property_registry_ = {
 		   {"oboInOwl#created_by", Prop::CREATED_BY},
 		   {"oboInOwl#creation_date", Prop::CREATION_DATE},
-		   {"oboInOwl#hasOBONamespace",Prop::HAS_OBO_NAMESPACE},
-		   {"oboInOwl#hasAlternativeId",Prop::HAS_ALTERNATIVE_ID},
-		   {"oboInOwl#is_class_level",Prop::IS_CLASS_LEVEL},
-		   {"oboInOwl#is_anonymous",Prop::IS_ANONYMOUS},
-		   {"oboInOwl#consider",Prop::CONSIDER},
-		   {"oboInOwl#default-namespace" ,Prop::DEFAULT_NAMESPACE},
-		   {"oboInOwl#logical-definition-view-relation" ,Prop::LOGICAL_DEFINITION_VIEW_RELATION},
-		   {"oboInOwl#saved-by",Prop::SAVED_BY},
-		   {"oboInOwl#is_metadata_tag",Prop::IS_METADATA_TAG},
-		   {"oboInOwl#shorthand",Prop::SHORT_HAND},
-		   {"oboInOwl#hasOBOFormatVersion",Prop::HAS_OBO_FORMAT_VERSION},
-		   {"core#closeMatch",Prop::CLOSE_MATCH},
-		   {"core#exactMatch",Prop::EXACT_MATCH},
-		   {"core#broadMatch",Prop::BROAD_MATCH},
-		   {"core#narrowMatch" ,Prop::NARROW_MATCH},
-		   {"rdf-schema#comment",Prop::RDF_SCHEMA_COMMENT},
-		   {"rdf-schema#seeAlso",Prop::SEE_ALSO},
-		   {"mondo#related",Prop::RELATED},
-		   {"mondo#excluded_subClassOf",Prop::EXCLUDED_SUBCLASS_OF},
-		   {"mondo#pathogenesis",Prop::PATHOGENESIS},
-		   {"date",Prop::DATE},
-		   {"owl#deprecated",Prop::OWL_DEPRECATED},
-		   {"hsapdv#editor_notes",Prop::EDITOR_NOTES},
-		   {"creator",Prop::CREATOR},
-		   {"description",Prop::DESCRIPTION},
+		   {"oboInOwl#hasOBONamespace", Prop::HAS_OBO_NAMESPACE},
+		   {"oboInOwl#hasAlternativeId", Prop::HAS_ALTERNATIVE_ID},
+		   {"oboInOwl#is_class_level", Prop::IS_CLASS_LEVEL},
+		   {"oboInOwl#is_anonymous", Prop::IS_ANONYMOUS},
+		   {"oboInOwl#consider", Prop::CONSIDER},
+		   {"oboInOwl#default-namespace", Prop::DEFAULT_NAMESPACE},
+		   {"oboInOwl#logical-definition-view-relation", Prop::LOGICAL_DEFINITION_VIEW_RELATION},
+		   {"oboInOwl#saved-by", Prop::SAVED_BY},
+		   {"oboInOwl#is_metadata_tag", Prop::IS_METADATA_TAG},
+		   {"oboInOwl#shorthand", Prop::SHORT_HAND},
+		   {"oboInOwl#hasOBOFormatVersion", Prop::HAS_OBO_FORMAT_VERSION},
+		   {"core#closeMatch", Prop::CLOSE_MATCH},
+		   {"core#exactMatch", Prop::EXACT_MATCH},
+		   {"core#broadMatch", Prop::BROAD_MATCH},
+		   {"core#narrowMatch", Prop::NARROW_MATCH},
+		   {"rdf-schema#comment", Prop::RDF_SCHEMA_COMMENT},
+		   {"rdf-schema#seeAlso", Prop::SEE_ALSO},
+		   {"mondo#related", Prop::RELATED},
+		   {"mondo#excluded_subClassOf", Prop::EXCLUDED_SUBCLASS_OF},
+		   {"mondo#pathogenesis", Prop::PATHOGENESIS},
+		   {"date", Prop::DATE},
+		   {"owl#deprecated", Prop::OWL_DEPRECATED},
+		   {"hsapdv#editor_notes", Prop::EDITOR_NOTES},
+		   {"creator", Prop::CREATOR},
+		   {"description", Prop::DESCRIPTION},
 		   {"license",Prop::LICENSE},
 		   {"rights",Prop::RIGHTS},
 		   {"subject",Prop::SUBJECT},
@@ -66,40 +66,16 @@ property_registry_ = {
 		   {"homepage",Prop::HOMEPAGE},
 };
 
-/**
- * construct a PropertyValue from a JSON object
- */
-PropertyValue
-PropertyValue::of(const rapidjson::Value &val) {
-  if (! val.IsObject()) {
-    throw JsonParseException("PropertyValue factory expects object");
+Prop
+Property::string_to_predicate(const string &s)
+{
+  auto p = Property::property_registry_.find(s);
+  if (p == Property::property_registry_.end()) {
+    throw "Unrecognized property: " + s;
   }
-  auto p = val.FindMember("pred");
-  if (p == val.MemberEnd()) {
-    throw JsonParseException("PropertyValue did not contain \'pred\' element");
-  }
-  string pred = val["pred"].GetString();
-  size_t pos = pred.find_last_of('/');
-  if (pos != string::npos) {
-    pred = pred.substr(pos+1);
-  }
- 
-  auto it = property_registry_.find(pred);
-  if (it == property_registry_.end()) {
-    std::cerr << get_json_string42(val);
-    throw JsonParseException("PropertyValue unrecognized: \"" + pred + "\"");
-  } 
-  Prop prop = it->second;
-   
-  p = val.FindMember("val");
-  if (p == val.MemberEnd()) {
-    throw JsonParseException("PropertyValue did not contain \'val\' element");
-  }
-  
-  string valu = val["val"].GetString();
-  PropertyValue pv{prop,valu};
-  return pv;
+  return p->second;
 }
+
 
 std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
   switch (pv.property_) {
@@ -123,54 +99,7 @@ std::ostream& operator<<(std::ostream& ost, const PropertyValue& pv) {
   return ost;
 }
 
-Property
-Property::of(const rapidjson::Value &val){
-  string id;
-  string label;
-  vector<PropertyValue> propvals;
-  if (! val.IsObject()) {
-    throw JsonParseException("Attempt to add malformed node (not JSON object)");
-  }
-  if (! val.HasMember("type")) {
-    throw JsonParseException("Attempt to add malformed node (no type information).");
-  } else if (strcmp ( val["type"].GetString(),"PROPERTY") ) {
-    string tt =val["type"].GetString();
-    throw JsonParseException("Attempt to add malformed property node (not a PROPERTY): " + tt);
-  }
-  if (! val.HasMember("id")) {
-    throw JsonParseException("Attempt to add malformed node (no id).");
-  } else {
-    id = val["id"].GetString();
-  }
-  if (! val.HasMember("lbl")) {
-    throw JsonParseException("Malformed node ("+id+"): no label.");
-  } else {
-    label = val["lbl"].GetString();
-  }
-  TermId tid = TermId::of(id);
-  if (! val.HasMember("meta")) {
-    //throw JsonParseException("Malformed node ("+id+"): no Metainformation");
-    cerr << "[WARNING] Property has no ("+id+"): no Metainformation\n";
-  } else {
-    const rapidjson::Value &meta = val["meta"];
-    if (! meta.IsObject()) {
-      throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
-    }
-    auto itr = meta.FindMember("basicPropertyValues");
-    if (itr != meta.MemberEnd()) {
-      const rapidjson::Value &propertyVals = itr->value;
-      if (! propertyVals.IsArray()) {
-	throw JsonParseException("Malformed node ("+id+"): Term property values not array");
-      }
-      for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-	PropertyValue propval = PropertyValue::of(*elem);
-	propvals.push_back(propval);
-      }
-    }
-  }
-  Property p{tid,label,propvals};
-  return p;
-}
+
 
 Property::Property(const Property &p):
   id_(p.id_),
@@ -207,4 +136,3 @@ std::ostream& operator<<(std::ostream& ost, const Property& prop){
   }
   return ost;
 }
-

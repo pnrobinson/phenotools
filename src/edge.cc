@@ -26,6 +26,16 @@ Edge::edgetype_registry_ = {
 			    {"BFO_0000054",EdgeType::REALIZED_IN},
   };
 
+EdgeType
+Edge::string_to_edgetype(const string &s)
+{
+  auto p = Edge::edgetype_registry_.find(s);
+  if (p == Edge::edgetype_registry_.end()) {
+    throw "Unrecognized edgetype:" + s;
+  }
+  return p->second;
+}
+
 Edge
 Edge::of(const rapidjson::Value &val){
   if (! val.IsObject()) {

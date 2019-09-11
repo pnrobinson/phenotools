@@ -6,7 +6,7 @@
 #include <memory>
 #include <rapidjson/document.h>
 #include "ontology.h"
-
+#include "property.h"
 
 using std::string;
 using std::vector;
@@ -35,6 +35,9 @@ private:
 	void process_edges(const rapidjson::Value& edges);
 
 	void transform_input_data_to_ontology();
+	PropertyValue json_to_property_value(const rapidjson::Value &val);
+	Property json_to_property(const rapidjson::Value &val);
+	Term json_to_term(const rapidjson::Value &val);
 
 public:
 	JsonOboParser(const string path);

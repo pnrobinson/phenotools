@@ -46,7 +46,7 @@ private:
 
 public:
   Term(const TermId &id, const string &label);
-  static Term of(const rapidjson::Value &val);
+  //static Term of(const rapidjson::Value &val);
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }

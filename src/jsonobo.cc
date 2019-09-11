@@ -12,6 +12,7 @@
 #include <sstream>
 
 using std::cout;
+using std::cerr;
 
 /**
  * A convenience function for debugging only!
@@ -81,7 +82,7 @@ JsonOboParser::process_metadata(const rapidjson::Value &val){
       throw JsonParseException("Ontology property values not array");
     }
     for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-      PropertyValue propval = PropertyValue::of(*elem);
+      PropertyValue propval = json_to_property_value(*elem);
       property_value_list_.push_back(propval);
       ontology_.add_property_value(propval);
     }
@@ -99,7 +100,7 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
   for (auto& v : nodes.GetArray()) {
     if (is_class(v)) {
       try {
-	       Term term = Term::of(v);
+	       Term term = json_to_term(v);
 	       term_list_.push_back(term);
 	       n++;
 	       //cout << "\n" << n << std::flush;
@@ -113,7 +114,9 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
         }
     } else if (is_property(v)){
       try{
-	       Property prop = Property::of(v);
+	       Property prop = json_to_property(v);
+         cerr << "Making property: " << prop <<"\n";
+         exit(1);
 	       ontology_.add_property(prop);
       } catch (const JsonParseException& e) {
          std::stringstream sstr;
@@ -235,4 +238,175 @@ JsonOboParser::get_ontology()
   ontology_.add_all_terms(term_list_);
   ontology_.add_all_edges(edge_list_);
   return ontology_;
+}
+
+
+
+/**
+ * construct a PropertyValue from a JSON object
+ */
+PropertyValue
+JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
+  if (! val.IsObject()) {
+    throw JsonParseException("PropertyValue factory expects object");
+  }
+  auto p = val.FindMember("pred");
+  if (p == val.MemberEnd()) {
+    throw JsonParseException("PropertyValue did not contain \'pred\' element");
+  }
+  // PropertyValue elements may contain elements like this
+  // "pred" : "http://purl.org/dc/elements/1.1/creator",
+  // In this case, we extract the last subelement (creator)
+  string pred = val["pred"].GetString();
+  size_t pos = pred.find_last_of('/');
+  if (pos != string::npos) {
+    pred = pred.substr(pos+1);
+  }
+  //We keep a list of properties in
+  Prop prop = Property::string_to_predicate(pred);
+
+  p = val.FindMember("val");
+  if (p == val.MemberEnd()) {
+    throw JsonParseException("PropertyValue did not contain \'val\' element");
+  }
+
+  string valu = val["val"].GetString();
+  PropertyValue pv{prop,valu};
+  return pv;
+}
+
+
+Term
+JsonOboParser::json_to_term(const rapidjson::Value &val){
+  string id;
+  string label;
+  if (! val.IsObject()) {
+    throw JsonParseException("Attempt to add malformed node (not JSON object)");
+  }
+  if (! val.HasMember("type")) {
+    throw JsonParseException("Attempt to add malformed node (no type information).");
+  } else if (strcmp ( val["type"].GetString(),"CLASS") ) {
+    string tt =val["type"].GetString();
+    throw JsonParseException("Attempt to add malformed node (not a CLASS): " + tt);
+  }
+  if (! val.HasMember("id")) {
+    throw JsonParseException("Attempt to add malformed node (no id).");
+  } else {
+    id = val["id"].GetString();
+  }
+  if (! val.HasMember("lbl")) {
+    //throw JsonParseException("Malformed node ("+id+"): no label.");
+    cerr << "[WARNING] node  ("+id+"): no label.\n";
+  } else {
+    label = val["lbl"].GetString();
+  }
+  TermId tid = TermId::of(id);
+  Term term{tid,label};
+  if (! val.HasMember("meta")) {
+    //throw JsonParseException("Malformed node ("+id+"): no Metainformation");
+    cerr << "[WARNING] node (" << id << ") has no Metainformation\n";
+  } else {
+    const rapidjson::Value &meta = val["meta"];
+    if (! meta.IsObject()) {
+      throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
+    }
+    rapidjson::Value::ConstMemberIterator itr = meta.FindMember("definition");
+    if (itr != meta.MemberEnd()) {
+      const rapidjson::Value &definition = meta["definition"];
+      rapidjson::Value::ConstMemberIterator it = definition.FindMember("val");
+      if (it != definition.MemberEnd()) {
+	string definition_value = it->value.GetString();
+	term.add_definition(definition_value);
+      }
+      it = definition.FindMember("xrefs");
+      if (it != definition.MemberEnd()) {
+	const rapidjson::Value& defxrefs = it->value;
+	if (! defxrefs.IsArray()) {
+	  throw JsonParseException("Malformed node ("+id+"): xref not array");
+	}
+	for (auto xrefs_itr = defxrefs.Begin();
+	     xrefs_itr != defxrefs.End(); ++xrefs_itr) {
+	  Xref xr = Xref::fromCurieString(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+	  term.add_definition_xref(xr);
+        }
+      } // done with definition
+      itr = meta.FindMember("xrefs");
+      if (itr != meta.MemberEnd()) {
+	const rapidjson::Value &xrefs = itr->value;
+	if (! xrefs.IsArray()) {
+	  throw JsonParseException("Malformed node ("+id+"): Term Xrefs not array");
+	} else {
+	  for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
+	    auto elem_iter = elem->FindMember("val");
+	    if (elem_iter != elem->MemberEnd()) {
+	      Xref txr = Xref::of(elem_iter->value);
+	      term.add_term_xref(txr);
+	    }
+          }
+	}
+	itr = meta.FindMember("basicPropertyValues");
+	if (itr != meta.MemberEnd()) {
+	  const rapidjson::Value &propertyVals = itr->value;
+	  if (! propertyVals.IsArray()) {
+	    throw JsonParseException("Malformed node ("+id+"): Term property values not array");
+	  }
+	  for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+	    PropertyValue propval = json_to_property_value(*elem);
+	    term.add_property_value(propval);
+	  }
+	}
+      }
+    }
+  }
+  return term;
+}
+
+
+Property
+JsonOboParser::json_to_property(const rapidjson::Value &val){
+  string id;
+  string label;
+  vector<PropertyValue> propvals;
+  if (! val.IsObject()) {
+    throw JsonParseException("Attempt to add malformed node (not JSON object)");
+  }
+  if (! val.HasMember("type")) {
+    throw JsonParseException("Attempt to add malformed node (no type information).");
+  } else if (strcmp ( val["type"].GetString(),"PROPERTY") ) {
+    string tt =val["type"].GetString();
+    throw JsonParseException("Attempt to add malformed property node (not a PROPERTY): " + tt);
+  }
+  if (! val.HasMember("id")) {
+    throw JsonParseException("Attempt to add malformed node (no id).");
+  } else {
+    id = val["id"].GetString();
+  }
+  if (! val.HasMember("lbl")) {
+    throw JsonParseException("Malformed node ("+id+"): no label.");
+  } else {
+    label = val["lbl"].GetString();
+  }
+  TermId tid = TermId::of(id);
+  if (! val.HasMember("meta")) {
+    //throw JsonParseException("Malformed node ("+id+"): no Metainformation");
+    cerr << "[WARNING] Property has no ("+id+"): no Metainformation\n";
+  } else {
+    const rapidjson::Value &meta = val["meta"];
+    if (! meta.IsObject()) {
+      throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
+    }
+    auto itr = meta.FindMember("basicPropertyValues");
+    if (itr != meta.MemberEnd()) {
+      const rapidjson::Value &propertyVals = itr->value;
+      if (! propertyVals.IsArray()) {
+	throw JsonParseException("Malformed node ("+id+"): Term property values not array");
+      }
+      for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+	PropertyValue propval = json_to_property_value(*elem);
+	propvals.push_back(propval);
+      }
+    }
+  }
+  Property p{tid,label,propvals};
+  return p;
 }
