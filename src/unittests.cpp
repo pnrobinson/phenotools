@@ -498,7 +498,6 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   TermId t1 = TermId::from_string("HP:0000002");
   std::optional<Term> t1opt = ontology.get_term(t1);
   REQUIRE(t1opt);
-  cout << ontology << "\n";
   Term term = *t1opt;
   REQUIRE("Fake term 2" == term.get_label());
   vector<TermId> parents = ontology.get_isa_parents(t1);
@@ -522,6 +521,16 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   Xref xref1 = xrefs.at(0);
   TermId expectedXreft = TermId::from_string("UMLS:C4024355");
   REQUIRE(expectedXreft == xref1.get_termid());
+  // Term 4 has a synonym
+  TermId t4 = TermId::from_string("HP:0000004");
+  std::optional<Term> t4opt = ontology.get_term(t4);
+  REQUIRE(t4opt);
+  Term term4 = *t4opt;
+  vector<Synonym> synonyms = term4.get_synonyms();
+  REQUIRE(1 == synonyms.size());
+  Synonym s1 = synonyms.at(0);
+  REQUIRE(s1.is_exact());
+  REQUIRE("Abnormal shape of thyroid gland" == s1.get_label());
 
 
 }

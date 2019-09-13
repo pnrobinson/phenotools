@@ -25,17 +25,19 @@ std::ostream& operator<<(std::ostream& ost, const Xref& txref){
  return ost;
 }
 
-Synonym::Synonym(const string &lbl, const string &typ):
+Synonym::Synonym(const string &typ, const string &lbl):
   label_(lbl)
 {
-  if (typ=="exact") {
+  if (typ=="hasExactSynonym") {
     stype_ = SynonymType::EXACT;
-  } else if (typ == "broad") {
+  } else if (typ == "hasBroadSynonym") {
     stype_ = SynonymType::BROAD;
-  } else if (typ == "narrow") {
+  } else if (typ == "hasNarrowSynonym") {
     stype_ = SynonymType::NARROW;
-  } else if (typ == "related") {
+  } else if (typ == "hasRelatedSynonym") {
     stype_ = SynonymType::RELATED;
+  } else {
+    cerr <<"[WARNING] could not determine synonym type for " << typ << "\n";
   }
 }
 

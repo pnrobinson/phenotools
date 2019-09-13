@@ -85,6 +85,7 @@ public:
   vector<TermId> get_alternative_ids() const { return alternative_id_list_; }
   vector<PredicateValue> get_property_values() const { return property_values_; }
   vector<TermId> get_isa_parents(const TermId &child) const;
+  vector<Synonym> get_synonyms() const { return synonym_list_; }
   bool obsolete() const { return is_obsolete_; }
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
