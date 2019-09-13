@@ -110,10 +110,27 @@ private:
   vector<int> offset_e_;
   /** CSR (Compressed Storage Format) Adjacency list. */
   vector<int> e_to_;
+  /** CSR (Compressed Storage Format) Adjacency list (reverse direction of edges) */
+  vector<int> edge_from_;
+  /** List of edge types, e.g., IS_A, PART_OF. Has same order as e_to_. */
+  vector<EdgeType> edge_type_list_;
+
+  //vector<int> _offset_to_edge;
+  //vector<int> _offset_from_edge;
+
+  //vector<int> _edge_to;
+  //
+
+  int is_a_edge_count_ = 0;
 
 
 public:
-  Ontology() = default;
+  Ontology() = delete;
+  Ontology(const string &id,
+          const vector<Term> &terms,
+          vector<Edge> &edges,
+          const vector<PredicateValue> &predicates,
+          const vector<Property> &properties);
   Ontology(const Ontology &other);
   Ontology(Ontology &other);
   Ontology& operator=(const Ontology &other);
@@ -127,12 +144,15 @@ public:
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return e_to_.size(); }
+  int is_a_edge_count() const { return is_a_edge_count_;}
   int predicate_count() const { return predicate_values_.size(); }
   int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
+  bool exists_path(const TermId &source, const TermId &dest) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
+  void debug_print() const;
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);

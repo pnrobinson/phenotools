@@ -2,6 +2,7 @@
 #include "ontology.h"
 #include <iostream>
 #include <utility> // make_pair
+#include <stack>
 
 
 using std::cerr;
@@ -210,6 +211,19 @@ Ontology::add_property(const Property & prop){
 	property_list_.push_back(prop);
 }
 
+Ontology::Ontology(const string &id,
+        const vector<Term> &terms,
+        vector<Edge> &edges,
+        const vector<PredicateValue> &predicates,
+        const vector<Property> &properties):
+  id_(id),
+  predicate_values_(predicates),
+  property_list_(properties)
+{
+    add_all_terms(terms);
+    add_all_edges(edges);
+}
+
 void
 Ontology::add_all_terms(const vector<Term> &terms){
   int N = terms.size();
@@ -253,6 +267,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
   std::sort(edges.begin(),edges.end());
   int n_vertices = current_term_ids_.size();
   e_to_.reserve(edges.size());
+  edge_type_list_.reserve(edges.size());
   offset_e_.reserve(n_vertices+1);
   // We perform two passes
   // In the first pass, we count how many edges emanate from each
@@ -315,6 +330,10 @@ Ontology::add_all_edges(vector<Edge> &edges){
     }
     //e_to_[source_index + offset] = destination_index;
     e_to_.push_back(destination_index);
+    edge_type_list_.push_back(e.get_edge_type());
+    if (e.is_is_a()) {
+      is_a_edge_count_++;
+    }
   }
   // When we get here, we are done! Print a message
   cout << "[INFO] edges: n=" << e_to_.size()
@@ -342,10 +361,46 @@ Ontology::get_isa_parents(const TermId &child) const
   }
   int idx = p->second;
   for (int i = offset_e_[idx]; i < offset_e_[1+idx]; i++) {
+    if (edge_type_list_[i] != EdgeType::IS_A) {
+      continue;
+    }
     TermId par = current_term_ids_.at(i);
     parents.push_back(par);
   }
   return parents;
+}
+
+bool
+Ontology::exists_path(const TermId &source, const TermId &dest) const
+{
+  auto p = termid_to_index_.find(source);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  std::stack<int> st;
+  int index = p->second;
+  p = termid_to_index_.find(dest);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  int dest_idx = p->second;
+  st.push(index);
+  while (! st.empty()) {
+    index = st.top();
+    st.pop();
+    for (int i = offset_e_[index]; i < offset_e_[1+index]; i++) {
+      if (i == dest_idx) {
+        return true;
+      }
+      st.push(i);
+    }
+  }
+  // if we get here, there was not path from source to dest
+  return false;
 }
 
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
@@ -358,13 +413,53 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 			<< "total current terms: " << ontology.current_term_count() << "\n"
 			<< "total term ids (including obsolete/alternative term ids): " <<
 				ontology.total_term_id_count() << "\n";
+  int is_a_count = ontology.is_a_edge_count();
+  int other_edge_count = ontology.edge_count() - 2 * is_a_count;
 	ost << "### Edges ###\n"
-			<< "total edges: " << ontology.edge_count() << "\n";
+			<< "is_a edges: " << is_a_count << "\n";
+  if (other_edge_count) {
+    ost << "other edges n=" << other_edge_count << "\n";
+  }
 	ost << "### Properties ###\n"
 			<< "Property count: " << ontology.property_count() << "\n";
 	for (auto p : ontology.property_list_) {
 			ost << p << "\n";
 	}
 		return ost;
+}
+
+/**
+  * Print out lots of details for helping with debugging and testing.
+  */
+void
+Ontology::debug_print() const
+{
+  cout << "List of all edges";
+  cout << "current_term_ids_ size="<<current_term_ids_.size()<<"\n";
+  cout << "edge_type_list_ size= " << edge_type_list_.size()<<"\n";
+  for (int i=0; i<offset_e_.size();i++) {
+    for (int j=offset_e_[i]; j<offset_e_[i+1]; j++) {
+      cout << "i="<<i <<", j="<<j<<", offset_e_.size()="<<offset_e_.size()<<"\n";
+
+      TermId source_id = current_term_ids_.at(i);
+        cout <<"got  source " << source_id << "\n";
+      TermId dest_id = current_term_ids_.at(j);
+      cout <<"got  dest " << dest_id << "\n";
+      // if we get here, the following "has to" work
+      auto source = term_map_.at(source_id);
+      auto dest = term_map_.at(dest_id);
+      EdgeType etype = edge_type_list_[i];
+      cout << source->get_label() << " [" << source_id << "]";
+      if (etype == EdgeType::IS_A) {
+        cout << " is_a ";
+      } else {
+        cout << " todo-edge ";
+      }
+        cout << dest->get_label() << " [" << dest_id << "]\n";
+    }
+  }
+
+
+
 
 }

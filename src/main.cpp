@@ -14,18 +14,11 @@
 #include "phenotools.h"
 #include "jsonobo.h"
 
-
-
 using std::string;
 using std::cout;
 using std::cerr;
 
-
-
-
-
 int main (int argc, char ** argv) {
-
   /** Path to HPO ontology file hp.json. */
   string hp_json_path;
   /** Path to mondo file file, mondo.json. */
@@ -34,27 +27,35 @@ int main (int argc, char ** argv) {
 
   CLI::App app ( "phenotools" );
   CLI::App* phenopacket_command = app.add_subcommand ( "phenopacket", "work with GA4GH phenopackets" );
+  CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
   CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
   CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
   CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
+  CLI::Option* debug_ont_option = debug_command->add_option("-o,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+
 
   CLI11_PARSE ( app, argc, argv );
 
   if ( validate_command->parsed() ) {
     if (*hp_json_path_option) {
       JsonOboParser parser {hp_json_path};
-      Ontology ontology = parser.get_ontology();
-      cout << ontology << "\n";
+      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+      cout << *ontology << "\n";
       return EXIT_SUCCESS;
     } else if (*mondo_json_path_option) {
       JsonOboParser parser {mondo_json_path};
-      Ontology ontology = parser.get_ontology();
-      cout << ontology << "\n";
+      std::unique_ptr<Ontology> ontology = parser.get_ontology();
+      cout << *ontology << "\n";
       return EXIT_SUCCESS;
     } else {
       std::cerr << "[ERROR] --hp or --mondo option required for validate command!\n";
     }
+  } else if (debug_command->parsed() ) {
+    JsonOboParser parser {hp_json_path};
+    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+    cout << *ontology << "\n";
+    ontology->debug_print();
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
     if ( ! *phenopacket_path_option ) {

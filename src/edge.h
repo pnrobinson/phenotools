@@ -10,6 +10,7 @@ using std::map;
 
 enum class EdgeType {
   IS_A,
+  IS_A_INVERSE,
   DISEASE_HAS_FEATURE,
   DISEASE_HAS_BASIS_IN_DISRUPTION_OF,
   DISEASE_HAS_BASIS_IN_DYSFUNCTION_OF,
@@ -46,7 +47,10 @@ public:
   static EdgeType string_to_edgetype(const string &s);
   TermId get_source() const { return source_; }
   TermId get_destination() const { return dest_; }
+  EdgeType get_edge_type() const { return edge_type_; }
   bool operator<(const Edge& rhs) const;
+  bool is_is_a() const { return edge_type_ == EdgeType::IS_A; }
+  Edge get_is_a_inverse() const;
   friend std::ostream& operator<<(std::ostream& ost, const Edge& edge);
 };
 std::ostream& operator<<(std::ostream& ost, const Edge& edge);

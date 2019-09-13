@@ -37,6 +37,14 @@ Edge::string_to_edgetype(const string &s)
 }
 
 Edge
+Edge::get_is_a_inverse() const
+{
+	//Edge(TermId s,EdgeType et,TermId o):
+	Edge inv{dest_, EdgeType::IS_A_INVERSE,source_};
+	return inv;
+}
+
+Edge
 Edge::of(const rapidjson::Value &val){
   if (! val.IsObject()) {
     throw JsonParseException("Edge element not JSON object");

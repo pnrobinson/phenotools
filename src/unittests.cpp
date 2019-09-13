@@ -12,6 +12,7 @@
 #include "jsonobo.h"
 
 using std::cout;
+using std::cerr;
 
 // The arena object is used to allocate certain protobuf objects
 google::protobuf::Arena arena;
@@ -494,13 +495,16 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
 {
   string hp_json_path = "../testdata/hp.small.json";
   JsonOboParser parser {hp_json_path};
-  Ontology ontology = parser.get_ontology();
+  std::unique_ptr<Ontology> ontology = parser.get_ontology();
   TermId t1 = TermId::from_string("HP:0000002");
-  std::optional<Term> t1opt = ontology.get_term(t1);
+  std::optional<Term> t1opt = ontology->get_term(t1);
   REQUIRE(t1opt);
   Term term = *t1opt;
   REQUIRE("Fake term 2" == term.get_label());
-  vector<TermId> parents = ontology.get_isa_parents(t1);
+  vector<TermId> parents = ontology->get_isa_parents(t1);
+  for (TermId t : parents) {
+    cerr << t1 << " ISA PAR " << t << "\n";
+  }
   REQUIRE(1 == parents.size());
   TermId par = TermId::from_string("HP:0000001");
   REQUIRE(par == parents.at(0));
@@ -523,7 +527,7 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   REQUIRE(expectedXreft == xref1.get_termid());
   // Term 4 has a synonym
   TermId t4 = TermId::from_string("HP:0000004");
-  std::optional<Term> t4opt = ontology.get_term(t4);
+  std::optional<Term> t4opt = ontology->get_term(t4);
   REQUIRE(t4opt);
   Term term4 = *t4opt;
   vector<Synonym> synonyms = term4.get_synonyms();
@@ -531,6 +535,23 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   Synonym s1 = synonyms.at(0);
   REQUIRE(s1.is_exact());
   REQUIRE("Abnormal shape of thyroid gland" == s1.get_label());
+}
+
+TEST_CASE("Test exists path algorithm","[exists_path]") {
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+  // term 1 is the root
+  TermId t1 = TermId::from_string("HP:0000001");
+  // term 2 is the child of term 1
+  TermId t2 = TermId::from_string("HP:0000002");
+  // term 3 is the grand child of term 1 and child of term 2
+  TermId t3 = TermId::from_string("HP:0000003");
+  // term 5 is the grand child of term 1 but not child of term 2
+  TermId t5 = TermId::from_string("HP:0000003");
+  bool b = ontology->exists_path(t2,t1);
+  REQUIRE(b);
+
 
 
 }
