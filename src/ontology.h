@@ -29,6 +29,32 @@ public:
 };
 std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 
+/**
+  * synonym of an ontology term
+  */
+class Synonym {
+private:
+  enum SynonymType { EXACT, BROAD, NARROW, RELATED };
+  SynonymType stype_;
+  string label_;
+
+public:
+  Synonym(const string &lbl, const string &typ);
+
+  Synonym(const Synonym &) = default;
+  Synonym(Synonym &&) = default;
+  Synonym &operator=(const Synonym &) = default;
+  Synonym &operator=(Synonym &&) = default;
+  ~Synonym(){}
+  string get_label() const { return label_; }
+  bool is_exact() const { return stype_ == SynonymType::EXACT; }
+  bool is_broad() const { return stype_ == SynonymType::BROAD; }
+  bool is_narrow() const { return stype_ == SynonymType::NARROW; }
+  bool is_related() const { return stype_ == SynonymType::RELATED; }
+  friend std::ostream& operator<<(std::ostream& ost, const Synonym& synonym);
+};
+std::ostream& operator<<(std::ostream& ost, const Synonym& synonym);
+
 class Term {
 private:
   TermId id_;
@@ -38,6 +64,7 @@ private:
   vector<Xref> term_xref_list_;
   vector<TermId> alternative_id_list_;
   vector<PredicateValue> property_values_;
+  vector<Synonym> synonym_list_;
   bool is_obsolete_ = false;
 
 public:
@@ -47,6 +74,7 @@ public:
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
   void add_predicate_value(const PredicateValue &pv);
+  void add_synonym(const string &pred, const string &lbl);
 
   TermId get_term_id() const { return id_; }
   string get_label() const { return label_; }

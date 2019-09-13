@@ -342,6 +342,23 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
 	             }
           }
 	      }
+        if (meta.HasMember("synonyms")) {
+          const rapidjson::Value &synonyms = meta["synonyms"];
+          if (! synonyms.IsArray()) {
+             throw JsonParseException("Malformed node ("+id+"): synonyms not array");
+          }
+          for (auto& syno : synonyms.GetArray()) {
+            if (! syno.HasMember("pred")){
+              throw JsonParseException("Synonym required to have pred object (node:"+id+")");
+            }
+            if (! syno.HasMember("val")) {
+              throw JsonParseException("Synonym required to have val object (node:"+id+")");
+            }
+            string pred = syno["pred"].GetString();
+            string val = syno["val"].GetString();
+            term.add_synonym(pred, val);
+          }
+        }
 	      itr = meta.FindMember("basicPropertyValues");
         if (itr != meta.MemberEnd()) {
 	         const rapidjson::Value &propertyVals = itr->value;

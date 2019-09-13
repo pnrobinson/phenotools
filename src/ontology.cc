@@ -25,6 +25,37 @@ std::ostream& operator<<(std::ostream& ost, const Xref& txref){
  return ost;
 }
 
+Synonym::Synonym(const string &lbl, const string &typ):
+  label_(lbl)
+{
+  if (typ=="exact") {
+    stype_ = SynonymType::EXACT;
+  } else if (typ == "broad") {
+    stype_ = SynonymType::BROAD;
+  } else if (typ == "narrow") {
+    stype_ = SynonymType::NARROW;
+  } else if (typ == "related") {
+    stype_ = SynonymType::RELATED;
+  }
+}
+
+std::ostream&
+operator<<(std::ostream& ost, const Synonym& synonym)
+{
+  switch(synonym.stype_) {
+    case Synonym::SynonymType::EXACT:
+      ost << "exact: ";break;
+    case Synonym::SynonymType::BROAD:
+      ost << "braod: ";break;
+    case Synonym::SynonymType::NARROW:
+      ost << "narrow: ";break;
+    case Synonym::SynonymType::RELATED:
+      ost << "related: ";break;
+  }
+  ost << synonym.label_;
+  return ost;
+}
+
 
 Term::Term(const TermId &id, const string &label):
   id_(id),label_(label) {}
@@ -55,6 +86,12 @@ Term::add_predicate_value(const PredicateValue &pv){
   }
 }
 
+void
+Term::add_synonym(const string &pred, const string &lbl)
+{
+  synonym_list_.emplace_back(Synonym(pred,lbl));
+}
+
 std::ostream& operator<<(std::ostream& ost, const Term& term){
   ost << term.label_ << " [" << term.id_ << "]\n";
   ost << "def: " << (term.definition_.empty() ? "n/a":term.definition_) << "\n";
@@ -73,6 +110,12 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
 		 ost << "\tproperty val:" << p << "\n";
 	 }
 	}
+  if (! term.synonym_list_.empty()) {
+    ost <<"\tsynonyms:\n";
+    for (const auto &s : term.synonym_list_) {
+      ost << s << "\n";
+    }
+  }
   return ost;
 }
 
