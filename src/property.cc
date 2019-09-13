@@ -87,18 +87,57 @@ std::ostream& operator<<(std::ostream& ost, const PredicateValue& pv) {
 map<string, AllowedPropertyValue>
 Property::property_registry_ = {
   {"UK spelling", AllowedPropertyValue::UK_SPELLING},
+	{"HP_0045076", AllowedPropertyValue::UK_SPELLING},
   {"abbreviation", AllowedPropertyValue::ABBREVIATION},
+	{"HP_0045077", AllowedPropertyValue::ABBREVIATION},
   {"plural form", AllowedPropertyValue::PLURAL_FORM},
+	{"HP_0045078", AllowedPropertyValue::PLURAL_FORM},
   {"layperson term", AllowedPropertyValue::LAYPERSON_TERM},
+	{"hp.owl#layperson", AllowedPropertyValue::LAYPERSON_TERM},
   {"Consequence of a disorder in another organ system.", AllowedPropertyValue::CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM},
-  {"display label", AllowedPropertyValue::DISPLAY_LABEL},
+	{"hp#secondary_consequence", AllowedPropertyValue::CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM},
+	{"display label", AllowedPropertyValue::DISPLAY_LABEL},
+	{"HP_0031940", AllowedPropertyValue::DISPLAY_LABEL},
+	{"hp#hposlim_core", AllowedPropertyValue::HPO_SLIM},
 	{"unknown", AllowedPropertyValue::UNKNOWN},
+	{"HP_0031859", AllowedPropertyValue::OBSOLETE_SYNONYM},
 };
 
-AllowedPropertyValue
-Property::string_to_property(const string &s)
+
+map<AllowedPropertyValue, string>
+Property::apv_to_label_ = {
+	{AllowedPropertyValue::UK_SPELLING, "UK spelling"},
+	{AllowedPropertyValue::ABBREVIATION, "abbreviation"},
+  {AllowedPropertyValue::PLURAL_FORM, "plural form"},
+  {AllowedPropertyValue::LAYPERSON_TERM, "layperson term"},
+  {AllowedPropertyValue::CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM, "secondary consequence"},
+  {AllowedPropertyValue::DISPLAY_LABEL, "display label"},
+  {AllowedPropertyValue::HPO_SLIM, "hpo slim"},
+  {AllowedPropertyValue::OBSOLETE_SYNONYM, "obsolete synonym"},
+  {AllowedPropertyValue::UNKNOWN,"unknown"},
+};
+
+
+Property::Property(AllowedPropertyValue apv):
+	apv_(apv)
 {
-  auto p = Property::property_registry_.find(s);
+	auto p = apv_to_label_.find(apv);
+	if (p != apv_to_label_.end()) {
+		label_ = p->second;
+	} else {
+		cerr << "[ERROR] Could not find property label\n";
+	}
+}
+
+AllowedPropertyValue
+Property::id_to_property(const string &s)
+{
+	std::size_t i = s.find_last_of('/');
+	string prp = s;
+  if (i != string::npos){
+    prp = s.substr(i+1);;
+  }
+  auto p = Property::property_registry_.find(prp);
   if (p == Property ::property_registry_.end()) {
     cerr<< "[WARNING] Unrecognized property: " << s << "\n";
     exit(1);
@@ -107,37 +146,31 @@ Property::string_to_property(const string &s)
 }
 
 Property::Property(const Property &p):
-  id_(p.id_),
-  label_(p.label_),
-  property_values_(p.property_values_)
+	apv_(p.apv_),
+  label_(p.label_)
 { }
 
 Property::Property(Property &&p):
-  id_ (std::move(p.id_)),
-  label_( std::move(p.label_) ),
-  property_values_ (std::move(p.property_values_) ) {}
+	apv_(p.apv_),
+  label_( std::move(p.label_) )
+{ }
 
 
 Property &
 Property::operator=(const Property &p){
-  id_ = p.id_;
+	apv_ = p.apv_;
   label_ = p.label_;
-  property_values_ = p.property_values_;
   return *this;
 }
 
 Property &
 Property::operator=(Property &&p){
-  id_ = std::move(p.id_);
+  apv_ = p.apv_;
   label_ = std::move(p.label_);
-  property_values_ = std::move(p.property_values_);
   return *this;
 }
 
 std::ostream& operator<<(std::ostream& ost, const Property& prop){
-  ost << prop.label_ << " [" << prop.id_ << "] ";
-  for (auto pv : prop.property_values_ ) {
-    ost << pv <<"; ";
-  }
+  ost << prop.label_;
   return ost;
 }

@@ -80,6 +80,8 @@ enum class AllowedPropertyValue {
   LAYPERSON_TERM,
   CONSEQUENCE_OF_A_DISORDER_IN_ANOTHER_ORGAN_SYSTEM,//"Consequence of a disorder in another organ system."
   DISPLAY_LABEL, //"display label"
+  HPO_SLIM,
+  OBSOLETE_SYNONYM,
   UNKNOWN,
 };
 
@@ -92,21 +94,19 @@ enum class AllowedPropertyValue {
   */
 class Property {
 private:
-  TermId id_;
+  AllowedPropertyValue apv_;
   string label_;
-  vector<PredicateValue> property_values_;
   static map<string, AllowedPropertyValue> property_registry_;
+  /** key, label of a property, value: corresponding term id */
+  static map<AllowedPropertyValue, string> apv_to_label_;
 public:
-  Property(TermId id,string label,vector<PredicateValue> vals):
-    id_(id),
-    label_(label),
-    property_values_(vals){}
+  Property(AllowedPropertyValue apv);
   Property(const Property &p);
   Property(Property &&p);
   ~Property(){}
   Property &operator=(const Property &p);
   Property &operator=(Property &&p);
-  static AllowedPropertyValue string_to_property(const string &s);
+  static AllowedPropertyValue id_to_property(const string &s);
   friend std::ostream& operator<<(std::ostream& ost, const Property& prop);
 };
 std::ostream& operator<<(std::ostream& ost, const Property& prop);

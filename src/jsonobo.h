@@ -22,7 +22,7 @@ private:
 	/** List of all edges of the ontology we are parsing. */
 	vector<Edge> edge_list_;
 	/** List of all property values of the ontology we are parsing. */
-	vector<PredicateValue> property_value_list_;
+	vector<PredicateValue> predicate_value_list_;
 	/** A list of errors, if any, encountered while parsing the input file.*/
 	vector<string> error_list_;
 
@@ -35,7 +35,7 @@ private:
 	void process_edges(const rapidjson::Value& edges);
 
 	void transform_input_data_to_ontology();
-	PredicateValue json_to_property_value(const rapidjson::Value &val);
+	PredicateValue json_to_predicate_value(const rapidjson::Value &val);
 	Property json_to_property(const rapidjson::Value &val);
 	Term json_to_term(const rapidjson::Value &val);
 	Xref json_to_xref(const rapidjson::Value &val);

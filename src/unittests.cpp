@@ -495,7 +495,7 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   string hp_json_path = "../testdata/hp.small.json";
   JsonOboParser parser {hp_json_path};
   Ontology ontology = parser.get_ontology();
-  TermId t1 = TermId::of("HP:0000002");
+  TermId t1 = TermId::from_string("HP:0000002");
   std::optional<Term> t1opt = ontology.get_term(t1);
   REQUIRE(t1opt);
   cout << ontology << "\n";
@@ -503,14 +503,14 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   REQUIRE("Fake term 2" == term.get_label());
   vector<TermId> parents = ontology.get_isa_parents(t1);
   REQUIRE(1 == parents.size());
-  TermId par = TermId::of("HP:0000001");
+  TermId par = TermId::from_string("HP:0000001");
   REQUIRE(par == parents.at(0));
   string def = "Definition for HP:0000002.";
   REQUIRE(def ==  term.get_definition());
   vector<Xref> def_xrefs = term.get_definition_xref_list();
   REQUIRE(1 == def_xrefs.size());
   Xref dxref1 = def_xrefs.at(0);
-  TermId expectedXref = TermId::of("HPO:fake2");
+  TermId expectedXref = TermId::from_string("HPO:fake2");
   REQUIRE(expectedXref == dxref1.get_termid());
   vector<PredicateValue> provals = term.get_property_values();
   REQUIRE(3 == provals.size());
@@ -520,7 +520,7 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   vector<Xref> xrefs = term.get_term_xref_list();
   REQUIRE(1 == xrefs.size());
   Xref xref1 = xrefs.at(0);
-  TermId expectedXreft = TermId::of("UMLS:C4024355");
+  TermId expectedXreft = TermId::from_string("UMLS:C4024355");
   REQUIRE(expectedXreft == xref1.get_termid());
 
 

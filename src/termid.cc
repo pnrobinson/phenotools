@@ -9,7 +9,7 @@ TermId::TermId(const string &s,std::size_t pos):
 }
 
 TermId
-TermId::of(const string &s)
+TermId::from_string(const string &s)
 {
   string cp = s;
   std::size_t i = cp.find_last_of('/');
@@ -41,17 +41,10 @@ TermId::from_url(const string &s){
     throw JsonParseException("Malformed TermId URL");
   }
   string st = s.substr(i+1);
-  TermId t = TermId::of(st);
+  TermId t = TermId::from_string(st);
   return t;
 }
 
-TermId TermId::of(const rapidjson::Value &val){
-  //printJJ(val);
-  if (! val.IsString() ) {
-    throw JsonParseException("Attempt to construct TermId from non-string");
-  }
-  return TermId::of(val.GetString());
-}
 
 
 TermId::TermId(const TermId &tid):

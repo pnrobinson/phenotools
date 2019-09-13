@@ -14,27 +14,6 @@ Xref::Xref(const Xref &txr):
 {
 }
 
-
-/*
-Xref
-Xref::of(const rapidjson::Value &val){
-  if (val.IsString() ) {
-    return Xref::fromCurieString(val);
-  } else {
-    throw JsonParseException("Could not construct Xref");
-  }
-}
-
-
-Xref
-Xref::fromCurieString(const rapidjson::Value &val){
-  TermId tid = TermId::of(val);
-  Xref xr{tid};
-  return xr;
-}
-*/
-
-
 Xref &
 Xref::operator=(const Xref &txr) {
  term_id_ = txr.term_id_;
@@ -69,7 +48,7 @@ Term::add_definition_xref(const Xref &txref){
 void
 Term::add_predicate_value(const PredicateValue &pv){
   if (pv.is_alternate_id()){
-    TermId alt_id = TermId::of(pv.get_value());
+    TermId alt_id = TermId::from_string(pv.get_value());
     alternative_id_list_.push_back(alt_id);
   } else {
     property_values_.push_back(pv);
@@ -112,6 +91,7 @@ std::ostream& operator<<(std::ostream& ost, const Edge& edge){
 Ontology::Ontology(const Ontology &other):
 	id_(other.id_),
 	predicate_values_(other.predicate_values_),
+  property_list_(other.property_list_),
 	term_map_(other.term_map_),
 	current_term_ids_(other.current_term_ids_),
 	obsolete_term_ids_(other.obsolete_term_ids_),
@@ -123,6 +103,7 @@ Ontology::Ontology(const Ontology &other):
 	 }
 Ontology::Ontology(Ontology &other): 	id_(other.id_){
 	predicate_values_ = std::move(other.predicate_values_);
+  property_list_ = std::move(other.property_list_);
 	term_map_ = std::move(other.term_map_);
 	current_term_ids_ = std::move(other.current_term_ids_);
   termid_to_index_ = std::move(other.termid_to_index_);
@@ -135,6 +116,7 @@ Ontology::operator=(const Ontology &other){
 	if (this != &other) {
 		id_ = other.id_;
 		predicate_values_ = other.predicate_values_;
+    property_list_ = other.property_list_;
 		term_map_ = other.term_map_;
     termid_to_index_ = other.termid_to_index_;
 		current_term_ids_ = other.current_term_ids_;
@@ -149,6 +131,7 @@ Ontology::operator=(Ontology &&other){
 	if (this != &other) {
 		id_ = std::move(other.id_);
 		predicate_values_ = std::move(other.predicate_values_);
+    property_list_ = std::move(other.property_list_);
 		term_map_ = std::move(other.term_map_);
 		current_term_ids_ = std::move(other.current_term_ids_);
 		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
@@ -178,6 +161,7 @@ Ontology::add_predicate_value(const PredicateValue &propval){
 
 void
 Ontology::add_property(const Property & prop){
+  cerr<<"[123345] Adding property\n";
 	property_list_.push_back(prop);
 }
 
@@ -332,7 +316,7 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 	ost << "### Edges ###\n"
 			<< "total edges: " << ontology.edge_count() << "\n";
 	ost << "### Properties ###\n"
-			<< "TODO total properties: " << ontology.property_count() << "\n";
+			<< "Property count: " << ontology.property_count() << "\n";
 	for (auto p : ontology.property_list_) {
 			ost << p << "\n";
 	}

@@ -57,17 +57,17 @@ bool is_class(const rapidjson::Value &val){
   }
   return false;
 }
-
+/**
+  * @return true if this element is a Property
+  */
 bool is_property(const rapidjson::Value &val){
   if (! val.IsObject()) {
     return false;
   }
   if (! val.HasMember("type")) {
     return false;
-  } else if (! strcmp(val["type"].GetString(), "PROPERTY")) {
-    return true;
   }
-  return false;
+  return (! strcmp(val["type"].GetString(), "PROPERTY"));
 }
 
 void
@@ -82,8 +82,8 @@ JsonOboParser::process_metadata(const rapidjson::Value &val){
       throw JsonParseException("Ontology property values not array");
     }
     for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-      PredicateValue predval = json_to_property_value(*elem);
-      property_value_list_.push_back(predval);
+      PredicateValue predval = json_to_predicate_value(*elem);
+      predicate_value_list_.push_back(predval);
       ontology_.add_predicate_value(predval);
     }
   }
@@ -116,7 +116,6 @@ JsonOboParser::process_nodes(const rapidjson::Value& nodes)
       // instance, some synonyms have the property "UK spelling"
       try{
 	       Property prop = json_to_property(v);
-         cerr << "Making property: \"" << prop <<"\"\n";
 	       ontology_.add_property(prop);
       } catch (const JsonParseException& e) {
          std::stringstream sstr;
@@ -243,10 +242,10 @@ JsonOboParser::get_ontology()
 
 
 /**
- * construct a PropertyValue from a JSON object
+ * construct a PredicateValue from a JSON object
  */
 PredicateValue
-JsonOboParser::json_to_property_value(const rapidjson::Value &val) {
+JsonOboParser::json_to_predicate_value(const rapidjson::Value &val) {
   if (! val.IsObject()) {
     throw JsonParseException("PropertyValue factory expects object");
   }
@@ -300,7 +299,7 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
   } else {
     label = val["lbl"].GetString();
   }
-  TermId tid = TermId::of(id);
+  TermId tid = TermId::from_string(id);
   Term term{tid,label};
   if (! val.HasMember("meta")) {
     //throw JsonParseException("Malformed node ("+id+"): no Metainformation");
@@ -315,58 +314,62 @@ JsonOboParser::json_to_term(const rapidjson::Value &val){
       const rapidjson::Value &definition = meta["definition"];
       rapidjson::Value::ConstMemberIterator it = definition.FindMember("val");
       if (it != definition.MemberEnd()) {
-	string definition_value = it->value.GetString();
-	term.add_definition(definition_value);
+	       string definition_value = it->value.GetString();
+	        term.add_definition(definition_value);
       }
       it = definition.FindMember("xrefs");
       if (it != definition.MemberEnd()) {
-	const rapidjson::Value& defxrefs = it->value;
-	if (! defxrefs.IsArray()) {
-	  throw JsonParseException("Malformed node ("+id+"): xref not array");
-	}
-	for (auto xrefs_itr = defxrefs.Begin();
-	     xrefs_itr != defxrefs.End(); ++xrefs_itr) {
-	  Xref xr = json_to_xref(*xrefs_itr); // xrefs in definitions are simply CURIEs.
-	  term.add_definition_xref(xr);
+	       const rapidjson::Value& defxrefs = it->value;
+	       if (! defxrefs.IsArray()) {
+	          throw JsonParseException("Malformed node ("+id+"): xref not array");
+	       }
+	       for (auto xrefs_itr = defxrefs.Begin(); xrefs_itr != defxrefs.End(); ++xrefs_itr) {
+	          Xref xr = json_to_xref(*xrefs_itr); // xrefs in definitions are simply CURIEs.
+	          term.add_definition_xref(xr);
         }
       } // done with definition
       itr = meta.FindMember("xrefs");
       if (itr != meta.MemberEnd()) {
-	const rapidjson::Value &xrefs = itr->value;
-	if (! xrefs.IsArray()) {
-	  throw JsonParseException("Malformed node ("+id+"): Term Xrefs not array");
-	} else {
-	  for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
-	    auto elem_iter = elem->FindMember("val");
-	    if (elem_iter != elem->MemberEnd()) {
-	      Xref txr = json_to_xref(elem_iter->value);
-	      term.add_term_xref(txr);
-	    }
+	       const rapidjson::Value &xrefs = itr->value;
+	       if (! xrefs.IsArray()) {
+	          throw JsonParseException("Malformed node ("+id+"): Term Xrefs not array");
+	       } else {
+	          for (auto elem = xrefs.Begin(); elem != xrefs.End(); elem++) {
+	             auto elem_iter = elem->FindMember("val");
+	             if (elem_iter != elem->MemberEnd()) {
+	                Xref txr = json_to_xref(elem_iter->value);
+	                term.add_term_xref(txr);
+	             }
           }
-	}
-	itr = meta.FindMember("basicPropertyValues");
-	if (itr != meta.MemberEnd()) {
-	  const rapidjson::Value &propertyVals = itr->value;
-	  if (! propertyVals.IsArray()) {
-	    throw JsonParseException("Malformed node ("+id+"): Term property values not array");
-	  }
-	  for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-	    PredicateValue propval = json_to_property_value(*elem);
-	    term.add_predicate_value(propval);
-	  }
-	}
+	      }
+	      itr = meta.FindMember("basicPropertyValues");
+        if (itr != meta.MemberEnd()) {
+	         const rapidjson::Value &propertyVals = itr->value;
+	          if (! propertyVals.IsArray()) {
+	             throw JsonParseException("Malformed node ("+id+"): Term property values not array");
+	          }
+	          for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
+	             PredicateValue propval = json_to_predicate_value(*elem);
+	             term.add_predicate_value(propval);
+	           }
+	       }
       }
     }
   }
   return term;
 }
 
-
+/**
+ * There are a number of properties in the HPO JSON file.
+ * They are represented in an inconsistent way. The solution
+ * that we follow here is to parse the id element (which all
+ * properties have) and assign allowable properties based on
+ * an enum in the properties.h file.
+ */
 Property
 JsonOboParser::json_to_property(const rapidjson::Value &val){
   string id;
   string label;
-  vector<PredicateValue> propvals;
   if (! val.IsObject()) {
     throw JsonParseException("Attempt to add malformed node (not JSON object)");
   }
@@ -381,33 +384,8 @@ JsonOboParser::json_to_property(const rapidjson::Value &val){
   } else {
     id = val["id"].GetString();
   }
-  if (! val.HasMember("lbl")) {
-    throw JsonParseException("Malformed node ("+id+"): no label.");
-  } else {
-    label = val["lbl"].GetString();
-  }
-  TermId tid = TermId::of(id);
-  if (! val.HasMember("meta")) {
-    //throw JsonParseException("Malformed node ("+id+"): no Metainformation");
-    cerr << "[WARNING] Property has no ("+id+"): no Metainformation\n";
-  } else {
-    const rapidjson::Value &meta = val["meta"];
-    if (! meta.IsObject()) {
-      throw JsonParseException("Malformed node ("+id+"): meta is not JSON object.");
-    }
-    auto itr = meta.FindMember("basicPropertyValues");
-    if (itr != meta.MemberEnd()) {
-      const rapidjson::Value &propertyVals = itr->value;
-      if (! propertyVals.IsArray()) {
-	throw JsonParseException("Malformed node ("+id+"): Term property values not array");
-      }
-      for (auto elem = propertyVals.Begin(); elem != propertyVals.End(); elem++) {
-	PredicateValue propval = json_to_property_value(*elem);
-	propvals.push_back(propval);
-      }
-    }
-  }
-  Property p{tid,label,propvals};
+  AllowedPropertyValue apv = Property::id_to_property(id);
+  Property p{apv};
   return p;
 }
 
@@ -415,7 +393,7 @@ Xref
 JsonOboParser::json_to_xref(const rapidjson::Value &val)
 {
   if (val.IsString() ) {
-    TermId tid = TermId::of(val);
+    TermId tid = TermId::from_string(val.GetString());
     Xref xr{tid};
     return xr;
   } else {
