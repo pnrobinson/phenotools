@@ -1006,7 +1006,7 @@ namespace phenotools {
   {
     std::set<string> ontology_prefixes;
     for (Resource r : resources_) {
-      ontology_prefixes.add(r.get_id());
+      ontology_prefixes.insert(r.get_id());
     }
     for (string pr : prefixes) {
       auto p = ontology_prefixes.find(pr);
@@ -1181,9 +1181,9 @@ namespace phenotools {
     std::set<string> prefixes;
     for (PhenotypicFeature pf : phenotypic_features_) {
       string termid = pf.get_id();
-      std::size_t i = cp.find_last_of(':');
+      std::size_t i = termid.find_last_of(':');
       string prefix = termid.substr(0,i);
-      prefixes.add(prefix);
+      prefixes.insert(prefix);
     }
     std::set<string> metadata_prefixes;
   }

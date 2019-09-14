@@ -2,6 +2,7 @@
 #include "ontology.h"
 #include <iostream>
 #include <utility> // make_pair
+#include <algorithm> // sort
 #include <stack>
 
 
@@ -210,48 +211,47 @@ Ontology::operator=(Ontology &&other){
   */
 void
 Ontology::add_predicate_value(const PredicateValue &propval){
-		predicate_values_.push_back(propval);
+  predicate_values_.push_back(propval);
 }
 
 void
 Ontology::add_property(const Property & prop){
-  cerr<<"[123345] Adding property\n";
-	property_list_.push_back(prop);
+  property_list_.push_back(prop);
 }
 
 Ontology::Ontology(const string &id,
-        const vector<Term> &terms,
-        vector<Edge> &edges,
-        const vector<PredicateValue> &predicates,
-        const vector<Property> &properties):
+		   const vector<Term> &terms,
+		   vector<Edge> &edges,
+		   const vector<PredicateValue> &predicates,
+		   const vector<Property> &properties):
   id_(id),
   predicate_values_(predicates),
   property_list_(properties)
 {
-    add_all_terms(terms);
-    add_all_edges(edges);
+  add_all_terms(terms);
+  add_all_edges(edges);
 }
 
 void
 Ontology::add_all_terms(const vector<Term> &terms){
-  int N = terms.size();
-	for (auto t : terms) {
-		std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
-		TermId tid = t.get_term_id();
-		string id = tid.get_id();
-		term_map_.insert(std::make_pair(tid,sptr));
-		if (t.obsolete()){
-			obsolete_term_ids_.push_back(tid);
-		} else {
-			current_term_ids_.push_back(tid);
-		}
-		if (t.has_alternative_ids()) {
-			vector<TermId> alt_ids = t.get_alternative_ids();
-			for (auto atid : alt_ids) {
-					term_map_.insert(std::make_pair(atid,sptr));
-			}
-		}
-	}
+  auto N = terms.size();
+  for (auto t : terms) {
+    std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
+    TermId tid = t.get_term_id();
+    string id = tid.get_id();
+    term_map_.insert(std::make_pair(tid,sptr));
+    if (t.obsolete()){
+      obsolete_term_ids_.push_back(tid);
+    } else {
+      current_term_ids_.push_back(tid);
+    }
+    if (t.has_alternative_ids()) {
+      vector<TermId> alt_ids = t.get_alternative_ids();
+      for (auto atid : alt_ids) {
+	term_map_.insert(std::make_pair(atid,sptr));
+      }
+    }
+  }
   std::sort(current_term_ids_.begin(), current_term_ids_.end());
   if (current_term_ids_.size() != N) {
     // sanity check
@@ -259,14 +259,14 @@ Ontology::add_all_terms(const vector<Term> &terms){
     cerr << "[FATAL] Number of term ids not equal to number of terms";
     std::exit(1);
   }
-  for (int i=0; i<current_term_ids_.size(); ++i) {
+  for (auto i=0u; i<current_term_ids_.size(); ++i) {
     termid_to_index_[current_term_ids_[i]] = i;
   }
 }
 
 /**
-	* Figure out how to be more efficient later.
-	*/
+ * Figure out how to be more efficient later.
+ */
 void
 Ontology::add_all_edges(vector<Edge> &edges){
   // First sort the edges on their source element
@@ -274,10 +274,10 @@ Ontology::add_all_edges(vector<Edge> &edges){
   // TermIds as the current_term_ids_ list. If the source is the
   // same, sort on the dest
   std::sort(edges.begin(),edges.end(),[](const Edge &a, const Edge &b) {
-    return a.get_source() == b.get_source() ?
-       a.get_destination() < b.get_destination() :
-       a.get_source() < b.get_source();
-  });
+					return a.get_source() == b.get_source() ?
+					  a.get_destination() < b.get_destination() :
+					  a.get_source() < b.get_source();
+				      });
   int n_vertices = current_term_ids_.size();
   edge_to_.reserve(edges.size());
   edge_from_.reserve(edges.size());
@@ -309,7 +309,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
   // emanating from each source ids.
   offset_to_edge_.push_back(0); // offset of zeroth source TermId is zero
   int offset = 0;
-  for (int i=0; i < current_term_ids_.size(); ++i) {
+  for (auto i=0u; i < current_term_ids_.size(); ++i) {
     // these i's are the indices of all of the TermIds
     auto p = index2edge_count.find(i);
     if (p != index2edge_count.end()) {
@@ -453,7 +453,7 @@ Ontology::debug_print() const
   cout << "List of all edges";
   cout << "current_term_ids_ size="<<current_term_ids_.size()<<"\n";
   cout << "edge_type_list_ size= " << edge_type_list_.size()<<"\n";
-  for (int i=0; i<offset_to_edge_.size()-1;i++) {
+  for (auto i=0u; i<offset_to_edge_.size()-1;i++) {
     for (int j=offset_to_edge_[i]; j<offset_to_edge_[i+1]; j++) {
       cout << "i="<<i <<", j="<<j<<", offset_to_edge_.size()="<<offset_to_edge_.size()<<"\n";
       int dest_idx = edge_to_.at(j);
@@ -473,14 +473,14 @@ Ontology::debug_print() const
     }
   }
   cout <<"begins at e_to[offset_e[v]] and ends at e_to[offset_e[v+1]]-1.\n";
-  for (int i=0; i<current_term_ids_.size(); i++) {
+  for (auto i=0u; i<current_term_ids_.size(); i++) {
     cout <<"current_term_ids_["<<i<<"]= " << current_term_ids_[i]<<"\n";
   }
-  for (int i=0; i<offset_to_edge_.size();i++) {
+  for (auto i=0u; i<offset_to_edge_.size();i++) {
     cout << "offset_to_edge_["<<i <<"]= " << offset_to_edge_[i] <<"\n";
   }
   //
-  for (int i=0; i< edge_type_list_.size();i++) {
+  for (auto i=0u; i< edge_type_list_.size();i++) {
     EdgeType et = edge_type_list_.at(i);
     cout << i<< ") edgetype= " << (et == EdgeType::IS_A?"isa":"not isa") <<"\n";
   }
