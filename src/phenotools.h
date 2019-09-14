@@ -67,12 +67,12 @@ namespace phenotools {
       BIOSAMPLE_LACKS_TUMOR_PROGRESSION,
       BIOSAMPLE_LACKS_TUMOR_GRADE,
       BIOSAMPLE_LACKS_TUMOR_STAGE,
-      BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS
+      BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS,
+      ONTOLOGY_NOT_IN_METADATA,
       } ;
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
-  class Validation{
-
+  class Validation {
   private:
     enum ValidationCause cause_;
     ValidationType validation_type_;
@@ -114,8 +114,8 @@ namespace phenotools {
   class ValidatorI {
   public:
     virtual ~ValidatorI(){}
-    virtual vector<Validation> validate() const=0;
-    void validate(vector<Validation> &v) const;
+    virtual vector<Validation> validate() const = 0;
+   void validate(vector<Validation> &v) const;
 
 };
 
@@ -133,7 +133,7 @@ private:
       label_(ontclz.label()) {}
   OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
     ~OntologyClass(){}
-    vector<Validation> validate() const;
+    vector<Validation> validate() const override;
     void validate(vector<Validation> &v) const;
     const string & get_id() const { return id_; }
     const string & get_label() const { return label_; }
@@ -153,8 +153,8 @@ private:
     Age(const org::phenopackets::schema::v1::core::Age &a);
     Age(const Age& age);
     ~Age(){}
-    vector<Validation> validate() const;
-     void validate(vector<Validation> &v) const {}
+    vector<Validation> validate() const override;
+    void validate(vector<Validation> &v) const {}
     friend ostream& operator<<(ostream& ost, const Age& age);
   };
   ostream& operator<<(ostream& ost, const Age& age);
@@ -168,7 +168,7 @@ private:
     start_(ar.start()),
       end_(ar.end()) {}
     ~AgeRange(){}
-    vector<Validation> validate() const;
+    vector<Validation> validate() const override;
     void validate(vector<Validation> &v) const {}
     friend ostream& operator<<(std::ostream& ost, const AgeRange& agerange);
   };
@@ -198,13 +198,13 @@ private:
       };
 
 
-  class Individual : public ValidatorI  {
+  class Individual {
   private:
-    // required
+    /** Required, arbitrary (application-dependent) identifier. */
     string id_;
     // optional
     string dataset_id_;
-    // optional (timestamp, converted to RFC 3339 date string)
+    /** optional (timestamp, converted to RFC 3339 date string). */
     string date_of_birth_;
     // optional
     unique_ptr<Age> age_;
@@ -218,7 +218,7 @@ private:
     Individual(org::phenopackets::schema::v1::core::Individual individual);
     ~Individual(){}
     vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
     const string & get_id() const { return id_; }
     friend ostream& operator<<(ostream& ost, const Individual& ind);
   };
@@ -226,7 +226,7 @@ private:
   ostream& operator<<(ostream& ost, const Individual& ind);
 
 
-  class ExternalReference : public ValidatorI {
+  class ExternalReference {
   private:
     string id_;
     string description_;
@@ -236,10 +236,10 @@ private:
       description_(er.description()) {}
     ~ExternalReference(){}
     vector<Validation> validate() const;
-     void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
   };
 
-  class Evidence : public ValidatorI {
+  class Evidence {
   private:
     unique_ptr<OntologyClass> evidence_code_;
     unique_ptr<ExternalReference> reference_;
@@ -250,11 +250,11 @@ private:
     Evidence & operator=(const Evidence &);
     ~Evidence(){}
     vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
   };
 
 
-  class PhenotypicFeature : public ValidatorI {
+  class PhenotypicFeature {
   private:
     string description_;
     unique_ptr<OntologyClass> type_;
@@ -272,7 +272,7 @@ private:
     PhenotypicFeature &operator=(const PhenotypicFeature & pfeat) { std::cerr<<"TODO"; return *this; }
     ~PhenotypicFeature(){}
     vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
     const string &get_id() const { return type_->get_id(); }
     const string &get_label() const { return type_->get_label();}
   };
@@ -380,7 +380,7 @@ private:
 
   enum class HtsFormat { UNKNOWN, SAM, BAM, CRAM, VCF, BCF, GVCF };
 
-  class HtsFile : public ValidatorI {
+  class HtsFile {
   private:
     HtsFormat hts_format_;
     string genome_assembly_;
@@ -391,14 +391,14 @@ private:
     HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile);
     HtsFile(const HtsFile &htsfile);
     vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
     friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
   };
   std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
 
 
 
-  class Resource : public ValidatorI {
+  class Resource {
   private:
     string id_;
     string name_;
@@ -422,7 +422,9 @@ private:
       version_(r.version_),
       iri_prefix_(r.iri_prefix_){}
     vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
+    /** @return the identifier (prefix) of this ontology, e.g., HP. */
+    string get_id() const { return id_; }
     friend std::ostream &operator<<(std::ostream& ost, const Resource& resource);
   };
   std::ostream &operator<<(std::ostream& ost, const Resource& resource);
@@ -433,7 +435,9 @@ private:
   private:
     //  (timestamp, converted to RFC 3339 date string)
     string created_;
+    /** Name/id of the person who created this Phenopacket. */
     string created_by_;
+    /** Name/id of the person who submitted this Phenopacket. */
     string submitted_by_;
     vector<Resource> resources_;
     vector<string> updated_;
@@ -443,12 +447,14 @@ private:
     MetaData(const org::phenopackets::schema::v1::core::MetaData &md);
     MetaData(const MetaData & md);
     vector<Validation> validate() const;
+    void validate(vector<Validation> &val) const;
+    void validate_ontology_prefixes(const std::set<string> prefixes, vector<Validation> &val) const;
     friend std::ostream &operator<<(std::ostream& ost, const MetaData& md);
   };
   std::ostream &operator<<(std::ostream& ost, const MetaData& md);
 
 
-  class Procedure : public ValidatorI  {
+  class Procedure  {
   private:
     unique_ptr<OntologyClass> code_;
     unique_ptr<OntologyClass> body_site_;
@@ -489,15 +495,18 @@ private:
     Biosample(const org::phenopackets::schema::v1::core::Biosample &bsample);
     ~Biosample(){}
     vector<Validation> validate() const;
+    void validate(vector<Validation> &val) const;
     friend std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
   };
 
   std::ostream& operator<<(std::ostream& ost, const Biosample& bsample);
 
-  class Phenopacket : public ValidatorI {
+  class Phenopacket {
   private:
     string id_;
+    /** The subject (e.g., index patient) of this Phenopacket. */
     unique_ptr<Individual> subject_;
+    /** A list of phenotypic abnormalities observed or explicitly excluded in the subject.*/
     vector<PhenotypicFeature> phenotypic_features_;
     vector<Biosample> biosamples_;
     vector<Gene> genes_;
@@ -505,6 +514,8 @@ private:
     vector<Disease> diseases_;
     vector<HtsFile> htsFiles_;
     unique_ptr<MetaData> metadata_;
+    /** Check the semantics and consistency of the phenopacket. */
+    void validate_content(vector<Validation> &v);
 
   public:
     Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;

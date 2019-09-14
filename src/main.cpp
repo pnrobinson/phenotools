@@ -77,11 +77,9 @@ int main (int argc, char ** argv) {
     }
     sstr << inFile.rdbuf();
     string JSONstring = sstr.str();
-    //cout <<"[INFO] reading phenopacket\n" << JSONstring << "\n";
-
     ::google::protobuf::util::JsonParseOptions options;
     ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
-    ::google::protobuf::util::JsonStringToMessage ( JSONstring,&phenopacketpb,options );
+    ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
     cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
 
     phenotools::Phenopacket ppacket ( phenopacketpb );
@@ -97,7 +95,7 @@ int main (int argc, char ** argv) {
 	   << N << " Q/C issue" << ( N>1?"s":"" )
 	   << " ####\n";
       for ( auto v : validation ) {
-	cout << v << "\n";
+	       cout << v << "\n";
       }
 
     }
