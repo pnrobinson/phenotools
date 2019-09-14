@@ -547,10 +547,23 @@ TEST_CASE("Test exists path algorithm","[exists_path]") {
   TermId t2 = TermId::from_string("HP:0000002");
   // term 3 is the grand child of term 1 and child of term 2
   TermId t3 = TermId::from_string("HP:0000003");
+  // term 4 is the  child of term 1 but not child of term 2
+  TermId t4 = TermId::from_string("HP:0000004");
   // term 5 is the grand child of term 1 but not child of term 2
-  TermId t5 = TermId::from_string("HP:0000003");
+  TermId t5 = TermId::from_string("HP:0000005");
   bool b = ontology->exists_path(t2,t1);
   REQUIRE(b);
+  b = ontology->exists_path(t3,t1);
+  REQUIRE(b);
+  b = ontology->exists_path(t1,t3);
+  REQUIRE(!b);
+  b = ontology->exists_path(t5,t4);
+  REQUIRE(b);
+  b = ontology->exists_path(t5,t1);
+  REQUIRE(b);
+  b = ontology->exists_path(t5,t2);
+  REQUIRE(!b);
+
 
 
 

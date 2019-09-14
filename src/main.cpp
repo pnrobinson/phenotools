@@ -52,10 +52,14 @@ int main (int argc, char ** argv) {
       std::cerr << "[ERROR] --hp or --mondo option required for validate command!\n";
     }
   } else if (debug_command->parsed() ) {
-    JsonOboParser parser {hp_json_path};
-    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-    cout << *ontology << "\n";
-    ontology->debug_print();
+    if (*debug_ont_option) {
+      JsonOboParser parser {hp_json_path};
+      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+      cout << *ontology << "\n";
+      ontology->debug_print();
+    } else {
+      cerr << "debug command required -o option.\n";
+    }
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
     if ( ! *phenopacket_path_option ) {

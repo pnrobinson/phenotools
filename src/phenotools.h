@@ -119,8 +119,8 @@ namespace phenotools {
 
 };
 
-  class OntologyClass : public ValidatorI {
-  private:
+class OntologyClass : public ValidatorI {
+private:
     string id_;
     string label_;
 

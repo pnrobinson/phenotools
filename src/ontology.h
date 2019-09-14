@@ -107,19 +107,17 @@ private:
   /**  offset_e stores offsets into e_to that indicate where the adjacency lists begin.
   The list for an arbitrary vertex begins at e_to[offset_e[v]] and ends at
   e_to[offset_e[v+1]]-1. */
-  vector<int> offset_e_;
+  vector<int> offset_to_edge_;
+  /** The inverse of the above, to allow us to traverse the graph in reverse */
+  vector<int> offset_from_edge_;
   /** CSR (Compressed Storage Format) Adjacency list. */
-  vector<int> e_to_;
+  vector<int> edge_to_;
   /** CSR (Compressed Storage Format) Adjacency list (reverse direction of edges) */
   vector<int> edge_from_;
   /** List of edge types, e.g., IS_A, PART_OF. Has same order as e_to_. */
   vector<EdgeType> edge_type_list_;
 
-  //vector<int> _offset_to_edge;
-  //vector<int> _offset_from_edge;
 
-  //vector<int> _edge_to;
-  //
 
   int is_a_edge_count_ = 0;
 
@@ -143,7 +141,7 @@ public:
   void add_all_edges(vector<Edge> &edges);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
-  int edge_count() const { return e_to_.size(); }
+  int edge_count() const { return edge_to_.size(); }
   int is_a_edge_count() const { return is_a_edge_count_;}
   int predicate_count() const { return predicate_values_.size(); }
   int property_count() const { return property_list_.size(); }
