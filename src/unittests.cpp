@@ -494,6 +494,14 @@ TEST_CASE("Procedure","[procedure]") {
 TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
 {
   string hp_json_path = "../testdata/hp.small.json";
+  {
+     std::ifstream infile(hp_json_path);
+     if (!infile.good()) {
+       cerr << "\n[ERROR] Could not find hp_json test file: "
+	    << hp_json_path << "\n";
+       exit(1);
+     }
+  }
   JsonOboParser parser {hp_json_path};
   std::unique_ptr<Ontology> ontology = parser.get_ontology();
   TermId t1 = TermId::from_string("HP:0000002");
