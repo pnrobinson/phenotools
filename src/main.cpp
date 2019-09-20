@@ -39,12 +39,12 @@ int main (int argc, char ** argv) {
 
   if ( validate_command->parsed() ) {
     if (*hp_json_path_option) {
-      JsonOboParser parser {hp_json_path};
+      JsonOboParser parser{hp_json_path};
       std::unique_ptr<Ontology>  ontology = parser.get_ontology();
       cout << *ontology << "\n";
       return EXIT_SUCCESS;
     } else if (*mondo_json_path_option) {
-      JsonOboParser parser {mondo_json_path};
+      JsonOboParser parser{mondo_json_path};
       std::unique_ptr<Ontology> ontology = parser.get_ontology();
       cout << *ontology << "\n";
       return EXIT_SUCCESS;
@@ -53,6 +53,7 @@ int main (int argc, char ** argv) {
     }
   } else if (debug_command->parsed() ) {
     if (*debug_ont_option) {
+      //TODO REMOVE AFTER DEV
       JsonOboParser parser {hp_json_path};
       std::unique_ptr<Ontology>  ontology = parser.get_ontology();
       cout << *ontology << "\n";
@@ -68,13 +69,13 @@ int main (int argc, char ** argv) {
     }
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    std::stringstream sstr;
     std::ifstream inFile;
     inFile.open ( phenopacket_path );
     if ( ! inFile.good() ) {
       cerr << "Could not open Phenopacket file at " << phenopacket_path <<"\n";
       return EXIT_FAILURE;
     }
+    std::stringstream sstr;
     sstr << inFile.rdbuf();
     string JSONstring = sstr.str();
     ::google::protobuf::util::JsonParseOptions options;
@@ -82,7 +83,7 @@ int main (int argc, char ** argv) {
     ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
     cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
 
-    phenotools::Phenopacket ppacket ( phenopacketpb );
+    phenotools::Phenopacket ppacket(phenopacketpb);
 
     cout << ppacket << "\n";
 

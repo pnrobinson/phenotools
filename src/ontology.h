@@ -1,3 +1,12 @@
+/**
+ * @file ontology.h
+ * @brief An object to represent a phenotype or related ontology (HP, MP, GO, MONDO, ECTO).
+ * @author Peter N Robinson
+ * @date  Created on: Sep 13, 2019
+ *
+ * Ontology objects contain most of the information contained in the JSON file
+ * and additionally provide some algorithms.
+ */
 #ifndef ONTOLOGY_H
 #define ONTOLOGY_H
 
@@ -5,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <set>
 #include <optional>
 #include "termid.h"
 #include "edge.h"
@@ -40,7 +50,6 @@ private:
 
 public:
   Synonym(const string &lbl, const string &typ);
-
   Synonym(const Synonym &) = default;
   Synonym(Synonym &&) = default;
   Synonym &operator=(const Synonym &) = default;
@@ -69,7 +78,6 @@ private:
 
 public:
   Term(const TermId &id, const string &label);
-  //static Term of(const rapidjson::Value &val);
   void add_definition(const string &def);
   void add_definition_xref(const Xref &txref);
   void add_term_xref(const Xref &txref) { term_xref_list_.push_back(txref); }
@@ -148,6 +156,7 @@ public:
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
   bool exists_path(const TermId &source, const TermId &dest) const;
+  bool have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
   void debug_print() const;

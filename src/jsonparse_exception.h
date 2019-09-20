@@ -1,3 +1,5 @@
+
+
 #ifndef JSONPARSE_EXCEPTION_H
 #define JSONPARSE_EXCEPTION_H
 
@@ -11,12 +13,12 @@
  */
 class JsonParseException : public std::exception {
 private:
-    std::string what_message;
+  std::string what_message;
 
 public:
-    JsonParseException(char const* const message):what_message(message){}
-     JsonParseException(const std::string & message):what_message(message){}
-    const char* what() const throw();
+  JsonParseException(char const* const message):what_message(message){}
+  JsonParseException(const std::string & message):what_message(message){}
+  const char* what() const throw();
 };
 
 

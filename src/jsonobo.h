@@ -1,3 +1,10 @@
+/**
+ * @file jsonobo.h
+ * @brief Leverage rapidjson to parse JSON files of phenotype ontologies.
+ * @author Peter N Robinson
+ * @date  Created on: Sep 13, 2019
+ */
+
 #ifndef JSONOBO_H
 #define JSONOBO_H
 
@@ -14,6 +21,7 @@ using std::unique_ptr;
 
 class JsonOboParser {
 private:
+	/** Path to the input JSON file. */
 	string path_;
 	/** The identifier of the ontology we are parsing. */
 	string ontology_id_;

@@ -1,3 +1,10 @@
+/**
+ * @file edge.cc
+ *
+ *  Created on: Sep 13, 2019
+ *  Author: Peter N Robinson
+ */
+
 #include "edge.h"
 
 /**

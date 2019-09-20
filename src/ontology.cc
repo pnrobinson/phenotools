@@ -1,3 +1,9 @@
+/**
+ * @file ontology.cc
+ *
+ *  Created on: Sep 13, 2019
+ *  Author: Peter N Robinson
+ */
 
 #include "ontology.h"
 #include <iostream>
@@ -416,6 +422,66 @@ Ontology::exists_path(const TermId &source, const TermId &dest) const
     }
   }
   // if we get here, there was not path from source to dest
+  return false;
+}
+
+
+bool
+Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const
+{
+  auto p = termid_to_index_.find(t1);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  std::stack<int> st;
+  int t1_index = p->second;
+  p = termid_to_index_.find(t2);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  int t2_index = p->second;
+  p = termid_to_index_.find(root);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  int root_index = p->second;
+
+  std::set<int> t1_ancestors;
+  st.push(t1_index);
+  while (! st.empty()) {
+    int index = st.top();
+    if (index == root_index) {
+      break;
+    }
+    t1_ancestors.insert(index);
+    st.pop();
+    for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
+      st.push(i);
+    }
+  }
+  // when we get here, t1_ancestors has the indices of t1 and all its ancestors
+  std::stack<int> st2;
+  st2.push(t2_index);
+  while (! st2.empty()) {
+    int index = st.top();
+    if (index == root_index) {
+      break;
+    }
+    if (t1_ancestors.find(index) != t1_ancestors.end()) {
+      return true;
+    }
+    st2.pop();
+    for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
+      st2.push(i);
+    }
+  }
+  // if we get here, there was no common ancestor
   return false;
 }
 
