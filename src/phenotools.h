@@ -69,7 +69,7 @@ namespace phenotools {
       BIOSAMPLE_LACKS_TUMOR_STAGE,
       BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS,
       ONTOLOGY_NOT_IN_METADATA,
-      } ;
+      };
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
   class Validation {

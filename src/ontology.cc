@@ -2,7 +2,7 @@
  * @file ontology.cc
  *
  *  Created on: Sep 13, 2019
- *  Author: Peter N Robinson
+ *  @author: Peter N Robinson
  */
 
 #include "ontology.h"
@@ -334,7 +334,6 @@ Ontology::add_all_edges(vector<Edge> &edges){
   for (const auto &e : edges) {
     TermId source = e.get_source();
     TermId destination = e.get_destination();
-    cout << "$$$$ " << source << " - " << (e.is_is_a()?"is-a":"other") << " - "<<destination <<"\n";
     // note we have already checked all of the source id's above
     auto it = termid_to_index_.find(source);
     int source_index = it->second;
@@ -415,10 +414,11 @@ Ontology::exists_path(const TermId &source, const TermId &dest) const
     index = st.top();
     st.pop();
     for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
-      if (i == dest_idx) {
+      int next_node = edge_to_[i];
+      if (next_node == dest_idx) {
         return true;
       }
-      st.push(i);
+      st.push(next_node);
     }
   }
   // if we get here, there was not path from source to dest
@@ -550,7 +550,16 @@ Ontology::debug_print() const
     EdgeType et = edge_type_list_.at(i);
     cout << i<< ") edgetype= " << (et == EdgeType::IS_A?"isa":"not isa") <<"\n";
   }
-
-
+  cout << "offset_e stores offsets into e_to that indicate where the adjacency lists begin. "
+    << "The list for an arbitrary vertex begins at e_to[offset_e[v]] and ends at "
+  << "  e_to[offset_e[v+1]]-1.\n";
+  cout << "offset_to_edge_\n";
+  for (auto i=0u; i < offset_to_edge_.size(); i++) {
+    cout << "\t" << offset_to_edge_[i] << "\n";
+  }
+  cout << "edge_to_\n";
+  for (auto i=0u; i < edge_to_.size(); i++) {
+    cout << "\t" << edge_to_[i] << "\n";
+  }
 
 }

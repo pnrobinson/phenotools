@@ -510,9 +510,6 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   Term term = *t1opt;
   REQUIRE("Fake term 2" == term.get_label());
   vector<TermId> parents = ontology->get_isa_parents(t1);
-  for (TermId t : parents) {
-    cerr << t1 << " ISA PAR " << t << "\n";
-  }
   REQUIRE(1 == parents.size());
   TermId par = TermId::from_string("HP:0000001");
   REQUIRE(par == parents.at(0));
@@ -564,6 +561,7 @@ TEST_CASE("Test exists path algorithm","[exists_path]") {
   b = ontology->exists_path(t3,t1);
   REQUIRE(b);
   b = ontology->exists_path(t1,t3);
+  b = ontology->exists_path(t5,t3);
   REQUIRE(!b);
   b = ontology->exists_path(t5,t4);
   REQUIRE(b);
@@ -571,8 +569,24 @@ TEST_CASE("Test exists path algorithm","[exists_path]") {
   REQUIRE(b);
   b = ontology->exists_path(t5,t2);
   REQUIRE(!b);
+}
 
 
-
-
+TEST_CASE("Parse Phenopacket with ontology","[xyz]") {
+//
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+  // term 1 is the root
+  TermId t1 = TermId::from_string("HP:0000001");
+  // term 2 is the child of term 1
+  TermId t2 = TermId::from_string("HP:0000002");
+  // term 3 is the grand child of term 1 and child of term 2
+  TermId t3 = TermId::from_string("HP:0000003");
+  // term 4 is the  child of term 1 but not child of term 2
+  TermId t4 = TermId::from_string("HP:0000004");
+  // term 5 is the grand child of term 1 but not child of term 2
+  TermId t5 = TermId::from_string("HP:0000005");
+  bool b = ontology->exists_path(t5,t3);
+  REQUIRE(!b);
 }

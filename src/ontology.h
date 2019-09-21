@@ -110,7 +110,7 @@ private:
   vector<TermId> current_term_ids_;
   /** obsoleted and alt ids. */
   vector<TermId> obsolete_term_ids_;
-  /** Key: a TermId object. Value: Correspodning index in current_term_ids_. */
+  /** Key: a TermId object. Value: Corresponding index in current_term_ids_. */
   map<TermId, int> termid_to_index_;
   /**  offset_e stores offsets into e_to that indicate where the adjacency lists begin.
   The list for an arbitrary vertex begins at e_to[offset_e[v]] and ends at
