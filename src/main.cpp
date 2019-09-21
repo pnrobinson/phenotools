@@ -26,12 +26,18 @@ int main (int argc, char ** argv) {
   string phenopacket_path;
 
   CLI::App app ( "phenotools" );
+  // phenopacket options
   CLI::App* phenopacket_command = app.add_subcommand ( "phenopacket", "work with GA4GH phenopackets" );
-  CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
-  CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
-  CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
-  CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
+  //CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "-h,--hp",phenopacket_path,"path to hp.json file" )->check ( CLI::ExistingFile );
+
+  // validate options
+  CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
+  CLI::Option* hp_json_path_option = app.add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
+  CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
+
+  // DEBUG OPTIONs
+  CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
   CLI::Option* debug_ont_option = debug_command->add_option("-o,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
 
 
@@ -88,6 +94,11 @@ int main (int argc, char ** argv) {
     cout << ppacket << "\n";
 
     auto validation = ppacket.validate();
+    if ( *hp_json_path_option ) {
+      JsonOboParser parser {hp_json_path};
+      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+      auto semantic_validation = ppacket.semantically_validate(ontology);
+    }
     if ( validation.empty() ) {
       cout << "No Q/C issues identified!\n";
     } else {

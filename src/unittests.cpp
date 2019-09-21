@@ -10,6 +10,8 @@
 #include "phenotools.h"
 #include "ontology.h"
 #include "jsonobo.h"
+#include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
 
 using std::cout;
 using std::cerr;
@@ -572,21 +574,29 @@ TEST_CASE("Test exists path algorithm","[exists_path]") {
 }
 
 
-TEST_CASE("Parse Phenopacket with ontology","[xyz]") {
+TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
 //
   string hp_json_path = "../testdata/hp.small.json";
   JsonOboParser parser {hp_json_path};
   std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-  // term 1 is the root
-  TermId t1 = TermId::from_string("HP:0000001");
-  // term 2 is the child of term 1
-  TermId t2 = TermId::from_string("HP:0000002");
-  // term 3 is the grand child of term 1 and child of term 2
-  TermId t3 = TermId::from_string("HP:0000003");
-  // term 4 is the  child of term 1 but not child of term 2
-  TermId t4 = TermId::from_string("HP:0000004");
-  // term 5 is the grand child of term 1 but not child of term 2
-  TermId t5 = TermId::from_string("HP:0000005");
-  bool b = ontology->exists_path(t5,t3);
-  REQUIRE(!b);
+  string phenopacket_path = "../testdata/small-phenopacket-1.json";
+  std::ifstream inFile;
+  inFile.open ( phenopacket_path );
+  if ( ! inFile.good() ) {
+    cerr << "Could not open Phenopacket file at " << phenopacket_path <<"\n";
+     exit(1);
+  }
+  std::stringstream sstr;
+  sstr << inFile.rdbuf();
+  string JSONstring = sstr.str();
+  ::google::protobuf::util::JsonParseOptions options;
+  ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
+  ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
+  phenotools::Phenopacket ppacket(phenopacketpb);
+
+  // now test if the annotations in the phenpacket are redundant.
+  ppacket.semantically_validate(ontology);
+  REQUIRE(true);
+
+
 }

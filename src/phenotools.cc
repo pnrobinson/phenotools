@@ -91,12 +91,12 @@ namespace phenotools {
     return "unknown error";
   }
 
-/*  void
+  void
   ValidatorI::validate(vector<Validation> &v) const {
       vector<Validation> val = validate();
       if (val.empty()) return;
       v.insert(v.end(),val.begin(),val.end());
-  }*/
+  }
 
 
   std::ostream& operator<<(std::ostream& ost, const Validation& v){
@@ -1233,6 +1233,39 @@ namespace phenotools {
       ost << *(ppacket.metadata_.get()) << "\n";
     }
     return ost;
+  }
+
+  vector<Validation>
+  Phenopacket::semantically_validate(const std::unique_ptr<Ontology> &ptr) const
+  {
+    vector<Validation> validation;
+    // collect the observed and excluded HP terms as TermId lists
+    vector<TermId> observed;
+    vector<TermId> excluded;
+    for (auto pf : phenotypic_features_) {
+      string id = pf.get_id();
+      TermId tid = TermId::from_string(id);
+      if (pf.is_negated()) {
+        excluded.push_back(tid);
+      } else {
+        observed.push_back(tid);
+      }
+    }
+    for (auto i =0u; i < observed.size(); i++) {
+      for (auto j = i+1; j < observed.size(); j++) {
+        if (ptr->exists_path(observed.at(i), observed.at(j))) {
+          std::cout << "[ERROR] Redundant terms: " << observed.at(i)
+            << " is a subclass of " << observed.at(j) <<"\n";
+        }
+        if (ptr->exists_path(observed.at(j), observed.at(i))) {
+          std::cout << "[ERROR] Redundant terms: " << observed.at(j)
+            << " is a subclass of " << observed.at(i) <<"\n";
+        }
+      }
+    }
+
+    return validation;
+
   }
 
 

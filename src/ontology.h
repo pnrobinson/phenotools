@@ -156,6 +156,7 @@ public:
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
   bool exists_path(const TermId &source, const TermId &dest) const;
+  /** @return true if t1 and t2 have a common ancestor excluding root */
   bool have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }

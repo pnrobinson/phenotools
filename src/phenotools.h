@@ -8,6 +8,7 @@
 
 #include "phenopackets.pb.h"
 #include "base.pb.h"
+#include "ontology.h"
 
 using std::unique_ptr;
 using std::string;
@@ -274,7 +275,8 @@ private:
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const;
     const string &get_id() const { return type_->get_id(); }
-    const string &get_label() const { return type_->get_label();}
+    const string &get_label() const { return type_->get_label(); }
+    bool is_negated() const { return negated_; } 
   };
 
 
@@ -468,9 +470,8 @@ private:
   };
   std::ostream &operator<<(std::ostream& ost, const Procedure& procedure);
 
-   class Biosample  : public ValidatorI {
-
-  private:
+  class Biosample  : public ValidatorI {
+   private:
     string id_;
     string dataset_id_;
     string individual_id_;
@@ -521,6 +522,7 @@ private:
     Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;
     ~Phenopacket(){}
     vector<Validation> validate() const;
+    vector<Validation> semantically_validate(const std::unique_ptr<Ontology> &ptr) const;
     void validate(vector<Validation> &v) const {}
     friend std::ostream& operator<<(std::ostream& ost, const Phenopacket& ppacket);
   };
