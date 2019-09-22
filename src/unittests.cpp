@@ -575,7 +575,6 @@ TEST_CASE("Test exists path algorithm","[exists_path]") {
 
 
 TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
-//
   string hp_json_path = "../testdata/hp.small.json";
   JsonOboParser parser {hp_json_path};
   std::unique_ptr<Ontology>  ontology = parser.get_ontology();

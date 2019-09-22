@@ -70,6 +70,7 @@ namespace phenotools {
       BIOSAMPLE_LACKS_TUMOR_STAGE,
       BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS,
       ONTOLOGY_NOT_IN_METADATA,
+      REDUNDANT_ANNOTATION,
       };
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
 
@@ -276,7 +277,7 @@ private:
     void validate(vector<Validation> &v) const;
     const string &get_id() const { return type_->get_id(); }
     const string &get_label() const { return type_->get_label(); }
-    bool is_negated() const { return negated_; } 
+    bool is_negated() const { return negated_; }
   };
 
 
