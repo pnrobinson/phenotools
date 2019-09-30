@@ -1,5 +1,5 @@
 #include "termid.h"
-#include "jsonparse_exception.h"
+#include "myexception.h"
 
 
 TermId::TermId(const string &s,std::size_t pos):
@@ -31,14 +31,14 @@ TermId::from_string(const string &s)
     string orcid= "ORCID:" + cp;
     return TermId{orcid,5};
   }
-  throw JsonParseException("Malformed ontology term id: " +s);
+  throw PhenopacketException("Malformed ontology term id: " +s);
 }
 
 TermId
 TermId::from_url(const string &s){
   std::size_t i = s.find_last_of('/');
   if (i == string::npos){
-    throw JsonParseException("Malformed TermId URL");
+    throw PhenopacketException("Malformed TermId URL");
   }
   string st = s.substr(i+1);
   TermId t = TermId::from_string(st);

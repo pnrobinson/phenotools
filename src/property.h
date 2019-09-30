@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 #include <map>
-//#include <rapidjson/document.h>
+
 #include "termid.h"
-#include "jsonparse_exception.h"
+//#include "myexception.h"
 
 using std::vector;
 using std::map;
