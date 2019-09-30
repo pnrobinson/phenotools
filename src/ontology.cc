@@ -431,27 +431,23 @@ Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId 
 {
   auto p = termid_to_index_.find(t1);
   if (p == termid_to_index_.end()) {
-    // not found
-    // should never happen, todo return exception
-    return false;
+    // not found, should never happen
+    throw PhenopacketException("Unrecognized TermId: " + t1.get_value());
   }
-  std::stack<int> st;
   int t1_index = p->second;
   p = termid_to_index_.find(t2);
   if (p == termid_to_index_.end()) {
-    // not found
-    // should never happen, todo return exception
-    return false;
+    // not found, should never happen
+    throw PhenopacketException("Unrecognized TermId: " + t1.get_value());
   }
   int t2_index = p->second;
   p = termid_to_index_.find(root);
   if (p == termid_to_index_.end()) {
-    // not found
-    // should never happen, todo return exception
-    return false;
+    // not found, should never happen
+    throw PhenopacketException("Unrecognized TermId: " + t1.get_value());
   }
   int root_index = p->second;
-
+  std::stack<int> st;
   std::set<int> t1_ancestors;
   st.push(t1_index);
   while (! st.empty()) {

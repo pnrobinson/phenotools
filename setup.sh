@@ -62,7 +62,7 @@ fi
 
 echo
 
-## Make the executbale
+## Make the executable
 
 if [ ! -e phenotools ]; then
     echo "[INFO] Building phenotools..."
@@ -71,7 +71,7 @@ if [ ! -e phenotools ]; then
 else
     echo "[INFO] phenotools exectuable found. Delete it to make a new version"
 fi
-       
+
 
 echo
 
@@ -89,10 +89,3 @@ echo
 echo
 echo "[INFO] DONE"
 echo
-   
-
-
-
-
-
-

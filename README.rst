@@ -31,7 +31,7 @@ Following this, download the latest source code, compile and install it. Briefly
 Installing rapidjson
 ~~~~~~~~~~~~~~~~~~~~
 Phenotools uses the `rapidjson C++ JSON library <http://rapidjson.org/>`_ to parse (OBO) ontology files in JSON format.
-See the rapidjson home page for details. Installation on *NIX systems probably will work as follows. ::
+See the rapidjson home page for details. Installation on *NIX systems and Mac probably will work as follows. ::
 
 	$ git clone https://github.com/Tencent/rapidjson.git
 	$ cd rapidjson
@@ -48,7 +48,7 @@ The build process first generates C++ code to represent the Phenopacket on the
 basis of the protobuf file. We use a Makefile to represent this dependency. Following
 this, g++ is used to compile the code using the C++17 standard. Note that
 the code will not compile with some older version of the protobuf library. Use
-version 3.7.1 or later.
+version 3.8.0 or later.
 
 
 
@@ -63,8 +63,7 @@ This software can be built simply with ::
 
 Running the app
 ~~~~~~~~~~~~~~~
-Phenotools is now in a preliminary stage, but it can validate phenopackets
-and THE JSON version of HPO.
+Phenotools is in an alpha stage, but it can already do a few useful things.
 
 phenopacket validation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -131,4 +130,4 @@ and run by the following commands. ::
   g++  -Wall -g -O0 --std=c++17 -I=. -pthread unittests.cpp base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o -o unittests -lprotobuf
   $ ./unittests
   ===============================================================================
-  All tests passed (111 assertions in 16 test cases)
+  All tests passed (140 assertions in 20 test cases)

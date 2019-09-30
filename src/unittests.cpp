@@ -594,8 +594,12 @@ TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
   phenotools::Phenopacket ppacket(phenopacketpb);
 
   // now test if the annotations in the phenpacket are redundant.
-  ppacket.semantically_validate(ontology);
-  REQUIRE(true);
+  vector<phenotools::Validation> validation = ppacket.semantically_validate(ontology);
+  REQUIRE(1 == validation.size());
+  phenotools::Validation v1 = validation.at(0);
+  REQUIRE(v1.get_cause() == phenotools::ValidationCause::REDUNDANT_ANNOTATION);
+  string msg = "[ERROR] Redundant terms: HP:0000003(Fake term 3) is a subclass of HP:0000002(Fake term 2)";
+  REQUIRE(msg == v1.message());
 
 
 }

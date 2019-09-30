@@ -16,6 +16,7 @@
 #include <google/protobuf/util/time_util.h>
 #include <time.h>
 #include <set>
+#include <sstream>
 
 
 using std::make_unique;
@@ -85,7 +86,7 @@ namespace phenotools {
     case ValidationCause::BIOSAMPLE_LACKS_TUMOR_STAGE: return "biosample lacks tumor stage";
     case ValidationCause::BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS: return "biosample lacks diagnostic markers";
     case ValidationCause::ONTOLOGY_NOT_IN_METADATA: return "ontology used but not in metadata";
-
+    case ValidationCause::REDUNDANT_ANNOTATION: return "redundant terms used in annotation";
     }
     // should never happen
     return "unknown error";
@@ -1236,7 +1237,7 @@ namespace phenotools {
   }
 
   vector<Validation>
-  Phenopacket::semantically_validate(const std::unique_ptr<Ontology> &ptr) const
+  Phenopacket::semantically_validate(const std::unique_ptr<Ontology> &ontology_p) const
   {
     vector<Validation> validation;
     // collect the observed and excluded HP terms as TermId lists
@@ -1253,13 +1254,27 @@ namespace phenotools {
     }
     for (auto i =0u; i < observed.size(); i++) {
       for (auto j = i+1; j < observed.size(); j++) {
-        if (ptr->exists_path(observed.at(i), observed.at(j))) {
-          std::cout << "[ERROR] Redundant terms: " << observed.at(i)
-            << " is a subclass of " << observed.at(j) <<"\n";
+        if (ontology_p->exists_path(observed.at(i), observed.at(j))) {
+          // if we get here, then the phenopacket includes
+          // two terms which are ancestor-descendent to each other
+          std::stringstream sstr;
+          sstr << "[ERROR] Redundant terms: ";
+          string label_i = ontology_p->get_term(observed.at(i))->get_label();
+          string label_j = ontology_p->get_term(observed.at(j))->get_label();
+          sstr << observed.at(i) << "(" << label_i << ")";
+          sstr << " is a subclass of " << observed.at(j) << "(" << label_j << ")";
+          Validation v = Validation::createError(ValidationCause::REDUNDANT_ANNOTATION, sstr.str());
+          validation.push_back(v);
         }
-        if (ptr->exists_path(observed.at(j), observed.at(i))) {
-          std::cout << "[ERROR] Redundant terms: " << observed.at(j)
-            << " is a subclass of " << observed.at(i) <<"\n";
+        if (ontology_p->exists_path(observed.at(j), observed.at(i))) {
+          std::stringstream sstr;
+          sstr << "[ERROR] Redundant terms: ";
+          string label_i = ontology_p->get_term(observed.at(i))->get_label();
+          string label_j = ontology_p->get_term(observed.at(j))->get_label();
+          sstr << observed.at(j) << "(" << label_j << ")";
+          sstr << " is a subclass of " << observed.at(i) << "(" << label_i << ")";
+          Validation v = Validation::createError(ValidationCause::REDUNDANT_ANNOTATION, sstr.str());
+          validation.push_back(v);
         }
       }
     }
