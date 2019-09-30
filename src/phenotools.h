@@ -71,6 +71,7 @@ namespace phenotools {
       BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS,
       ONTOLOGY_NOT_IN_METADATA,
       REDUNDANT_ANNOTATION,
+      UNRECOGNIZED_TERMID,
       };
   static const string EMPTY="";// use for elements that are not present in the phenopacket input
 

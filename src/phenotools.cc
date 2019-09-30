@@ -87,6 +87,7 @@ namespace phenotools {
     case ValidationCause::BIOSAMPLE_LACKS_DIAGNOSTIC_MARKERS: return "biosample lacks diagnostic markers";
     case ValidationCause::ONTOLOGY_NOT_IN_METADATA: return "ontology used but not in metadata";
     case ValidationCause::REDUNDANT_ANNOTATION: return "redundant terms used in annotation";
+    case ValidationCause::UNRECOGNIZED_TERMID: return "unrecognized TermId";
     }
     // should never happen
     return "unknown error";
@@ -1250,6 +1251,15 @@ namespace phenotools {
         excluded.push_back(tid);
       } else {
         observed.push_back(tid);
+      }
+      // check whether the term is represented in the Ontology
+      std::optional<Term> term_opt = ontology_p->get_term(tid);
+      if (! term_opt) {
+        std::stringstream sstr;
+        sstr << "[ERROR] Could not find " << tid.get_value()
+            << " in the ontology";
+        Validation v = Validation::createError(ValidationCause::UNRECOGNIZED_TERMID, sstr.str());
+        validation.push_back(v);
       }
     }
     for (auto i =0u; i < observed.size(); i++) {

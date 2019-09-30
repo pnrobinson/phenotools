@@ -1,3 +1,10 @@
+/**
+ * @file main.cpp
+ *
+ *  Created on: May 30, 2019
+ *  @author: Peter N Robinson
+ */
+
 #include <iostream>
 #include <string>
 #include <fstream>

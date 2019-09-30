@@ -592,7 +592,6 @@ TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
   ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
   ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
   phenotools::Phenopacket ppacket(phenopacketpb);
-
   // now test if the annotations in the phenpacket are redundant.
   vector<phenotools::Validation> validation = ppacket.semantically_validate(ontology);
   REQUIRE(1 == validation.size());
@@ -600,6 +599,32 @@ TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
   REQUIRE(v1.get_cause() == phenotools::ValidationCause::REDUNDANT_ANNOTATION);
   string msg = "[ERROR] Redundant terms: HP:0000003(Fake term 3) is a subclass of HP:0000002(Fake term 2)";
   REQUIRE(msg == v1.message());
+}
 
 
+TEST_CASE("Parse Phenopacket with bad term","[has_term_not_in_ontology]") {
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+  string phenopacket_path = "../testdata/small-phenopacket-2.json";
+  std::ifstream inFile;
+  inFile.open ( phenopacket_path );
+  if ( ! inFile.good() ) {
+    cerr << "Could not open Phenopacket file at " << phenopacket_path <<"\n";
+     exit(1);
+  }
+  std::stringstream sstr;
+  sstr << inFile.rdbuf();
+  string JSONstring = sstr.str();
+  ::google::protobuf::util::JsonParseOptions options;
+  ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
+  ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
+  phenotools::Phenopacket ppacket(phenopacketpb);
+  // now test for a "bad" term HP:9999999, which is not in the ontology
+  vector<phenotools::Validation> validation = ppacket.semantically_validate(ontology);
+  REQUIRE(1 == validation.size());
+  phenotools::Validation v1 = validation.at(0);
+  REQUIRE(v1.get_cause() == phenotools::ValidationCause::UNRECOGNIZED_TERMID);
+  string msg = "[ERROR] Could not find HP:9999999 in the ontology";
+  REQUIRE(msg == v1.message());
 }
