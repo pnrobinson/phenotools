@@ -33,8 +33,8 @@ TEST_CASE("test OntologyClass basics","[ontologyclass]") {
 
 TEST_CASE("test OntologyClass malformed","[ontologyclass]") {
   org::phenopackets::schema::v1::core::OntologyClass ontclz;
-  string hpo_id = "HP0001166";
-  string hpo_label = "";
+  string hpo_id = "HP0001166"; // invalid id -- no semicolon
+  string hpo_label = ""; // invalid label: empty
   ontclz.set_id(hpo_id);
   ontclz.set_label(hpo_label);
   phenotools::OntologyClass myoc(ontclz);
@@ -68,7 +68,6 @@ TEST_CASE("test Age with string and empty","[age]") {
   // Now make an Age that has an ontology class
   string id = "HsapDv:0000236";
   string label = "second decade human stage";
-
   org::phenopackets::schema::v1::core::OntologyClass* c =
     google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
   c->set_id(id);

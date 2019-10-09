@@ -40,12 +40,12 @@ int main (int argc, char ** argv) {
 
   // validate options
   CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
-  CLI::Option* hp_json_path_option = app.add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
+  CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
   CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
 
   // DEBUG OPTIONs
   CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
-  CLI::Option* debug_ont_option = debug_command->add_option("-o,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+  CLI::Option* debug_ont_option = debug_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
 
 
   CLI11_PARSE ( app, argc, argv );

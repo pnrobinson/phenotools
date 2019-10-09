@@ -23,6 +23,7 @@ then
     echo
 else
     echo "[ERROR] could not find protoc library, terminating script"
+    exit 1
 fi
 
 

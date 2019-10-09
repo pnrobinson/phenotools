@@ -124,9 +124,9 @@ namespace phenotools {
     } else {
       std::size_t pos = id_.find(':');
       if (pos == std::string::npos) {
-	Validation e = Validation::createWarning(ValidationCause::INVALID_ONTOLOGY_ID,
-						 "OntologyClass id ("+id_+") not a valid CURIE");
-	vl.push_back(e);
+	       Validation e = Validation::createWarning(ValidationCause::INVALID_ONTOLOGY_ID,
+						     "OntologyClass id ("+id_+") not a valid CURIE");
+	       vl.push_back(e);
       }
     }
     if (label_.empty()) {

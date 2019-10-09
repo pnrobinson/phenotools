@@ -118,23 +118,19 @@ namespace phenotools {
   public:
     virtual ~ValidatorI(){}
     virtual vector<Validation> validate() const = 0;
-   void validate(vector<Validation> &v) const;
+    void validate(vector<Validation> &v) const;
+  };
 
-};
-
-class OntologyClass : public ValidatorI {
-private:
+  class OntologyClass : public ValidatorI {
+  private:
     string id_;
     string label_;
-
   public:
-  OntologyClass(const string &id, const string &label):
-    id_(id),label_(label) {
-    }
-  OntologyClass(org::phenopackets::schema::v1::core::OntologyClass ontclz):
-    id_(ontclz.id()),
-      label_(ontclz.label()) {}
-  OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
+    OntologyClass(const string &id, const string &label):
+      id_(id),label_(label){}
+    OntologyClass(org::phenopackets::schema::v1::core::OntologyClass ontclz):
+      id_(ontclz.id()), label_(ontclz.label()) {}
+    OntologyClass(const OntologyClass & from):id_(from.id_),label_(from.label_){}
     ~OntologyClass(){}
     vector<Validation> validate() const override;
     void validate(vector<Validation> &v) const;
