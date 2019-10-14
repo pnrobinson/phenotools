@@ -16,10 +16,10 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "CLI11.hpp"
-#include "phenopackets.pb.h"
-#include "base.pb.h"
-#include "phenotools.h"
-#include "jsonobo.h"
+#include "../lib/phenopackets.pb.h"
+#include "../lib/base.pb.h"
+#include "../lib/phenotools.h"
+#include "../lib/jsonobo.h"
 
 using std::string;
 using std::cout;
