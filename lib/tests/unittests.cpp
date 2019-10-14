@@ -4,12 +4,12 @@
 #include <iostream>
 
 #include "catch.hpp"
-#include "base.pb.h"
-#include "phenopackets.pb.h"
-#include "interpretation.pb.h"
-#include "phenotools.h"
-#include "ontology.h"
-#include "jsonobo.h"
+#include "../base.pb.h"
+#include "../phenopackets.pb.h"
+#include "../interpretation.pb.h"
+#include "../phenotools.h"
+#include "../ontology.h"
+#include "../jsonobo.h"
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 
