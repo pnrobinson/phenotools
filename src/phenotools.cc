@@ -1193,7 +1193,12 @@ namespace phenotools {
 
   std::ostream& operator<<(std::ostream& ost, const Individual& ind){
     ost << "ID: "<<ind.id_ << "\n";
-    ost << "Age: "<<*(ind.age_.get()) <<"\n";
+    if (ind.age_ != nullptr) {
+      ost << "Age: "<<*(ind.age_.get()) <<"\n";
+    } else {
+      ost << "Age: unknown\n";
+    }
+    
     ost << "Sex: "<<ind.sex_<<"\n";
     return ost;
   }
