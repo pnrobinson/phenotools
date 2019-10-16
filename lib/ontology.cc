@@ -275,6 +275,15 @@ Ontology::add_all_terms(const vector<Term> &terms){
  */
 void
 Ontology::add_all_edges(vector<Edge> &edges){
+  // First we add inverse edges for all IS_A edges
+  vector<Edge> inverse_edges;
+  for (Edge e: edges) {
+    if (e.is_is_a()) {
+      inverse_edges.emplace_back(e.get_is_a_inverse());
+    }
+  }
+  // now merge
+  edges.insert(edges.end(),inverse_edges.begin(), inverse_edges.end());
   // First sort the edges on their source element
   // this will mean that edges has the same oder of source
   // TermIds as the current_term_ids_ list. If the source is the
@@ -285,7 +294,9 @@ Ontology::add_all_edges(vector<Edge> &edges){
 					  a.get_source() < b.get_source();
 				      });
   int n_vertices = current_term_ids_.size();
-  edge_to_.reserve(edges.size());
+  int number_isa_edges = std::count_if(edges.begin(), edges.end(), [](Edge e){return e.is_is_a();});
+  int total_edge_count = edges.size() + number_isa_edges; // add this for the inverse edges
+  edge_to_.reserve(total_edge_count);
   edge_from_.reserve(edges.size());
   edge_type_list_.reserve(edges.size());
   offset_to_edge_.reserve(n_vertices+1);
@@ -357,7 +368,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
     }
   }
   // When we get here, we are done! Print a message
-  cout << "[INFO] edges: n=" << edge_to_.size()
+  cout << "[INFO] Done parsing edges: n=" << edge_to_.size() << __FILE__ << ":"<<__LINE__
         << " terms: n=" << n_vertices << "\n";
 }
 
@@ -382,10 +393,11 @@ Ontology::get_isa_parents(const TermId &child) const
   }
   int idx = p->second;
   for (int i = offset_to_edge_[idx]; i < offset_to_edge_[1+idx]; i++) {
-    if (edge_type_list_[i] != EdgeType::IS_A) {
+    if (edge_type_list_[i] != EdgeType::IS_A) { 
       continue;
     }
-    TermId par = current_term_ids_.at(i);
+    int next_node = edge_to_[i];
+    TermId par = current_term_ids_.at(next_node);
     parents.push_back(par);
   }
   return parents;
@@ -415,6 +427,9 @@ Ontology::exists_path(const TermId &source, const TermId &dest) const
     st.pop();
     for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
       int next_node = edge_to_[i];
+      if (edge_type_list_[i] != EdgeType::IS_A) {
+        continue;
+      }
       if (next_node == dest_idx) {
         return true;
       }
@@ -424,6 +439,46 @@ Ontology::exists_path(const TermId &source, const TermId &dest) const
   // if we get here, there was not path from source to dest
   return false;
 }
+
+
+bool
+Ontology::exists_path(const TermId &source, const TermId &dest, EdgeType etype) const
+{
+  auto p = termid_to_index_.find(source);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  std::stack<int> st;
+  int index = p->second;
+  p = termid_to_index_.find(dest);
+  if (p == termid_to_index_.end()) {
+    // not found
+    // should never happen, todo return exception
+    return false;
+  }
+  int dest_idx = p->second;
+  st.push(index);
+  while (! st.empty()) {
+    index = st.top();
+    st.pop();
+    for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
+      int next_node = edge_to_[i];
+      if (etype != edge_type_list_[i]){
+        continue; // only follow path of indicated edge type
+      }
+      if (next_node == dest_idx) {
+        return true;
+      }
+      st.push(next_node);
+    }
+  }
+  // if we get here, there was not path from source to dest
+  return false;
+}
+
+
 
 
 bool

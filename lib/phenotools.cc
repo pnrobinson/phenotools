@@ -1269,7 +1269,7 @@ namespace phenotools {
     }
     for (auto i =0u; i < observed.size(); i++) {
       for (auto j = i+1; j < observed.size(); j++) {
-        if (ontology_p->exists_path(observed.at(i), observed.at(j))) {
+        if (ontology_p->exists_path(observed.at(i), observed.at(j), EdgeType::IS_A)) {
           // if we get here, then the phenopacket includes
           // two terms which are ancestor-descendent to each other
           std::stringstream sstr;
@@ -1281,7 +1281,7 @@ namespace phenotools {
           Validation v = Validation::createError(ValidationCause::REDUNDANT_ANNOTATION, sstr.str());
           validation.push_back(v);
         }
-        if (ontology_p->exists_path(observed.at(j), observed.at(i))) {
+        if (ontology_p->exists_path(observed.at(j), observed.at(i), EdgeType::IS_A)) {
           std::stringstream sstr;
           sstr << "[ERROR] Redundant terms: ";
           string label_i = ontology_p->get_term(observed.at(i))->get_label();

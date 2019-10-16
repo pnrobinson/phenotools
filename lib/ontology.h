@@ -20,6 +20,8 @@
 #include "edge.h"
 #include "property.h"
 
+#include <iostream> // remove after debug
+
 
 using std::string;
 using std::vector;
@@ -86,7 +88,7 @@ public:
 
   TermId get_term_id() const { return id_; }
   string get_label() const { return label_; }
-  string get_definition() const { return definition_; }
+  string get_definition() const { std::cout<<"ABC";return definition_; }
   vector<Xref> get_definition_xref_list() const { return definition_xref_list_;}
   vector<Xref> get_term_xref_list() const {return term_xref_list_;}
   bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }
@@ -155,7 +157,10 @@ public:
   int property_count() const { return property_list_.size(); }
   std::optional<Term> get_term(const TermId &tid) const;
   vector<TermId> get_isa_parents(const TermId &child) const;
+  /** @return true if there exists a path from source to dest */
   bool exists_path(const TermId &source, const TermId &dest) const;
+  /** @return true if there exists a path of edges that have the indicated edgetype. */
+  bool exists_path(const TermId &source, const TermId &dest, EdgeType etype) const;
   /** @return true if t1 and t2 have a common ancestor excluding root */
   bool have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);

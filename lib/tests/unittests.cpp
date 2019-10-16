@@ -505,6 +505,7 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   }
   JsonOboParser parser {hp_json_path};
   std::unique_ptr<Ontology> ontology = parser.get_ontology();
+  //ontology->debug_print();
   TermId t1 = TermId::from_string("HP:0000002");
   std::optional<Term> t1opt = ontology->get_term(t1);
   REQUIRE(t1opt);
@@ -516,6 +517,7 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   REQUIRE(par == parents.at(0));
   string def = "Definition for HP:0000002.";
   REQUIRE(def ==  term.get_definition());
+  
   vector<Xref> def_xrefs = term.get_definition_xref_list();
   REQUIRE(1 == def_xrefs.size());
   Xref dxref1 = def_xrefs.at(0);
@@ -541,37 +543,8 @@ TEST_CASE("Parse hp.small.json","[parse_hp_small_json]")
   Synonym s1 = synonyms.at(0);
   REQUIRE(s1.is_exact());
   REQUIRE("Abnormal shape of thyroid gland" == s1.get_label());
+  std::cout << "DDDOOONBNNEEE\n";
 }
-
-TEST_CASE("Test exists path algorithm","[exists_path]") {
-  string hp_json_path = "../testdata/hp.small.json";
-  JsonOboParser parser {hp_json_path};
-  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-  // term 1 is the root
-  TermId t1 = TermId::from_string("HP:0000001");
-  // term 2 is the child of term 1
-  TermId t2 = TermId::from_string("HP:0000002");
-  // term 3 is the grand child of term 1 and child of term 2
-  TermId t3 = TermId::from_string("HP:0000003");
-  // term 4 is the  child of term 1 but not child of term 2
-  TermId t4 = TermId::from_string("HP:0000004");
-  // term 5 is the grand child of term 1 but not child of term 2
-  TermId t5 = TermId::from_string("HP:0000005");
-  bool b = ontology->exists_path(t2,t1);
-  REQUIRE(b);
-  b = ontology->exists_path(t3,t1);
-  REQUIRE(b);
-  b = ontology->exists_path(t1,t3);
-  b = ontology->exists_path(t5,t3);
-  REQUIRE(!b);
-  b = ontology->exists_path(t5,t4);
-  REQUIRE(b);
-  b = ontology->exists_path(t5,t1);
-  REQUIRE(b);
-  b = ontology->exists_path(t5,t2);
-  REQUIRE(!b);
-}
-
 
 TEST_CASE("Parse Phenopacket with ontology","[has_redundant_annotation]") {
   string hp_json_path = "../testdata/hp.small.json";
