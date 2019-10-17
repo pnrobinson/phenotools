@@ -88,7 +88,7 @@ public:
 
   TermId get_term_id() const { return id_; }
   string get_label() const { return label_; }
-  string get_definition() const { std::cout<<"ABC";return definition_; }
+  string get_definition() const { return definition_; }
   vector<Xref> get_definition_xref_list() const { return definition_xref_list_;}
   vector<Xref> get_term_xref_list() const {return term_xref_list_;}
   bool has_alternative_ids() const { return ! alternative_id_list_.empty(); }

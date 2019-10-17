@@ -59,6 +59,7 @@ namespace phenotools {
     case ValidationCause::LACKS_ALLELE: return "allele missing";
     case ValidationCause::DISEASE_LACKS_TERM: return "disease lacks term";
     case ValidationCause::UNIDENTIFIED_HTS_FILETYPE: return "Unidentified HTS file type";
+    case ValidationCause::HTSFILE_LACKS_URI: return "HtsFile lacks a URI";
     case ValidationCause::LACKS_SAMPLE_MAP: return "no sample map for HTS file";
     case ValidationCause::LACKS_HTS_FILE: return "no HTS file found";
     case ValidationCause::RESOURCE_LACKS_ID: return "resource id missing";
@@ -797,7 +798,9 @@ namespace phenotools {
   }
 */
 
-  HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
+  HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile):
+    uri_(htsfile.uri())
+  {
     switch(htsfile.hts_format()){
     case org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM:
       hts_format_=HtsFormat::BAM; break;
@@ -827,6 +830,9 @@ namespace phenotools {
 
   vector<Validation> HtsFile::validate() const {
     vector<Validation> vl;
+    if (uri_.empty()) {
+      vl.emplace_back(Validation::createError(ValidationCause::HTSFILE_LACKS_URI));
+    }
     if (hts_format_ == HtsFormat::UNKNOWN) {
       Validation v = Validation::createError(ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
       vl.push_back(v);
