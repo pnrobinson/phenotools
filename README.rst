@@ -44,26 +44,66 @@ See the rapidjson home page for details. Installation on *NIX systems and Mac pr
 
 Building phenotools
 ~~~~~~~~~~~~~~~~~~~
+
+Download phenopacket-schema
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First, download the phenopacket-schema code. In the following, we download the code 
+directly into the phenotools repository. If you dwnload it somewhere else, adjust the
+path accordingly. ::
+
+  git clone https://github.com/phenopackets/phenopacket-schema.git
+
+Generate the C++ code from the phenopacket-schema protobuf files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The build process first generates C++ code to represent the Phenopacket on the
-basis of the protobuf file. We use a Makefile to represent this dependency. Following
-this, g++ is used to compile the code using the C++17 standard. Note that
-the code will not compile with some older version of the protobuf library. Use
-version 3.8.0 or later.
+basis of the protobuf file. ::
+
+  PROTO_PATH='phenopacket-schema/src/main/proto'
+  protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/base.proto
+  protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/interpretation.proto
+  protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/phenopackets.proto
+
+Build phenotools
+^^^^^^^^^^^^^^^^
+
+Following this, we can build phenotools using cmake. ::
+
+  mkdir build
+  cd build
+  cmake ..
+
+This will generate a static library file as well as unit testing code and an app called phenotools.
+
+Running the unittests
+^^^^^^^^^^^^^^^^^^^^^
+To run the unit tests following the build, enter ::
+
+  ./lib/tests/phenopacket_tests
+
+Running the app
+^^^^^^^^^^^^^^^
+
+Following the build, the app ``phenotools`` is located in the ``app`` subdirectory. The following
+command runs phenotools with the ``--help`` option to show available commands and arguments. ::
+
+  ./app/phenotools --help
 
 
+A setup script
+^^^^^^^^^^^^^^
 
-
-The ``setup.sh`` script downloads the GitHub repository, generates the C++ files from the
-protobuf code, and compiles the ``phenotools`` executable.
-
-
-This software can be built simply with ::
+There is a setup script that works on linux systems only. Enter the following to perform
+all steps of the build process starting from the download of the phenopackets-schema repository. ::
 
   $ ./setup.sh
 
+
+
 Running the app
 ~~~~~~~~~~~~~~~
-Phenotools is in an alpha stage, but it can already do a few useful things.
+Phenotools is in a beta stage, but it can already do a few useful things.
 
 phenopacket validation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -119,15 +159,3 @@ execute the following command. ::
 
 
 
-Running the unittests
-~~~~~~~~~~~~~~~~~~~~~
-
-The setup script builds and runs an app called ``unittests`` that runs unit tests. This app can also be built
-and run by the following commands. ::
-
-  $ cd src/
-  $ make unittests
-  g++  -Wall -g -O0 --std=c++17 -I=. -pthread unittests.cpp base.pb.o interpretation.pb.o phenopackets.pb.o phenotools.o -o unittests -lprotobuf
-  $ ./unittests
-  ===============================================================================
-  All tests passed (140 assertions in 20 test cases)
