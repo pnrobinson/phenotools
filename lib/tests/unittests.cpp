@@ -65,19 +65,6 @@ TEST_CASE("test Age with string and empty","[age]") {
   phenotools::Validation v1 = validation.at(0);
   REQUIRE( v1.is_error() == true );
   REQUIRE( v1.message() == "At least one of age and age_class must be present in Age element" );
-  // Now make an Age that has an ontology class
-  string id = "HsapDv:0000236";
-  string label = "second decade human stage";
-  org::phenopackets::schema::v1::core::OntologyClass* c =
-    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::OntologyClass>(&arena);
-  c->set_id(id);
-  c->set_label(label);
-  // now we are OK again -- the Age object as an age-class OntologyClass object.
-  agepb.set_allocated_age_class(c);
-  phenotools::Age age3(agepb);
-  validation = age3.validate();
-  REQUIRE( validation.empty() == true );
-  agepb.release_age_class();
 }
 
 TEST_CASE("AgeRange","[agerange]") {
@@ -353,29 +340,14 @@ TEST_CASE("Test Disease","[disease]"){
   diseasepb.release_class_of_onset();
 }
 
-TEST_CASE("Test File","[file]"){
-  org::phenopackets::schema::v1::core::File filepb;
-  // error -- no data
-  phenotools::File f1(filepb);
-  vector<phenotools::Validation> validation = f1.validate();
-  REQUIRE(validation.size()==1);
-  phenotools::Validation v = validation.at(0);
-  REQUIRE(v.is_error()==true);
-  REQUIRE(v.get_cause() == phenotools::ValidationCause::FILE_LACKS_SPECIFICATION);
-  // add file data
-  filepb.set_uri("http://www.example.org");
-  phenotools::File f2(filepb);
-  validation = f2.validate();
-  REQUIRE(validation.empty()==true);
-}
-
-
 TEST_CASE("Test HtsFile","[htsfile]") {
   org::phenopackets::schema::v1::core::HtsFile htsfilepb;
   // error -- no data
   phenotools::HtsFile f1(htsfilepb);
   vector<phenotools::Validation> validation = f1.validate();
-  REQUIRE(validation.size()==4);
+  // THe errors are that we did not specifiy the file type, we did not
+  // set the genome assembly, and we did not set the sample map.
+  REQUIRE(validation.size()==3);
   phenotools::Validation v = validation.at(0);
   REQUIRE(v.is_error()==true);
   REQUIRE(v.get_cause() == phenotools::ValidationCause::UNIDENTIFIED_HTS_FILETYPE);
@@ -385,33 +357,25 @@ TEST_CASE("Test HtsFile","[htsfile]") {
   v = validation.at(2);
   REQUIRE(v.is_warning()==true);
   REQUIRE(v.get_cause() == phenotools::ValidationCause::LACKS_SAMPLE_MAP);
-  v = validation.at(3);
-  REQUIRE(v.is_error()==true);
-  REQUIRE(v.get_cause() == phenotools::ValidationCause::LACKS_HTS_FILE);
   // set the HTS format to VCF. Then we should only have 3 QC issues
   htsfilepb.set_hts_format(org::phenopackets::schema::v1::core::HtsFile_HtsFormat_BAM);
   phenotools::HtsFile f2(htsfilepb);
   validation = f2.validate();
-  REQUIRE(validation.size()==3);
+  REQUIRE(validation.size()==2);
   // set the genome assembly. Then we should only have 2 Q/C issues
   htsfilepb.set_genome_assembly("GRCh38");
   phenotools::HtsFile f3(htsfilepb);
   validation = f3.validate();
-  REQUIRE(validation.size()==2);
+  REQUIRE(validation.size()==1);
   // add an entry to the sample id map. Then we should only have one error
   (*(htsfilepb.mutable_individual_to_sample_identifiers()))["sample 1"]="file 1";
+  htsfilepb.set_uri("http://www.example.org");
   phenotools::HtsFile f4(htsfilepb);
   validation = f4.validate();
-  REQUIRE(validation.size()==1);
-  // And a File -- then we should be 100%
-  org::phenopackets::schema::v1::core::File* file =
-    google::protobuf::Arena::Create<org::phenopackets::schema::v1::core::File>(&arena);
-  file->set_uri("http://www.example.org");
-  htsfilepb.set_allocated_file(file);
+  REQUIRE(validation.size()==0);
   phenotools::HtsFile f5(htsfilepb);
   validation = f5.validate();
   REQUIRE(validation.empty());
-  htsfilepb.release_file();
 }
 
 

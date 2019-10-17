@@ -42,7 +42,6 @@ namespace phenotools {
       LACKS_ZYGOSITY,
       LACKS_ALLELE,
       DISEASE_LACKS_TERM,
-      FILE_LACKS_SPECIFICATION,
       UNIDENTIFIED_HTS_FILETYPE,
       LACKS_SAMPLE_MAP,
       LACKS_HTS_FILE,
@@ -145,7 +144,6 @@ namespace phenotools {
   private:
     /** An ISO8601 string such as P40Y6M (40 years and 6 months old).*/
     string age_;
-    unique_ptr<OntologyClass> age_class_;
 
   public:
     Age()=default;
@@ -202,7 +200,7 @@ namespace phenotools {
     /** Required, arbitrary (application-dependent) identifier. */
     string id_;
     // optional
-    string dataset_id_;
+    vector<string> alternate_ids_;
     /** optional (timestamp, converted to RFC 3339 date string). */
     string date_of_birth_;
     // optional
@@ -363,7 +361,7 @@ namespace phenotools {
   std::ostream &operator<<(std::ostream& ost, const Disease& dis);
 
 
-  class File : public ValidatorI {
+ /* class File : public ValidatorI {
   private:
     string path_;
     string uri_;
@@ -376,22 +374,27 @@ namespace phenotools {
     friend std::ostream &operator<<(std::ostream& ost, const File& file);
   };
   std::ostream &operator<<(std::ostream& ost, const File& file);
-
+*/
 
   enum class HtsFormat { UNKNOWN, SAM, BAM, CRAM, VCF, BCF, GVCF };
+  std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf);
 
   class HtsFile {
   private:
+    string uri_;
+    string description_;
     HtsFormat hts_format_;
     string genome_assembly_;
     map<string,string> individual_to_sample_identifiers_;
-    unique_ptr<File> file_;
 
   public:
     HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile);
     HtsFile(const HtsFile &htsfile);
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const;
+    string get_uri() const { return uri_; }
+    string get_description() const { return description_; }
+    HtsFormat get_htsformat() const { return hts_format_; }
     friend std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
   };
   std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile);
@@ -440,7 +443,6 @@ namespace phenotools {
     /** Name/id of the person who submitted this Phenopacket. */
     string submitted_by_;
     vector<Resource> resources_;
-    vector<string> updated_;
     string phenopacket_schema_version_;
     vector<ExternalReference> external_references_;
   public:

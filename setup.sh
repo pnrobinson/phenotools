@@ -41,52 +41,41 @@ fi
 
 #3 create the C++ code
 
-PROTO_PATH='phenopacket-schema/src/main/proto'
+export PROTO_PATH='phenopacket-schema/src/main/proto'
 ## Generate the C++ files with protoc
 if [ -e 'src/base.pb.h' ]; then
     echo "[INFO] base.pb.h previously generated"
 else
-    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/base.proto
+    protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/base.proto
 fi
 
 if [ -e 'src/interpretation.pb.h' ]; then
     echo "[INFO] interpretation.pb.h previously generated"
 else
-    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/interpretation.proto
+    protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/interpretation.proto
 fi
 
 if [ -e 'src/phenopackets.pb.h' ]; then
     echo "[INFO] phenopackets.pb.h previously generated"
 else
-    protoc --proto_path=${PROTO_PATH} --cpp_out=src ${PROTO_PATH}/phenopackets.proto
+    protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/phenopackets.proto
 fi
 
 echo
 
 ## Make the executable
 
-if [ ! -e phenotools ]; then
-    echo "[INFO] Building phenotools..."
-    cd src; make; cd ..
-    mv ./src/phenotools .
-else
-    echo "[INFO] phenotools exectuable found. Delete it to make a new version"
-fi
-
+if [ ! -e build ]; then
+    mkdir build
+fi  
+cd build; cmake ..; make
+mv ./app/phenotools .
 
 echo
 
-# Make the unit tests
-
-if [ ! -e unittests ]; then
-   echo "[INFO] Building the unit tests"
-   cd src; make unittests; cd ..
-   mv ./src/unittests .
-fi
-
+# Run the unit tests
 echo "[INFO] Running the unit tests ..."
 echo
-./unittests
-echo
+./lib/tests/phenotools_tests
 echo "[INFO] DONE"
 echo

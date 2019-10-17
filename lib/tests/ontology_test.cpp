@@ -70,8 +70,8 @@ TEST_CASE("Test exists path algorithm woth specific edge type","[exists_path_edg
   REQUIRE(b);
   b = ontology->exists_path(t1, t2, EdgeType::IS_A);
   REQUIRE_FALSE(b);
-  //b = ontology->exists_path(t1, t2, EdgeType::IS_A_INVERSE);
-  //REQUIRE(b);
+  b = ontology->exists_path(t1, t2, EdgeType::IS_A_INVERSE);
+  REQUIRE(b);
   b = ontology->exists_path(t3, t1, EdgeType::IS_A);
   REQUIRE(b);
   b = ontology->exists_path(t1, t3, EdgeType::IS_A);

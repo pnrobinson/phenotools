@@ -58,7 +58,6 @@ namespace phenotools {
     case ValidationCause::LACKS_ZYGOSITY: return "zygosity missing";
     case ValidationCause::LACKS_ALLELE: return "allele missing";
     case ValidationCause::DISEASE_LACKS_TERM: return "disease lacks term";
-    case ValidationCause::FILE_LACKS_SPECIFICATION: return "File must has path or uri";
     case ValidationCause::UNIDENTIFIED_HTS_FILETYPE: return "Unidentified HTS file type";
     case ValidationCause::LACKS_SAMPLE_MAP: return "no sample map for HTS file";
     case ValidationCause::LACKS_HTS_FILE: return "no HTS file found";
@@ -153,42 +152,26 @@ namespace phenotools {
     return ost;
   }
 
-  Age::Age(const org::phenopackets::schema::v1::core::Age &a):age_(a.age()){
-    if (a.has_age_class()) {
-      age_class_ = make_unique<OntologyClass>(a.age_class());
-    }
+  Age::Age(const org::phenopackets::schema::v1::core::Age &a):age_(a.age())
+  {
   }
 
-  Age::Age(const Age& age):age_(age.age_) {
-    if (age.age_class_){
-      age_class_ = make_unique<OntologyClass>(*(age.age_class_.get()));
-    }
+  Age::Age(const Age& age):age_(age.age_) 
+  {
   }
 
   vector<Validation> Age::validate() const {
     vector<Validation> vl;
-    if (age_.empty() && ! age_class_ ){
+    if (age_.empty()){
       Validation e = Validation::createError(ValidationCause::AGE_ELEMENT_UNINITIALIZED);
       vl.push_back(e);
-    }
-    if (age_class_) {
-      vector<Validation> age_class_valid = age_class_->validate();
-      if (age_class_valid.size()>0) {
-	vl.insert( vl.end(), age_class_valid.begin(), age_class_valid.end() );
-      }
     }
     return vl;
   }
 
 
   std::ostream& operator<<(std::ostream& ost, const Age& age){
-    if (! age.age_.empty()) {
-      ost << age.age_;
-    } else if (age.age_class_) {
-      ost <<  age.age_class_->get_label() << "[" << age.age_class_->get_id() << "]";
-    } else {
-      ost << NOT_AVAILABLE;
-    }
+    ost << age.age_;
     return ost;
   }
 
@@ -229,14 +212,16 @@ namespace phenotools {
 
 
   Individual::Individual(org::phenopackets::schema::v1::core::Individual individual):
-    id_(individual.id()),
-    dataset_id_(individual.dataset_id())
+    id_(individual.id())
   {
     google::protobuf::Timestamp tstamp = individual.date_of_birth();
     if (tstamp.IsInitialized()) {
       date_of_birth_=google::protobuf::util::TimeUtil::ToString(tstamp);
     } else {
       date_of_birth_= EMPTY_STRING;
+    }
+    if (! individual.alternate_ids().empty()) {
+      alternate_ids_.insert(alternate_ids_.end(), individual.alternate_ids().begin(),individual.alternate_ids().end());
     }
 
     if (individual.has_age_at_collection()){
@@ -773,7 +758,7 @@ namespace phenotools {
   }
 
 
-
+/*
   File::File(const org::phenopackets::schema::v1::core::File &file):
     path_(file.path()),
     uri_(file.uri()),
@@ -810,7 +795,7 @@ namespace phenotools {
     }
     return ost;
   }
-
+*/
 
   HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile){
     switch(htsfile.hts_format()){
@@ -832,17 +817,11 @@ namespace phenotools {
     genome_assembly_ = htsfile.genome_assembly();
     individual_to_sample_identifiers_ .insert(htsfile.individual_to_sample_identifiers().begin(),
 					      htsfile.individual_to_sample_identifiers().end());
-    if (htsfile.has_file()){
-      file_ = make_unique<File>(htsfile.file());
-    }
   }
 
   HtsFile::HtsFile(const HtsFile & hts):
     hts_format_(hts.hts_format_),
     genome_assembly_(hts.genome_assembly_){
-    if (hts.file_) {
-      file_ = make_unique<File>(*(hts.file_));
-    }
   }
 
 
@@ -860,10 +839,6 @@ namespace phenotools {
       Validation v = Validation::createWarning(ValidationCause::LACKS_SAMPLE_MAP);
       vl.push_back(v);
     }
-    if (! file_ ){
-      Validation v = Validation::createError(ValidationCause::LACKS_HTS_FILE);
-      vl.push_back(v);
-    }
     return vl;
   }
 
@@ -876,12 +851,25 @@ namespace phenotools {
   }
 
 
+std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
+{
+  switch (htsf) {
+    case HtsFormat::BAM: ost << "BAM"; break;
+    case HtsFormat::BCF: ost << "BST"; break;
+    case HtsFormat::CRAM: ost << "CRAM"; break;
+    case HtsFormat::GVCF: ost << "GVCF"; break;
+    case HtsFormat::SAM: ost << "SAM"; break;
+    case HtsFormat::VCF: ost << "VCF"; break;
+    default: ost << "UNKNOWN";
+  }
+  return ost;
+}
+
   std::ostream &operator<<(std::ostream& ost, const HtsFile& htsfile){
-    //ost << *(htsfile.hts_format_.get());
+    ost << htsfile.get_uri() << ", ";
+    ost << htsfile.get_htsformat();
     ost << ", "<<htsfile.genome_assembly_ << " ";
-    if (htsfile.file_) {
-      ost << *(htsfile.file_.get()) ;
-    }
+    
     return ost;
   }
 
@@ -937,26 +925,16 @@ namespace phenotools {
     created_by_ = md.created_by();
     submitted_by_ = md.submitted_by();
     phenopacket_schema_version_ = md.phenopacket_schema_version();
-
-    if (md.updated_size()>0) {
-      for (auto u : md.updated()  ){
-	if (u.IsInitialized()) {
-	  auto utime =google::protobuf::util::TimeUtil::ToString(u);
-	  updated_.push_back(utime);
-	}
-      }
-    }
-
     if (md.resources_size()>0) {
       for (auto r : md.resources()) {
-	Resource res(r);
-	resources_.push_back(res);
+	      Resource res(r);
+	      resources_.push_back(res);
       }
     }
     if (md.external_references_size()>0) {
       for (auto er : md.external_references()) {
-	ExternalReference extref(er);
-	external_references_.push_back(extref);
+	      ExternalReference extref(er);
+	      external_references_.push_back(extref);
       }
     }
   }
@@ -965,7 +943,6 @@ namespace phenotools {
     created_(md.created_),
     created_by_(md.created_by_),
     submitted_by_(md.submitted_by_),
-    updated_(md.updated_),
     phenopacket_schema_version_(md.phenopacket_schema_version_){
     for (Resource r : md.resources_) {
       resources_.push_back(r); // creates copy

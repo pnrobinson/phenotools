@@ -403,6 +403,10 @@ Ontology::get_isa_parents(const TermId &child) const
   return parents;
 }
 
+/**
+ * This function checks whether there is a path of IS_A links that starts
+ * at source and ends at dest.
+ * */
 bool
 Ontology::exists_path(const TermId &source, const TermId &dest) const
 {
