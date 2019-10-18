@@ -368,8 +368,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
     }
   }
   // When we get here, we are done! Print a message
-  cout << "[INFO] Done parsing edges: n=" << edge_to_.size() << __FILE__ << ":"<<__LINE__
-        << " terms: n=" << n_vertices << "\n";
+  cout << "[INFO] Done parsing edges: n=" << edge_to_.size() <<  " terms: n=" << n_vertices << "\n";
 }
 
 std::optional<Term>

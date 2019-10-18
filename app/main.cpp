@@ -36,7 +36,7 @@ int main (int argc, char ** argv) {
   // phenopacket options
   CLI::App* phenopacket_command = app.add_subcommand ( "phenopacket", "work with GA4GH phenopackets" );
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
-  //CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "-h,--hp",phenopacket_path,"path to hp.json file" )->check ( CLI::ExistingFile );
+  CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "--hp",hp_json_path,"path to hp.json file" )->check ( CLI::ExistingFile );
 
   // validate options
   CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
@@ -97,6 +97,11 @@ int main (int argc, char ** argv) {
     cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
 
     phenotools::Phenopacket ppacket(phenopacketpb);
+    if (*phenopacket_hp_option) {
+      JsonOboParser parser {hp_json_path};
+      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+      ppacket.semantically_validate(ontology);
+    }
 
     cout << ppacket << "\n";
 

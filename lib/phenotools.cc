@@ -1276,7 +1276,9 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
         }
       }
     }
-
+    if (validation.empty()) {
+      std::cout << "[INFO] Semantic validation identified no errors.\n";
+    }
     return validation;
 
   }
