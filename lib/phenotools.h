@@ -4,19 +4,29 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <set>
 #include <map>
+#include <locale>         // std::locale, std::toupper
 
 #include "phenopackets.pb.h"
 #include "base.pb.h"
 #include "ontology.h"
 
 using std::unique_ptr;
+using std::shared_ptr;
+using std::make_shared;
 using std::string;
 using std::vector;
 using std::map;
 using std::ostream;
 
 namespace phenotools {
+
+  /*
+  static std::set<string> prefix_set;
+  void register_ontology_prefix(string prefix) {
+    prefix_set.insert(prefix);
+  }*/
 
   enum class ValidationType { WARNING, ERROR };
   enum class ValidationCause {
@@ -55,6 +65,8 @@ namespace phenotools {
       METADATA_LACKS_CREATED_TIMESTAMP,
       METADATA_LACKS_CREATED_BY,
       METADATA_LACKS_RESOURCES,
+      METADATA_DOES_NOT_CONTAIN_ONTOLOGY,
+      METADATA_HAS_SUPERFLUOUS_ONTOLOGY,
       PROCEDURE_LACKS_CODE,
       PHENOPACKET_LACKS_ID,
       PHENOPACKET_LACKS_SUBJECT,
@@ -136,6 +148,7 @@ namespace phenotools {
     void validate(vector<Validation> &v) const;
     const string & get_id() const { return id_; }
     const string & get_label() const { return label_; }
+    string get_prefix() const;
     friend std::ostream& operator<<(std::ostream& ost, const OntologyClass& oc);
   };
   ostream& operator<<(ostream& ost, const OntologyClass& oc);
@@ -152,7 +165,7 @@ namespace phenotools {
     Age(const Age& age);
     ~Age(){}
     vector<Validation> validate() const override;
-    void validate(vector<Validation> &v) const {}
+    void validate(vector<Validation> &v) const;
     friend ostream& operator<<(ostream& ost, const Age& age);
   };
   ostream& operator<<(ostream& ost, const Age& age);
@@ -210,7 +223,7 @@ namespace phenotools {
     unique_ptr<AgeRange> age_range_;
     enum Sex sex_;
     enum KaryotypicSex karyotypic_sex_;
-    unique_ptr<OntologyClass> taxonomy_ptr_;
+    shared_ptr<OntologyClass> taxonomy_ptr_;
 
   public:
     Individual(org::phenopackets::schema::v1::core::Individual individual);
@@ -218,6 +231,7 @@ namespace phenotools {
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const;
     const string & get_id() const { return id_; }
+    shared_ptr<OntologyClass> get_taxon() const { return taxonomy_ptr_; }
     friend ostream& operator<<(ostream& ost, const Individual& ind);
   };
 
@@ -330,16 +344,18 @@ namespace phenotools {
 
   class Variant : public ValidatorI {
   private:
-    unique_ptr<HgvsAllele> hgvs_allele_;
-    unique_ptr<VcfAllele> vcf_allele_;
-    // todo spdi, iscn,murine
-    unique_ptr<OntologyClass> zygosity_;
+    shared_ptr<HgvsAllele> hgvs_allele_;
+    shared_ptr<VcfAllele> vcf_allele_;
+    // todo spdi, iscn
+    shared_ptr<OntologyClass> zygosity_;
 
   public:
     Variant(const org::phenopackets::schema::v1::core::Variant & var);
     Variant(const Variant & var);
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const {}
+    bool has_zygosity() const { return nullptr != zygosity_; }
+    shared_ptr<OntologyClass> get_zygosity() const { return zygosity_; } 
     friend std::ostream &operator<<(std::ostream& ost, const Variant& var);
   };
   std::ostream &operator<<(std::ostream& ost, const Variant& var);
@@ -347,35 +363,26 @@ namespace phenotools {
 
   class Disease : public ValidatorI {
   private:
-    unique_ptr<OntologyClass> term_;
-    unique_ptr<Age> age_of_onset_;
-    unique_ptr<AgeRange> age_range_of_onset_;
-    unique_ptr<OntologyClass> class_of_onset_;
+    shared_ptr<OntologyClass> term_;
+    shared_ptr<Age> age_of_onset_;
+    shared_ptr<AgeRange> age_range_of_onset_;
+    shared_ptr<OntologyClass> class_of_onset_;
 
   public:
     Disease(const org::phenopackets::schema::v1::core::Disease & dis);
     Disease(const Disease &dis);
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const {}
+    shared_ptr<OntologyClass> get_term() const { return term_; }
+    bool has_age_of_onset() const { return nullptr != age_of_onset_; }
+    shared_ptr<Age> get_age_of_onset() const { return age_of_onset_; }
+    bool has_age_range_of_onset() const { return nullptr != age_range_of_onset_; }
+    shared_ptr<AgeRange> get_age_range_of_onset() const { return age_range_of_onset_; }
+    bool has_class_of_onset() { return nullptr != class_of_onset_; }
+    shared_ptr<OntologyClass> get_class_of_onset() const { return class_of_onset_; }
     friend std::ostream &operator<<(std::ostream& ost, const Disease& dis);
   };
   std::ostream &operator<<(std::ostream& ost, const Disease& dis);
-
-
- /* class File : public ValidatorI {
-  private:
-    string path_;
-    string uri_;
-    string description_;
-  public:
-    File(const org::phenopackets::schema::v1::core::File &file);
-    File(const File &file);
-    vector<Validation> validate() const;
-    void validate(vector<Validation> &v) const {}
-    friend std::ostream &operator<<(std::ostream& ost, const File& file);
-  };
-  std::ostream &operator<<(std::ostream& ost, const File& file);
-*/
 
   enum class HtsFormat { UNKNOWN, SAM, BAM, CRAM, VCF, BCF, GVCF };
   std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf);
@@ -429,6 +436,7 @@ namespace phenotools {
     void validate(vector<Validation> &v) const;
     /** @return the identifier (prefix) of this ontology, e.g., HP. */
     string get_id() const { return id_; }
+    string get_namespace_prefix() const { return namespace_prefix_; }
     friend std::ostream &operator<<(std::ostream& ost, const Resource& resource);
   };
   std::ostream &operator<<(std::ostream& ost, const Resource& resource);
@@ -452,6 +460,7 @@ namespace phenotools {
     vector<Validation> validate() const;
     void validate(vector<Validation> &val) const;
     void validate_ontology_prefixes(const std::set<string> prefixes, vector<Validation> &val) const;
+    std::set<string> get_prefixes() const;
     friend std::ostream &operator<<(std::ostream& ost, const MetaData& md);
   };
   std::ostream &operator<<(std::ostream& ost, const MetaData& md);
@@ -515,9 +524,9 @@ namespace phenotools {
     vector<Variant> variants_;
     vector<Disease> diseases_;
     vector<HtsFile> htsFiles_;
-    unique_ptr<MetaData> metadata_;
+    shared_ptr<MetaData> metadata_;
     /** Check the semantics and consistency of the phenopacket. */
-    void validate_content(vector<Validation> &v);
+    void validate_metadata_prefixes(vector<Validation> &v) const;
 
   public:
     Phenopacket(const org::phenopackets::schema::v1::Phenopacket &pp) ;

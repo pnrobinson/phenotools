@@ -20,6 +20,7 @@
 
 
 using std::make_unique;
+using std::make_shared;
 
 
 
@@ -71,6 +72,8 @@ namespace phenotools {
     case ValidationCause::METADATA_LACKS_CREATED_TIMESTAMP: return "metadata timestamp missing";
     case ValidationCause::METADATA_LACKS_CREATED_BY: return "metadata created-by missing";
     case ValidationCause::METADATA_LACKS_RESOURCES: return "metadata lacks resources";
+    case ValidationCause::METADATA_DOES_NOT_CONTAIN_ONTOLOGY: return "metadata lacks ontology used in phenopacket";
+    case ValidationCause::METADATA_HAS_SUPERFLUOUS_ONTOLOGY: return "metadata refers to ontology not used in phenopacket";
     case ValidationCause::PROCEDURE_LACKS_CODE: return "procedrure code missing";
     case ValidationCause::PHENOPACKET_LACKS_ID: return "phenopacket id missing";
     case ValidationCause::PHENOPACKET_LACKS_SUBJECT: return "phenopacket subject missing";
@@ -112,6 +115,19 @@ namespace phenotools {
     }
     ost << v.message();
     return ost;
+  }
+
+  /**
+   * Return the prefix, i.e., "HP" from an id such as HP:0001234.
+   */
+  string 
+  OntologyClass::get_prefix() const 
+  {
+    int i = id_.find_first_of(":");
+    // when we get here we have already tested that
+    // the prefixes are ok but guard against index errors
+    if (i<0) return "N/A"; 
+    return id_.substr(0,i);
   }
 
 
@@ -168,6 +184,15 @@ namespace phenotools {
       vl.push_back(e);
     }
     return vl;
+  }
+
+  void
+  Age::validate(vector<Validation> &v) const
+  {
+    if (age_.empty()){
+      Validation e = Validation::createError(ValidationCause::AGE_ELEMENT_UNINITIALIZED);
+      v.push_back(e);
+    }
   }
 
 
@@ -282,7 +307,7 @@ namespace phenotools {
       karyotypic_sex_=KaryotypicSex::UNKNOWN_KARYOTYPE;
     }
     if (individual.has_taxonomy()){
-      taxonomy_ptr_ = make_unique<OntologyClass>(individual.taxonomy());
+      taxonomy_ptr_ = std::make_shared<OntologyClass>(individual.taxonomy());
     }
   }
 
@@ -620,26 +645,26 @@ namespace phenotools {
 
   Variant::Variant(const org::phenopackets::schema::v1::core::Variant & var){
     if (var.has_hgvs_allele()) {
-      hgvs_allele_ = make_unique<HgvsAllele>(var.hgvs_allele());
+      hgvs_allele_ = make_shared<HgvsAllele>(var.hgvs_allele());
     } else if (var.has_vcf_allele()) {
-      vcf_allele_ = make_unique<VcfAllele>(var.vcf_allele());
+      vcf_allele_ = make_shared<VcfAllele>(var.vcf_allele());
     }
 
     // TODO
     if (var.has_zygosity()) {
-      zygosity_ = make_unique<OntologyClass>(var.zygosity());
+      zygosity_ = make_shared<OntologyClass>(var.zygosity());
     }
   }
 
   Variant::Variant(const Variant & var) {
     if (var.hgvs_allele_) {
-      hgvs_allele_ = make_unique<HgvsAllele>(*(var.hgvs_allele_.get()));
+      hgvs_allele_ = make_shared<HgvsAllele>(*(var.hgvs_allele_.get()));
     } else if (var.vcf_allele_) {
-      vcf_allele_ = make_unique<VcfAllele>(*(var.vcf_allele_.get()));
+      vcf_allele_ = make_shared<VcfAllele>(*(var.vcf_allele_.get()));
     }
     // todo
     if (var.zygosity_) {
-      zygosity_ = make_unique<OntologyClass>(*(var.zygosity_));
+      zygosity_ = make_shared<OntologyClass>(*(var.zygosity_));
     }
 
 
@@ -653,13 +678,13 @@ namespace phenotools {
       has_allele=true;
       vector<Validation>  v2 =  hgvs_allele_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );
+	      vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else if (vcf_allele_) {
       has_allele=true;
       vector<Validation>  v2 =  vcf_allele_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );
+	      vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     } else {
       std::cout <<"WARNING SOME ALLELE SUBTYPES NOT IMPLEMENTED YET";
@@ -674,7 +699,7 @@ namespace phenotools {
     } else {
       vector<Validation>  v2 =  zygosity_->validate();
       if (v2.size()>0) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );
+	      vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
@@ -757,46 +782,6 @@ namespace phenotools {
     }
     return ost;
   }
-
-
-/*
-  File::File(const org::phenopackets::schema::v1::core::File &file):
-    path_(file.path()),
-    uri_(file.uri()),
-    description_(file.description())
-  {}
-
-
-  File::File(const File &file):
-    path_(file.path_),
-    uri_(file.uri_),
-    description_(file.description_)
-  {}
-
-  vector<Validation>
-  File::validate() const {
-    vector<Validation> vl;
-    if ( path_.empty() && uri_.empty()){
-      Validation v = Validation::createError(ValidationCause::FILE_LACKS_SPECIFICATION);
-      vl.push_back(v);
-    }
-    return vl;
-  }
-
-
-  std::ostream &operator<<(std::ostream& ost, const File& file){
-
-    if (! file.path_.empty()) {
-      ost << file.path_;
-    } else if (file.uri_.empty()) {
-      ost << file.uri_;
-    }
-    if (file.description_.empty()){
-      ost << " [" << file.description_ << "]";
-    }
-    return ost;
-  }
-*/
 
   HtsFile::HtsFile(const org::phenopackets::schema::v1::core::HtsFile &htsfile):
     uri_(htsfile.uri())
@@ -959,6 +944,20 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
   }
 
 
+  std::set<string>
+  MetaData::get_prefixes() const
+  {
+    std::set<string> prefixes;
+    //std::locale loc;
+    for (Resource r : resources_) {
+      string id = r.get_id();
+      transform(id.begin(), id.end(), id.begin(), ::toupper); 
+      prefixes.insert(id);
+    }
+    return prefixes;
+  }
+
+
   vector<Validation>
   MetaData::validate() const {
     vector<Validation> vl;
@@ -1093,7 +1092,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       }
     }
     if (pp.has_meta_data()) {
-      metadata_ = make_unique<MetaData>(pp.meta_data());
+      metadata_ = make_shared<MetaData>(pp.meta_data());
     }
   }
 
@@ -1157,20 +1156,65 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     return vl;
   }
 
+  /**
+   *  Check that all ontology terms use ontologies that are
+    * listed inthe Metadata
+    *assumption -- the prefix can be used to match uniquely
+    */
   void
-  Phenopacket::validate_content(vector<Validation> &v)
+  Phenopacket::validate_metadata_prefixes(vector<Validation> &v) const
   {
-    // check that all ontology terms use ontologies that are
-    // listed inthe Metadata
-    // assumption -- the prefix can be used to match uniquely
+   
     std::set<string> prefixes;
+    // taxon prefix
+    if (subject_->get_taxon() != nullptr) {
+      auto oc = subject_->get_taxon().get();
+      prefixes.insert(oc->get_prefix());
+    }
+    if (diseases_.size()>0) {
+      for (Disease d : diseases_) {
+        auto oc = d.get_term();
+        prefixes.insert(oc->get_prefix());
+        if (d.has_class_of_onset()){
+          oc = d.get_class_of_onset();
+          prefixes.insert(oc->get_prefix());
+        }
+      }
+    }
+    // HPO prefix (or other phenotype ontology)
     for (PhenotypicFeature pf : phenotypic_features_) {
       string termid = pf.get_id();
       std::size_t i = termid.find_last_of(':');
       string prefix = termid.substr(0,i);
       prefixes.insert(prefix);
     }
-    std::set<string> metadata_prefixes;
+    if (variants_.size()>0) {
+      for (Variant v : variants_) {
+        if (v.has_zygosity()) {}
+          auto z = v.get_zygosity();
+          prefixes.insert(z->get_prefix());
+      }
+    }
+    std::set<string> metadata_prefixes = metadata_->get_prefixes();
+    // are the ontology prefixes used in phenopacket that are not
+    // mentioned in the MetaData?
+    for (string s : prefixes) {
+      auto p = metadata_prefixes.find(s);
+      if (p == metadata_prefixes.end()) {
+        std::stringstream sstr;
+        sstr<< "Metadata did not contain ontology used in phenopacket: " << s;
+        Validation v = Validation::createError(ValidationCause::METADATA_DOES_NOT_CONTAIN_ONTOLOGY,sstr.str());
+      }
+    }
+    // Are there ontologies in the MetaData that are not used in the phenopacket?
+    for (string s : metadata_prefixes) {
+      auto p = prefixes.find(s);
+      if (p == prefixes.end()) {
+        std::stringstream sstr;
+        sstr << "Metadata contains ontolog not used in Phenopacket: " << s;
+        Validation v = Validation::createError(ValidationCause::METADATA_HAS_SUPERFLUOUS_ONTOLOGY,sstr.str());
+      }
+    }
   }
 
 
@@ -1201,21 +1245,21 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       ost << "genes: n/a\n";
     } else {
       for (Gene g : ppacket.genes_) {
-	ost << "Gene: "<<g<<"\n";
+	      ost << "Gene: "<<g<<"\n";
       }
     }
     if (ppacket.variants_.empty()) {
       ost << "Variants: n/a\n";
     } else {
       for (Variant v : ppacket.variants_) {
-	ost << "\t" << v << "\n";
+	      ost << "\t" << v << "\n";
       }
     }
     if (ppacket.diseases_.empty()) {
       ost << "Diseases: n/a\n";
     } else {
       for (Disease d : ppacket.diseases_) {
-	ost << "Disease: "<< d <<"\n";
+	      ost << "Disease: "<< d <<"\n";
       }
     }
     if (ppacket.metadata_) {
@@ -1225,6 +1269,10 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     return ost;
   }
 
+  /**
+   * Check whether all HPO terms used are present in the ontology. Check that no two terms
+   * have ancestor descendant relation to each other.
+   */
   vector<Validation>
   Phenopacket::semantically_validate(const std::unique_ptr<Ontology> &ontology_p) const
   {
@@ -1279,6 +1327,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     if (validation.empty()) {
       std::cout << "[INFO] Semantic validation identified no errors.\n";
     }
+    validate_metadata_prefixes(validation);
     return validation;
 
   }
