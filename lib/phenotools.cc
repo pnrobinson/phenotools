@@ -900,8 +900,8 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
 
   std::ostream &operator<<(std::ostream& ost, const Resource& resource) {
     ost << resource.name_ << ": " << resource.id_
-	<< "(" << resource.namespace_prefix_ << ";" << resource.url_
-	<< ";" << resource.version_  << ";" << resource.iri_prefix_ <<")";
+	      << "(" << resource.namespace_prefix_ << ";" << resource.url_
+	      << ";" << resource.version_  << ";" << resource.iri_prefix_ <<")";
     return ost;
   }
 
@@ -921,7 +921,6 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       for (auto r : md.resources()) {
 	      Resource res(r);
 	      resources_.push_back(res);
-        std::cout << "resource " << res << "\n";
       }
     }
     if (md.external_references_size()>0) {
@@ -994,7 +993,9 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
   {
     std::set<string> ontology_prefixes;
     for (Resource r : resources_) {
-      ontology_prefixes.insert(r.get_id());
+      string id = r.get_id();
+      transform(id.begin(), id.end(), id.begin(), ::toupper); 
+      ontology_prefixes.insert(id);
     }
     for (string pr : prefixes) {
       auto p = ontology_prefixes.find(pr);

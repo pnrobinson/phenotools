@@ -4,6 +4,7 @@ add_executable(${PROJECT_NAME}
     unittests.cpp
     ontology_test.cpp
     htsfile_test.cpp
+    metadata_test.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
