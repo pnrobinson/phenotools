@@ -97,27 +97,22 @@ int main (int argc, char ** argv) {
     cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
 
     phenotools::Phenopacket ppacket(phenopacketpb);
+    auto validation = ppacket.validate();
     if (*phenopacket_hp_option) {
       JsonOboParser parser {hp_json_path};
       std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-      ppacket.semantically_validate(ontology);
-    }
-
-    cout << ppacket << "\n";
-
-    auto validation = ppacket.validate();
-    if ( *hp_json_path_option ) {
-      JsonOboParser parser {hp_json_path};
-      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-      auto semantic_validation = ppacket.semantically_validate(ontology);
+      auto semvalidation = ppacket.semantically_validate(ontology);
+      validation.insert(validation.end(),semvalidation.begin(), semvalidation.end());
+    } else {
+      cout << "[INFO] Validation performed without ontology\n";
     }
     if ( validation.empty() ) {
       cout << "No Q/C issues identified!\n";
     } else {
       auto N = validation.size();
       cout << "#### We identified "
-	   << N << " Q/C issue" << ( N>1?"s":"" )
-	   << " ####\n";
+	        << N << " Q/C issue" << ( N>1?"s":"" )
+	        << " ####\n";
       for ( auto v : validation ) {
 	       cout << v << "\n";
       }

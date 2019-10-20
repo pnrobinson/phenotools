@@ -21,6 +21,7 @@
 
 using std::make_unique;
 using std::make_shared;
+using std::cout;
 
 
 
@@ -920,6 +921,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       for (auto r : md.resources()) {
 	      Resource res(r);
 	      resources_.push_back(res);
+        std::cout << "resource " << res << "\n";
       }
     }
     if (md.external_references_size()>0) {
@@ -944,11 +946,13 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
   }
 
 
+  /**
+   * Extract a set of prefixes of the ontologies used in the MetaData, e.g., HP, GENO, ...
+   */
   std::set<string>
   MetaData::get_prefixes() const
   {
     std::set<string> prefixes;
-    //std::locale loc;
     for (Resource r : resources_) {
       string id = r.get_id();
       transform(id.begin(), id.end(), id.begin(), ::toupper); 
@@ -999,6 +1003,18 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
         val.push_back(v);
       }
     }
+    for (string pr : ontology_prefixes) {
+      auto p = prefixes.find(pr);
+      if (p == prefixes.end()) {
+        std::stringstream sstr;
+        sstr << "MetaData includes superfluous entry for " << pr;
+        Validation v = Validation::createWarning(ValidationCause::METADATA_HAS_SUPERFLUOUS_ONTOLOGY,sstr.str());
+        val.push_back(v);
+        cout << sstr.str();
+      } else {
+        cout << " ALl is OK for " << pr << "\n";
+      }
+    }
   }
 
   std::ostream &operator<<(std::ostream& ost, const MetaData& md){
@@ -1040,7 +1056,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     } else {
       vector<Validation> v2 = code_->validate();
       if (! v2.empty()) {
-	vl.insert(vl.end(),v2.begin(),v2.end() );
+      	vl.insert(vl.end(),v2.begin(),v2.end() );
       }
     }
     return vl;
@@ -1060,8 +1076,8 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     }
     if (pp.phenotypic_features_size()>0) {
       for (auto m : pp.phenotypic_features()) {
-	PhenotypicFeature phenofeature(m);
-	phenotypic_features_.push_back(phenofeature);
+	      PhenotypicFeature phenofeature(m);
+	      phenotypic_features_.push_back(phenofeature);
       }
     }
     if (pp.biosamples_size()>0) {
@@ -1069,14 +1085,14 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     }
     if (pp.genes_size()>0) {
       for (auto g:pp.genes()) {
-	Gene gene(g);
-	genes_.push_back(gene);
+	      Gene gene(g);
+	      genes_.push_back(gene);
       }
     }
     if (pp.variants_size()>0) {
       for (auto v:pp.variants()) {
-	Variant var(v);
-	variants_.push_back(var);
+	      Variant var(v);
+	      variants_.push_back(var);
       }
     }
     if (pp.diseases_size()>0) {
@@ -1162,9 +1178,8 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     *assumption -- the prefix can be used to match uniquely
     */
   void
-  Phenopacket::validate_metadata_prefixes(vector<Validation> &v) const
+  Phenopacket::validate_metadata_prefixes(vector<Validation> &valids) const
   {
-   
     std::set<string> prefixes;
     // taxon prefix
     if (subject_->get_taxon() != nullptr) {
@@ -1204,7 +1219,8 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
         std::stringstream sstr;
         sstr<< "Metadata did not contain ontology used in phenopacket: " << s;
         Validation v = Validation::createError(ValidationCause::METADATA_DOES_NOT_CONTAIN_ONTOLOGY,sstr.str());
-      }
+        valids.push_back(v);
+      } 
     }
     // Are there ontologies in the MetaData that are not used in the phenopacket?
     for (string s : metadata_prefixes) {
@@ -1212,8 +1228,9 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       if (p == prefixes.end()) {
         std::stringstream sstr;
         sstr << "Metadata contains ontolog not used in Phenopacket: " << s;
-        Validation v = Validation::createError(ValidationCause::METADATA_HAS_SUPERFLUOUS_ONTOLOGY,sstr.str());
-      }
+        Validation v = Validation::createWarning(ValidationCause::METADATA_HAS_SUPERFLUOUS_ONTOLOGY,sstr.str());
+        valids.push_back(v);
+      } 
     }
   }
 
@@ -1324,10 +1341,13 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
         }
       }
     }
+    
+    validate_metadata_prefixes(validation);
     if (validation.empty()) {
       std::cout << "[INFO] Semantic validation identified no errors.\n";
+    } else {
+      std::cout << "[INFO] Semantic validation identified " << validation.size() <<" issues\n";
     }
-    validate_metadata_prefixes(validation);
     return validation;
 
   }
@@ -1337,13 +1357,11 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
   Biosample::validate() const {
     vector<Validation> vl;
     if (id_.empty()) {
-      Validation v = Validation::createError(ValidationCause::BIOSAMPLE_LACKS_ID);
-      vl.push_back(v);
+      vl.push_back(Validation::createError(ValidationCause::BIOSAMPLE_LACKS_ID));
     }
     //dataset_id_, individual_id_, description_ are optional and thus are not validated
     if (! sampled_tissue_) {
-      Validation v = Validation::createError(ValidationCause::BIOSAMPLE_LACKS_SAMPLED_TISSUE);
-      vl.push_back(v);
+      vl.push_back(Validation::createError(ValidationCause::BIOSAMPLE_LACKS_SAMPLED_TISSUE));
     } else {
       vector<Validation> v2 = sampled_tissue_->validate();
       if (! v2.empty() ){
@@ -1351,8 +1369,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
       }
     }
     if (! phenotypic_features_.empty() ){
-      Validation v = Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_PHENOTYPES);
-      vl.push_back(v);
+      vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_PHENOTYPES));
     } else {
       for (auto pf : phenotypic_features_){
         vector<Validation> v2 = pf.validate();
@@ -1363,8 +1380,7 @@ std::ostream &operator<<(std::ostream& ost, const HtsFormat htsf)
     }
     //taxonomy_ is optional
      if (! age_of_individual_at_collection_ && ! age_range_of_individual_at_collection_) {
-        Validation v = Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_AGE);
-        vl.push_back(v);
+        vl.push_back(Validation::createWarning(ValidationCause::BIOSAMPLE_LACKS_AGE));
     } else if (age_of_individual_at_collection_) {
          vector<Validation> v2 = age_of_individual_at_collection_->validate();
          if (! v2.empty() ){
