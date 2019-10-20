@@ -487,6 +487,9 @@ Ontology::exists_path(const TermId &source, const TermId &dest, EdgeType etype) 
 bool
 Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const
 {
+  if (t1 == root || t2 == root) {
+    return false; // by definition, if one of the terms (t1,t2) is root there is no non-root common anc
+  }
   auto p = termid_to_index_.find(t1);
   if (p == termid_to_index_.end()) {
     // not found, should never happen
@@ -496,13 +499,13 @@ Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId 
   p = termid_to_index_.find(t2);
   if (p == termid_to_index_.end()) {
     // not found, should never happen
-    throw PhenopacketException("Unrecognized TermId: " + t1.get_value());
+    throw PhenopacketException("Unrecognized TermId: " + t2.get_value());
   }
   int t2_index = p->second;
   p = termid_to_index_.find(root);
   if (p == termid_to_index_.end()) {
     // not found, should never happen
-    throw PhenopacketException("Unrecognized TermId: " + t1.get_value());
+    throw PhenopacketException("Unrecognized TermId: " + root.get_value());
   }
   int root_index = p->second;
   std::stack<int> st;
@@ -516,7 +519,11 @@ Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId 
     t1_ancestors.insert(index);
     st.pop();
     for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
-      st.push(i);
+      if (edge_type_list_[i] != EdgeType::IS_A) {
+        continue; // only follow is-a links to get ancestors
+      }
+      int next_vertex = edge_to_[i];
+      st.push(next_vertex);
     }
   }
   // when we get here, t1_ancestors has the indices of t1 and all its ancestors
@@ -524,14 +531,15 @@ Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId 
   st2.push(t2_index);
   while (! st2.empty()) {
     int index = st.top();
-    if (index == root_index) {
+    int vertex_idx = edge_to_[index];
+    if (vertex_idx == root_index) {
       break;
     }
-    if (t1_ancestors.find(index) != t1_ancestors.end()) {
+    if (t1_ancestors.find(vertex_idx) != t1_ancestors.end()) {
       return true;
     }
     st2.pop();
-    for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
+    for (int i = offset_to_edge_[vertex_idx]; i < offset_to_edge_[1+vertex_idx]; i++) {
       st2.push(i);
     }
   }

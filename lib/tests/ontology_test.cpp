@@ -87,3 +87,20 @@ TEST_CASE("Test exists path algorithm with specific edge type","[exists_path_edg
   // t5 and t2 are in different subhierarchies
   REQUIRE_FALSE(ontology->exists_path(t5, t2));
 }
+
+TEST_CASE("Have common ancestor","[have_common_anc]") {
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+  //ontology->debug_print();
+  // term 1 is the root
+  TermId t1 = TermId::from_string("HP:0000001");
+  // term 2 is the child of term 1
+  TermId t2 = TermId::from_string("HP:0000002");
+  // term 3 is the grand child of term 1 and child of term 2
+  TermId t3 = TermId::from_string("HP:0000003");
+  // term 4 is the  child of term 1 but not child of term 2
+  REQUIRE(ontology->have_common_ancestor(t2,t3,t1));
+  // t1 and t3 do not have a common nonroot ancestor, because t1 is the root
+  REQUIRE_FALSE(ontology->have_common_ancestor(t1,t3,t1));
+}
