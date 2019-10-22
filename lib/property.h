@@ -47,6 +47,7 @@ enum class Predicate {
   IS_CLASS_LEVEL, //oboInOwl#is_class_level
   PATHOGENESIS, //mondo#pathogenesis
   NEVER_IN_TAXON, // RO_0002161
+  IN_TAXON, //RO_0002162
   SOURCE, //http://purl.org/dc/terms/source
   HAS_OBO_FORMAT_VERSION,
   HOMEPAGE,
@@ -82,6 +83,10 @@ enum class AllowedPropertyValue {
   DISPLAY_LABEL, //"display label"
   HPO_SLIM,
   OBSOLETE_SYNONYM,
+  DUBIOUS,
+  MAY_BE_MERGED_INTO,
+  IN_TAXON,
+  NEVER_IN_TAXON,
   UNKNOWN,
 };
 

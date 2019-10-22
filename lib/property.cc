@@ -1,4 +1,5 @@
 #include "property.h"
+#include "myexception.h"
 
 #include <iostream>
 using std::cerr;
@@ -42,6 +43,7 @@ PredicateValue::predicate_registry_ = {
 		   {"title",Predicate::TITLE},
 		   {"IAO_0100001",Predicate::TERM_REPLACED_BY},
 		   {"RO_0002161",Predicate::NEVER_IN_TAXON},
+		   {"RO_0002162", Predicate::IN_TAXON},
 		   {"mondo#excluded_synonym",Predicate::EXCLUDED_SYNONYM},
 		   {"source",Predicate::SOURCE},
 		   {"homepage",Predicate::HOMEPAGE},
@@ -101,6 +103,10 @@ Property::property_registry_ = {
 	{"hp#hposlim_core", AllowedPropertyValue::HPO_SLIM},
 	{"unknown", AllowedPropertyValue::UNKNOWN},
 	{"HP_0031859", AllowedPropertyValue::OBSOLETE_SYNONYM},
+	{"mondo#DUBIOUS", AllowedPropertyValue::DUBIOUS},
+	{"mondo#may_be_merged_into", AllowedPropertyValue::MAY_BE_MERGED_INTO},
+	{"RO_0002161", AllowedPropertyValue::NEVER_IN_TAXON},
+	{"RO_0002162", AllowedPropertyValue::IN_TAXON}
 };
 
 
@@ -114,7 +120,11 @@ Property::apv_to_label_ = {
   {AllowedPropertyValue::DISPLAY_LABEL, "display label"},
   {AllowedPropertyValue::HPO_SLIM, "hpo slim"},
   {AllowedPropertyValue::OBSOLETE_SYNONYM, "obsolete synonym"},
+  {AllowedPropertyValue::DUBIOUS, "dubious"},
+  {AllowedPropertyValue::MAY_BE_MERGED_INTO, "may_be_merged_into"},
   {AllowedPropertyValue::UNKNOWN,"unknown"},
+  {AllowedPropertyValue::IN_TAXON,"IN_TAXON"},
+   {AllowedPropertyValue::NEVER_IN_TAXON,"NEVER_IN_TAXON"}
 };
 
 
@@ -134,15 +144,15 @@ Property::id_to_property(const string &s)
 {
 	std::size_t i = s.find_last_of('/');
 	string prp = s;
-  if (i != string::npos){
-    prp = s.substr(i+1);;
-  }
-  auto p = Property::property_registry_.find(prp);
-  if (p == Property ::property_registry_.end()) {
-    cerr<< "[WARNING] Unrecognized property: " << s << "\n";
-    exit(1);
-  }
-  return p->second;
+  	if (i != string::npos){
+    	prp = s.substr(i+1);;
+  	} 
+  	//cerr << "id_to_property: s="<<s<<", prp="<<prp<<"\n";
+  	auto p = Property::property_registry_.find(prp);
+  	if (p == Property ::property_registry_.end()) {
+		throw PhenopacketException("[WARNING] Unrecognized property: " + s);
+  	}
+  	return p->second;
 }
 
 Property::Property(const Property &p):

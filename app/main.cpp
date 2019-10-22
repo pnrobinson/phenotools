@@ -38,6 +38,12 @@ int main (int argc, char ** argv) {
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "--hp",hp_json_path,"path to hp.json file" )->check ( CLI::ExistingFile );
 
+  // mondo options
+  auto mondo_app = app.add_subcommand("mondo", "work with MONDO");
+  auto mondo_json_option = mondo_app->add_option("-j,--json",mondo_json_path,"path to mondo.json file");
+  
+  
+  
   // validate options
   CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
   CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
@@ -46,6 +52,8 @@ int main (int argc, char ** argv) {
   // DEBUG OPTIONs
   CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
   CLI::Option* debug_ont_option = debug_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+
+
 
 
   CLI11_PARSE ( app, argc, argv );
@@ -118,6 +126,19 @@ int main (int argc, char ** argv) {
       }
 
     }
+  } else if (mondo_app->parsed()) {
+    // run the MONDO mode
+    if (! *mondo_json_option) {
+      cerr << "[ERROR] mondo command requires -j/--json <path to mondo.json> option.\n";
+      exit(EXIT_FAILURE);
+    }
+    try {
+    JsonOboParser parser{mondo_json_path};
+    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+    } catch (JsonParseException &e) {
+      std::cerr << e.what();
+    }
+    
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
   }

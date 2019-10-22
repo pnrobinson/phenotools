@@ -26,10 +26,16 @@ TermId::from_string(const string &s)
     return TermId{cp,i}; // rely on RVO/move
   }
   // orcid.org/0000-0001-5208-3432
-  i = s.find_first_of("orcid.org/");
+  i = s.find("orcid.org/");
   if (i != string::npos) {
     string orcid= "ORCID:" + cp;
     return TermId{orcid,5};
+  }
+  // http://identifiers.org/hgnc/2214
+  i = s.find("hgnc/");
+  if (i != string::npos) {
+    string hgnc = "HGNC:" + s.substr(i+5);
+    return TermId{hgnc,4};
   }
   throw PhenopacketException("Malformed ontology term id: " +s);
 }
