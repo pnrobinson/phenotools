@@ -43,12 +43,10 @@ int main (int argc, char ** argv) {
   auto mondo_json_option = mondo_app->add_option("-j,--json",mondo_json_path,"path to mondo.json file");
   
   
+  // HPO options
+  CLI::App* hpo_command = app.add_subcommand ( "hpo", "Q/C of JSON HP ontology file" );
+  CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
   
-  // validate options
-  CLI::App* validate_command = app.add_subcommand ( "validate", "perform Q/C of JSON ontology file (HP,MP,MONDO,GO)" );
-  CLI::Option* hp_json_path_option = validate_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
-  CLI::Option* mondo_json_path_option = validate_command->add_option ( "--mondo", mondo_json_path,"path to  mondo.json file" )->check ( CLI::ExistingFile );
-
   // DEBUG OPTIONs
   CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
   CLI::Option* debug_ont_option = debug_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
@@ -58,20 +56,15 @@ int main (int argc, char ** argv) {
 
   CLI11_PARSE ( app, argc, argv );
 
-  if ( validate_command->parsed() ) {
-    if (*hp_json_path_option) {
-      JsonOboParser parser{hp_json_path};
-      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-      cout << *ontology << "\n";
-      return EXIT_SUCCESS;
-    } else if (*mondo_json_path_option) {
-      JsonOboParser parser{mondo_json_path};
-      std::unique_ptr<Ontology> ontology = parser.get_ontology();
-      cout << *ontology << "\n";
-      return EXIT_SUCCESS;
-    } else {
-      std::cerr << "[ERROR] --hp or --mondo option required for validate command!\n";
+  if ( hpo_command->parsed() ) {
+    if (! *hp_json_path_option) {
+      cerr << "[ERROR] --hp <path to hp.json> option required for hpo command.\n";
+      exit(EXIT_FAILURE);
     }
+    JsonOboParser parser{hp_json_path};
+    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+    cout << *ontology << "\n";
+    return EXIT_SUCCESS;
   } else if (debug_command->parsed() ) {
     if (*debug_ont_option) {
       //TODO REMOVE AFTER DEV

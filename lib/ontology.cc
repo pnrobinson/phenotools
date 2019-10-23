@@ -292,6 +292,7 @@ Ontology::add_all_terms(const vector<Term> &terms){
  */
 void
 Ontology::add_all_edges(vector<Edge> &edges){
+  original_edge_count_ = edges.size();
   // First we add inverse edges for all IS_A edges
   vector<Edge> inverse_edges;
   for (Edge e: edges) {
@@ -388,7 +389,9 @@ Ontology::add_all_edges(vector<Edge> &edges){
     }
   }
   // When we get here, we are done! Print a message
-  cout << "[INFO] Done parsing edges: n=" << edge_to_.size() <<  " terms: n=" << n_vertices << "\n";
+  cout << "[INFO] Done parsing edges: n=" << original_edge_count_ 
+      << " (including supplemental edges: "
+      << edge_to_.size() <<  ") terms: n=" << n_vertices << "\n";
 }
 
 std::optional<Term>

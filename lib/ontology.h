@@ -112,6 +112,7 @@ std::ostream& operator<<(std::ostream& ost, const Term& term);
 class Ontology {
 private:
   string id_;
+  int original_edge_count_;
   vector<PredicateValue> predicate_values_;
   vector<Property> property_list_;
   map<TermId, std::shared_ptr<Term> > term_map_;
@@ -158,7 +159,8 @@ public:
   void add_all_edges(vector<Edge> &edges);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
-  int edge_count() const { return edge_to_.size(); }
+  int edge_count() const { return original_edge_count_; }
+  int edge_count_with_supplemental_edges() const { return edge_to_.size(); }
   int is_a_edge_count() const { return is_a_edge_count_;}
   int predicate_count() const { return predicate_values_.size(); }
   int property_count() const { return property_list_.size(); }
