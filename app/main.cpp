@@ -31,6 +31,8 @@ int main (int argc, char ** argv) {
   /** Path to mondo file file, mondo.json. */
   string mondo_json_path;
   string phenopacket_path;
+  bool show_descriptive_stats = false;
+  bool show_quality_control = false;
 
   CLI::App app ( "phenotools" );
   // phenopacket options
@@ -46,7 +48,9 @@ int main (int argc, char ** argv) {
   // HPO options
   CLI::App* hpo_command = app.add_subcommand ( "hpo", "Q/C of JSON HP ontology file" );
   CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
-  
+  auto hp_stats = hpo_command->add_flag("-s,--stats",show_descriptive_stats,"show descriptive statistics");
+  auto hp_qc = hpo_command->add_flag("-q,--qc", show_quality_control, "show quality assessment");
+
   // DEBUG OPTIONs
   CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
   CLI::Option* debug_ont_option = debug_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
@@ -63,8 +67,20 @@ int main (int argc, char ** argv) {
     }
     JsonOboParser parser{hp_json_path};
     std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-    cout << *ontology << "\n";
-    return EXIT_SUCCESS;
+    if (show_descriptive_stats) {
+      ontology->output_descriptive_statistics();
+    }
+    if (show_quality_control) {
+      parser.output_quality_assessment();
+    }
+    if (show_descriptive_stats || show_quality_control ) {
+      return EXIT_SUCCESS;
+    } else {
+      cout << "Consider running with -s or -q option to see descriptive stats and Q/C results.\n";
+      return EXIT_SUCCESS;
+    }
+   
+    
   } else if (debug_command->parsed() ) {
     if (*debug_ont_option) {
       //TODO REMOVE AFTER DEV

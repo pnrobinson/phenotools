@@ -153,6 +153,7 @@ public:
   Ontology& operator=(Ontology &&other);
   ~Ontology(){}
   void set_id(const string &id) { id_ = id; }
+  string get_id() const { return id_; }
   void add_predicate_value(const PredicateValue &propval);
   void add_property(const Property & prop);
   void add_all_terms(const vector<Term> &terms);
@@ -175,6 +176,8 @@ public:
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
   void debug_print() const;
+  /** Output basic descriptive statistics about the ontology.*/
+  void output_descriptive_statistics(std::ostream& s = std::cout) const;
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);

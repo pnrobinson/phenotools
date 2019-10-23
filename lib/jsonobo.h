@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 #include <rapidjson/document.h>
 #include "ontology.h"
 #include "property.h"
@@ -56,8 +57,7 @@ public:
 			with CLR graph. When this method is called, the CTOR
 			has ingested data to the term_list and the edge_list.*/
 	std::unique_ptr<Ontology> get_ontology();
-
-	void dump_errors() const;
+  	void output_quality_assessment(std::ostream& s = std::cout) const;
 };
 
 

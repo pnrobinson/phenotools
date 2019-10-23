@@ -204,28 +204,28 @@ JsonOboParser::JsonOboParser(const string path):
     const rapidjson::Value& meta = mainObject["meta"];
     process_metadata(meta);
   }
-  std::cout << "DONE:" <<  std::endl;
+ /* std::cout << "DONE:" <<  std::endl;
   if (error_list_.size()>0) {
     for (string e : error_list_) {
       std::cout << "\t" << e << "\n";
     }
   } else {
     std::cout << "[INFO] No errors encountered\n";
-  }
+  }*/
 }
 
 
 
 void
-JsonOboParser::dump_errors() const
+JsonOboParser::output_quality_assessment(std::ostream& ost) const
 {
   if (error_list_.size() == 0) {
-    std::cout <<"[INFO] No errors enounted in JSON parse\n";
+    ost <<"[INFO] No errors enounted in JSON parse\n";
     return;
   }
-  std::cout << "[ERRORS]:\n";
+  ost << "[ERRORS]:\n";
   for (string e : error_list_) {
-    std::cout << e << "\n";
+    ost << e << "\n";
   }
 }
 
@@ -233,7 +233,6 @@ JsonOboParser::dump_errors() const
 unique_ptr<Ontology>
 JsonOboParser::get_ontology()
 {
-  dump_errors();
   return std::make_unique<Ontology>(ontology_id_,
                                     term_list_,
                                     edge_list_,

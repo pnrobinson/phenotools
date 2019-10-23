@@ -596,6 +596,26 @@ std::ostream& operator<<(std::ostream& ost, const Ontology& ontology){
 }
 
 /**
+* Output basic descriptive statistics about the ontology. By default, write to
+* std::out, but clients can also pass a handle to a file.
+*/
+void 
+Ontology::output_descriptive_statistics(std::ostream& ost) const
+{
+  ost << "id: " << id_ << "\n";
+  for (const auto &pv : predicate_values_) {
+		ost << pv << "\n";
+	}
+  ost  << "current_term_count: " << current_term_count() << "\n"
+			<< "term_id_count(including obsolete/alternative term ids): " <<
+				total_term_id_count() << "\n";
+  ost << "is_a edge_count: " <<  is_a_edge_count() << "\n";
+  ost << "total original edge count: " << edge_count()  << "\n";
+  ost << "edge_count_with_supplemental_edges: " << edge_count_with_supplemental_edges() << "\n";
+  ost << "property count: " << property_count() << "\n";
+}
+
+/**
   * Print out lots of details for helping with debugging and testing.
   */
 void
