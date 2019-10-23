@@ -7,6 +7,8 @@
 
 #include "edge.h"
 
+#include <iostream> // remove after debug
+
 /**
  * Static initialization of map of edge types. */
 map<string,EdgeType>
@@ -60,6 +62,7 @@ Edge::of(const rapidjson::Value &val){
   if (p == val.MemberEnd()) {
     throw JsonParseException("Edge did not contain \'sub\' element");
   }
+  
   TermId subj = TermId::from_url(p->value.GetString());
   p = val.FindMember("obj");
   if (p == val.MemberEnd()) {

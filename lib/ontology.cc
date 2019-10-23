@@ -280,8 +280,7 @@ Ontology::add_all_terms(const vector<Term> &terms){
   if (current_term_ids_.size() != N) {
     // sanity check
     // should never ever happen. TODO add exception
-    cerr << "[FATAL] Number of term ids not equal to number of terms";
-    std::exit(1);
+    throw PhenopacketException("[FATAL] Number of term ids not equal to number of terms");
   }
   for (auto i=0u; i<current_term_ids_.size(); ++i) {
     termid_to_index_[current_term_ids_[i]] = i;
@@ -329,8 +328,11 @@ Ontology::add_all_edges(vector<Edge> &edges){
     if (it == termid_to_index_.end()) {
       // sanity check, should never happen unless input file is corrupted
       // todo -- write Exception
-      cerr << "[FATAL] could not find TermId for source node:" << source << "\n";
-      std::exit(1);
+      
+      for (auto p : termid_to_index_) {
+        std::cerr <<"xx" << p.first << ": " << p.second << "\n";
+      }
+      throw PhenopacketException("[FATAL] could not find TermId for source node:" + source.get_value() );
     }
     int idx = it->second;
     auto p = index2edge_count.find(idx);

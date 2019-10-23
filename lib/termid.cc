@@ -16,17 +16,27 @@ TermId::from_string(const string &s)
 {
   string cp = s;
   std::size_t i = cp.find_last_of('/');
-  std::size_t j = cp.find(':');
-  if (i != string::npos && i < j) {
+  if (i != string::npos) {
     cp = cp.substr(i+1);
   }
   i = cp.find(':');
-  if (i != string::npos) {
+  if (string::npos == i ) {
+    if (string::npos != s.find("hgnc")) {
+      string hgnc = "HGNC:" + cp;
+      return TermId{hgnc,4};
+    } else if (string::npos != s.find("ICD10")) {
+        string icd = "ICD10:" + cp;
+      return TermId{icd,5};
+    }
+    // if we get here, we could not find one of the two
+    // above cases
+  } else {
     return TermId{cp,i}; // rely on RVO/move
   }
   i = cp.find('_'); // some terms are with _
   if (i != string::npos) {
     cp[i] = ':';
+    TermId t{cp,i};
     return TermId{cp,i}; // rely on RVO/move
   }
   // orcid.org/0000-0001-5208-3432
@@ -35,18 +45,6 @@ TermId::from_string(const string &s)
     string orcid= "ORCID:" + cp;
     return TermId{orcid,5};
   }
-  // http://identifiers.org/hgnc/2214
-  i = s.find("hgnc/");
-  if (i != string::npos) {
-    string hgnc = "HGNC:" + s.substr(i+5);
-    return TermId{hgnc,4};
-  }
-  i = s.find("ICD10");
-  if (i == 0) { // string begins with ICD10
-    string icd = "ICD10:" + s.substr(5);
-    return TermId{icd,5};
-  }
-  cout << "about to throw s="<< s << "\n";
   throw PhenopacketException("Could not create TermId from string: Malformed ontology term id: " +s);
 }
 
