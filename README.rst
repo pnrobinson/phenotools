@@ -148,14 +148,24 @@ It will input the Phenopacket included in the demo and output this. ::
 In this case, our example phenopacket was missing the ``id`` element but otherwise
 was well-formed.
 
-Running the JSON obo parser
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+hpo mode
+~~~~~~~~
 
-We are currently implementing support for ingesting JSON-formatted OBO ontologies. We will implement a function that will update an existing phenopacket.
-This feature is current experimental. To try it out, download the ``hp.json`` file from the HPO `GitHub page <https://github.com/obophenotype/human-phenotype-ontology>`_, and
+Phenotools can read the HPO JSON file (``hp.json``) and output descriptive statistics (``-s``, ``--stats``) and/or
+perform quality assessment (``-q``,``--qc``).
+
+To run it, download the ``hp.json`` file from the HPO `GitHub page <https://github.com/obophenotype/human-phenotype-ontology>`_, and
 execute the following command. ::
 
-   $ ./phenotools validate -hp hp.json
+   $ ./phenotools hpo -j hp.json [-s/--stats][-q/--qc]
 
 
+mondo mode
+~~~~~~~~~~
 
+Phenotools will be able to analyze and work with other JSON-serialized obo ontologies including MONDO. This feature is still exerimental.
+For the adventurous, download the ``mondo.json`` file from the MONDO `GitHub page <https://github.com/monarch-initiative/mondo>`_.
+
+To run the app, enter, ::
+
+   $ ./phenotools mondo -j mondo.json [-s/--stats][-q/--qc]
