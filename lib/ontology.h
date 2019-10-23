@@ -16,6 +16,7 @@
 #include <memory>
 #include <set>
 #include <optional>
+#include <variant>
 #include "termid.h"
 #include "edge.h"
 #include "property.h"
@@ -30,12 +31,18 @@ using std::map;
 
 class Xref {
 private:
-    TermId term_id_;
+  /** Intended to hold a TermId or a URL */
+  // consider using variant in the future. Not currently supported on macOS by c++17 compiler
+  //  std::variant<TermId, std::string> cargo_;
+  TermId term_id_;
+  string url_;
+  Xref();
 public:
     Xref(const TermId &tid): term_id_(tid){}
     Xref(const Xref &txr);
     Xref(Xref &&txr) = default;
     Xref &operator=(const Xref &txr);
+    static Xref from_url(const string &url);
     TermId get_termid() const { return term_id_; }
     friend std::ostream& operator<<(std::ostream& ost, const Xref& txref);
 };

@@ -27,9 +27,14 @@ class TermId {
   string get_prefix() const { return value_.substr(0,separator_pos_); }
   string get_id() const { return value_.substr(separator_pos_+1); }
   friend bool operator==(const TermId& lhs, const TermId& tid);
+  friend bool operator!=(const TermId& lhs, const TermId& tid);
   friend std::ostream& operator<<(std::ostream& ost, const TermId& tid);
 };
 bool operator==(const TermId& lhs, const TermId& tid);
+bool operator!=(const TermId& lhs, const TermId& tid);
 std::ostream& operator<<(std::ostream& ost, const TermId& tid);
+
+// static instance
+extern const TermId EMPTY_TERMID;
 
 #endif

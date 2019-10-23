@@ -22,14 +22,32 @@ Xref::Xref(const Xref &txr):
 {
 }
 
+Xref::Xref():
+term_id_(EMPTY_TERMID)
+{
+}
+
+Xref
+Xref::from_url(const string& url)
+{
+  Xref xref{};
+  xref.url_ = url;
+  return xref;
+}
+
 Xref &
 Xref::operator=(const Xref &txr) {
  term_id_ = txr.term_id_;
+ url_ = txr.url_;
  return *this;
 }
 
 std::ostream& operator<<(std::ostream& ost, const Xref& txref){
- ost << "[todo-termxref] " << txref.term_id_;
+  if (txref.term_id_ != EMPTY_TERMID) {
+    ost << txref.term_id_;
+  } else {
+    ost << txref.url_;
+  }
  return ost;
 }
 
