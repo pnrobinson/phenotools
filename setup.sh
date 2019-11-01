@@ -43,19 +43,19 @@ fi
 
 export PROTO_PATH='phenopacket-schema/src/main/proto'
 ## Generate the C++ files with protoc
-if [ -e 'src/base.pb.h' ]; then
+if [ -e 'lib/base.pb.h' ]; then
     echo "[INFO] base.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/base.proto
 fi
 
-if [ -e 'src/interpretation.pb.h' ]; then
+if [ -e 'lib/interpretation.pb.h' ]; then
     echo "[INFO] interpretation.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/interpretation.proto
 fi
 
-if [ -e 'src/phenopackets.pb.h' ]; then
+if [ -e 'lib/phenopackets.pb.h' ]; then
     echo "[INFO] phenopackets.pb.h previously generated"
 else
     protoc --proto_path=${PROTO_PATH} --cpp_out=lib ${PROTO_PATH}/phenopackets.proto
