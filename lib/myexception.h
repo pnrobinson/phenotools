@@ -30,8 +30,8 @@ class JsonParseException : public PhenopacketException {
 
 
 public:
-  JsonParseException(char const* const message) { }
-  JsonParseException(const std::string & message) { }
+  JsonParseException(char const* const message);
+  JsonParseException(const std::string & message);
   const char* what() const throw();
 };
 

@@ -17,6 +17,8 @@
 #include <set>
 #include <optional>
 #include <variant>
+#include <functional>
+
 #include "termid.h"
 #include "edge.h"
 #include "property.h"
@@ -104,6 +106,7 @@ public:
   vector<TermId> get_isa_parents(const TermId &child) const;
   vector<Synonym> get_synonyms() const { return synonym_list_; }
   bool obsolete() const { return is_obsolete_; }
+  bool contains_xref_with_prefix(const string &prefix) const;
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
 std::ostream& operator<<(std::ostream& ost, const Term& term);
@@ -127,15 +130,20 @@ private:
   e_to[offset_e[v+1]]-1. */
   vector<int> offset_to_edge_;
   /** The inverse of the above, to allow us to traverse the graph in reverse */
-  vector<int> offset_from_edge_;
+ // vector<int> offset_from_edge_;
   /** CSR (Compressed Storage Format) Adjacency list. */
   vector<int> edge_to_;
   /** CSR (Compressed Storage Format) Adjacency list (reverse direction of edges) */
-  vector<int> edge_from_;
+  //vector<int> edge_from_;
   /** List of edge types, e.g., IS_A, PART_OF. Has same order as e_to_. */
   vector<EdgeType> edge_type_list_;
 
   int is_a_edge_count_ = 0;
+  /** Some edges are for the logical definitions. By default we skip these edges and only
+   * include edges between vertices in the main node section of the json file. This variable
+   * counts the number of edges skipped for this reason.
+   */
+  int skipped_edge_count_;
   bool valid_edge(Edge e) const;
 
 
@@ -184,6 +192,7 @@ public:
   /** Output basic descriptive statistics about the ontology.*/
   void output_descriptive_statistics(std::ostream& s = std::cout) const;
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
+  int filter_terms(std::function<bool(Term*)> f, std::ostream& s = std::cout);
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 

@@ -11,6 +11,7 @@ add_library(${PROJECT_NAME} STATIC
   ontology.cc
   phenotools.cc
   termid.cc
+  mondo.cc
   ${PROTO_SRCS} ${PROTO_HDRS}
 )
 

@@ -148,6 +148,17 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
   return ost;
 }
 
+ bool 
+ Term::contains_xref_with_prefix(const string &prefix) const
+ {
+   for (Xref xr : term_xref_list_) {
+     if (xr.get_termid().get_prefix() == prefix) {
+       return true;
+     }
+   }
+   return false;
+ }
+
 
 
 std::ostream& operator<<(std::ostream& ost, const Edge& edge){
@@ -169,9 +180,9 @@ Ontology::Ontology(const Ontology &other):
 	obsolete_term_ids_(other.obsolete_term_ids_),
   termid_to_index_(other.termid_to_index_),
   offset_to_edge_(other.offset_to_edge_),
-  offset_from_edge_ (other.offset_from_edge_),
-	edge_to_(other.edge_to_),
-  edge_from_(other.edge_from_)
+ // offset_from_edge_ (other.offset_from_edge_),
+	edge_to_(other.edge_to_)
+ // edge_from_(other.edge_from_)
 	 {
 		// no-op
 	 }
@@ -183,9 +194,9 @@ Ontology::Ontology(Ontology &other): 	id_(other.id_){
   termid_to_index_ = std::move(other.termid_to_index_);
 	obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
 	edge_to_ = std::move(other.edge_to_);
-  edge_from_ = std::move(other.edge_from_);
+  //edge_from_ = std::move(other.edge_from_);
   offset_to_edge_ = std::move(other.offset_to_edge_);
-  offset_from_edge_ = std::move(other.offset_from_edge_);
+  //offset_from_edge_ = std::move(other.offset_from_edge_);
 }
 Ontology&
 Ontology::operator=(const Ontology &other){
@@ -198,9 +209,9 @@ Ontology::operator=(const Ontology &other){
 		current_term_ids_ = other.current_term_ids_;
 		obsolete_term_ids_ = other.obsolete_term_ids_;
 		edge_to_ = other.edge_to_;
-    edge_from_ = other.edge_from_;
+    //edge_from_ = other.edge_from_;
     offset_to_edge_ = other.offset_to_edge_;
-    offset_from_edge_ = other.offset_from_edge_;
+    //offset_from_edge_ = other.offset_from_edge_;
 	}
 	return *this;
 }
@@ -215,9 +226,9 @@ Ontology::operator=(Ontology &&other){
 		obsolete_term_ids_ = std::move(other.obsolete_term_ids_);
     termid_to_index_ = std::move(other.termid_to_index_);
 		edge_to_ = std::move(other.edge_to_);
-    edge_from_ = std::move(other.edge_from_);
+    //edge_from_ = std::move(other.edge_from_);
     offset_to_edge_ = std::move(other.offset_to_edge_);
-    offset_from_edge_ = std::move(other.offset_from_edge_);
+    //offset_from_edge_ = std::move(other.offset_from_edge_);
 	}
 	return *this;
 }
@@ -330,12 +341,14 @@ void
 Ontology::add_all_edges(vector<Edge> &edges, bool edge_leniency){
   original_edge_count_ = edges.size();
   is_a_edge_count_ = 0;
+  skipped_edge_count_ = 0;
   vector<Edge> valid_edges; // edges with s/d TermIds in the ontology
   // First we add inverse edges for all IS_A edges
   vector<Edge> inverse_edges;
   for (Edge e: edges) {
     if (! valid_edge(e)) {
-      cout << "[INFO] invalid edge: " << e << "\n";
+      //cout << "[INFO] " << __FILE__ << "(" << __LINE__ << ") invalid edge: " << e << "\n";
+      ++skipped_edge_count_;
       if (edge_leniency) continue;
       else {
         std::stringstream sstr;
@@ -443,6 +456,9 @@ Ontology::add_all_edges(vector<Edge> &edges, bool edge_leniency){
   cout << "[INFO] Done parsing edges: n=" << original_edge_count_ 
       << " (including supplemental edges: "
       << edge_to_.size() <<  ") terms: n=" << n_vertices << "\n";
+  if (skipped_edge_count_ > 0) {
+    cout <<"[WARNING] skipped " << skipped_edge_count_ << " edges.\n";
+  }
 }
 
 std::optional<Term>
@@ -717,5 +733,23 @@ Ontology::debug_print() const
   for (auto i=0u; i < edge_to_.size(); i++) {
     cout << "\t" << edge_to_[i] << "\n";
   }
+}
 
+
+
+int 
+Ontology::filter_terms(std::function<bool(Term*)> f, std::ostream& s)
+{
+  int passed = 0;
+  for (TermId tid : current_term_ids_) {
+    auto p = term_map_.find(tid);
+    if (p != term_map_.end()) {
+      std::shared_ptr<Term> t = p->second;
+      if (f(t.get())) {
+        s << t->get_label() << "\n";
+        passed++;
+      }
+    }
+  }
+  return passed;
 }

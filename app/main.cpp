@@ -20,6 +20,7 @@
 #include "../lib/base.pb.h"
 #include "../lib/phenotools.h"
 #include "../lib/jsonobo.h"
+#include "../mondo.h"
 
 using std::string;
 using std::cout;
@@ -33,6 +34,7 @@ int main (int argc, char ** argv) {
   string phenopacket_path;
   bool show_descriptive_stats = false;
   bool show_quality_control = false;
+  bool omim_analysis = false; 
 
   CLI::App app ( "phenotools" );
   // phenopacket options
@@ -43,6 +45,7 @@ int main (int argc, char ** argv) {
   // mondo options
   auto mondo_app = app.add_subcommand("mondo", "work with MONDO");
   auto mondo_json_option = mondo_app->add_option("-j,--json",mondo_json_path,"path to mondo.json file");
+  auto mondo_omim_flag = mondo_app->add_flag("--omim", omim_analysis, "output OMIM stats");
   
   
   // HPO options
@@ -141,12 +144,16 @@ int main (int argc, char ** argv) {
       cerr << "[ERROR] mondo command requires -j/--json <path to mondo.json> option.\n";
       exit(EXIT_FAILURE);
     }
-    try {
+    //try {
     JsonOboParser parser{mondo_json_path};
     std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-    } catch (JsonParseException &e) {
-      std::cerr << e.what();
+    Mondo mondo{std::move(ontology)};
+    if (mondo_omim_flag) {
+      mondo.omim_stats();
     }
+    //} catch (JsonParseException &e) {
+      //std::cerr << e.what();
+    //}
     
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
