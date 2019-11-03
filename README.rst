@@ -48,7 +48,7 @@ Building phenotools
 Download phenopacket-schema
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-First, download the phenopacket-schema code. In the following, we download the code 
+First, download the phenopacket-schema code. In the following, we download the code
 directly into the phenotools repository. If you dwnload it somewhere else, adjust the
 path accordingly. ::
 
@@ -94,7 +94,7 @@ command runs phenotools with the ``--help`` option to show available commands an
 A setup script
 ^^^^^^^^^^^^^^
 
-There is a setup script that works on linux systems only. Enter the following to perform
+There is a setup script that works on Macintosh and linux systems only. Enter the following to perform
 all steps of the build process starting from the download of the phenopackets-schema repository. ::
 
   $ ./setup.sh

@@ -10,6 +10,7 @@
 #include <utility> // make_pair
 #include <algorithm> // sort
 #include <stack>
+#include <sstream>
 
 
 using std::cerr;
@@ -253,7 +254,21 @@ Ontology::Ontology(const string &id,
   property_list_(properties)
 {
   add_all_terms(terms);
-  add_all_edges(edges);
+  add_all_edges(edges, true); // default edge leniency is true
+}
+
+Ontology::Ontology(const string &id,
+		   const vector<Term> &terms,
+		   vector<Edge> &edges,
+		   const vector<PredicateValue> &predicates,
+		   const vector<Property> &properties,
+       bool edge_lenient):
+  id_(id),
+  predicate_values_(predicates),
+  property_list_(properties)
+{
+  add_all_terms(terms);
+  add_all_edges(edges, edge_lenient);
 }
 
 void
@@ -272,7 +287,7 @@ Ontology::add_all_terms(const vector<Term> &terms){
     if (t.has_alternative_ids()) {
       vector<TermId> alt_ids = t.get_alternative_ids();
       for (auto atid : alt_ids) {
-	term_map_.insert(std::make_pair(atid,sptr));
+	      term_map_.insert(std::make_pair(atid,sptr));
       }
     }
   }
@@ -288,16 +303,52 @@ Ontology::add_all_terms(const vector<Term> &terms){
 }
 
 /**
+ * Check whether source and destination terms are in the ontology.
+ * This is needed to avoid problems with edges that are derived from
+ * the logical definitions.
+ * */
+bool
+Ontology::valid_edge(Edge e) const
+{
+  TermId source = e.get_source();
+  auto it = termid_to_index_.find(source);
+  if (it == termid_to_index_.end()) {
+    return false;
+  }
+  TermId dest = e.get_destination();
+  it = termid_to_index_.find(dest);
+  if (it == termid_to_index_.end()) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Figure out how to be more efficient later.
  */
 void
-Ontology::add_all_edges(vector<Edge> &edges){
+Ontology::add_all_edges(vector<Edge> &edges, bool edge_leniency){
   original_edge_count_ = edges.size();
+  is_a_edge_count_ = 0;
+  vector<Edge> valid_edges; // edges with s/d TermIds in the ontology
   // First we add inverse edges for all IS_A edges
   vector<Edge> inverse_edges;
   for (Edge e: edges) {
+    if (! valid_edge(e)) {
+      cout << "[INFO] invalid edge: " << e << "\n";
+      if (edge_leniency) continue;
+      else {
+        std::stringstream sstr;
+        sstr << "[FATAL] could not find TermId for edge:" << e;
+        throw PhenopacketException(sstr.str() );
+      }
+    }
+    // if we get here the edge is OK
+    valid_edges.push_back(e);
     if (e.is_is_a()) {
+      ++is_a_edge_count_;
       inverse_edges.emplace_back(e.get_is_a_inverse());
+      valid_edges.emplace_back(e.get_is_a_inverse());
     }
   }
   // now merge
@@ -306,27 +357,27 @@ Ontology::add_all_edges(vector<Edge> &edges){
   // this will mean that edges has the same oder of source
   // TermIds as the current_term_ids_ list. If the source is the
   // same, sort on the dest
-  std::sort(edges.begin(),edges.end(),[](const Edge &a, const Edge &b) {
+  std::sort(valid_edges.begin(),valid_edges.end(),[](const Edge &a, const Edge &b) {
 					return a.get_source() == b.get_source() ?
 					  a.get_destination() < b.get_destination() :
 					  a.get_source() < b.get_source();
 				      });
   int n_vertices = current_term_ids_.size();
-  int number_isa_edges = std::count_if(edges.begin(), edges.end(), [](Edge e){return e.is_is_a();});
-  int total_edge_count = edges.size() + number_isa_edges; // add this for the inverse edges
+  int number_isa_edges = std::count_if(valid_edges.begin(), valid_edges.end(), [](Edge e){return e.is_is_a();});
+  int total_edge_count = valid_edges.size() ;//+ number_isa_edges; // add this for the inverse edges
   edge_to_.reserve(total_edge_count);
-  edge_from_.reserve(edges.size());
+  //edge_from_.reserve(edges.size());
   edge_type_list_.reserve(edges.size());
   offset_to_edge_.reserve(n_vertices+1);
-  offset_from_edge_.reserve(n_vertices+1);
+ // offset_from_edge_.reserve(n_vertices+1);
   // We perform two passes
   // In the first pass, we count how many edges emanate from each
   // source
   map<int,int> index2edge_count;
-  for (const auto &e : edges) {
+  for (const auto &e : valid_edges) {
     TermId source = e.get_source();
     auto it = termid_to_index_.find(source);
-    if (it == termid_to_index_.end()) {
+    /*if (it == termid_to_index_.end()) {
       // sanity check, should never happen unless input file is corrupted
       // todo -- write Exception
       
@@ -334,7 +385,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
         std::cerr <<"xx" << p.first << ": " << p.second << "\n";
       }
       throw PhenopacketException("[FATAL] could not find TermId for source node:" + source.get_value() );
-    }
+    }*/
     int idx = it->second;
     auto p = index2edge_count.find(idx);
     if (p == index2edge_count.end()) {
@@ -363,7 +414,7 @@ Ontology::add_all_edges(vector<Edge> &edges){
   // entered for a given source index
   int current_source_index = -1;
   offset = 0;
-  for (const auto &e : edges) {
+  for (const auto &e : valid_edges) {
     TermId source = e.get_source();
     TermId destination = e.get_destination();
     // note we have already checked all of the source id's above

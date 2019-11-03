@@ -355,7 +355,7 @@ namespace phenotools {
     vector<Validation> validate() const;
     void validate(vector<Validation> &v) const {}
     bool has_zygosity() const { return nullptr != zygosity_; }
-    shared_ptr<OntologyClass> get_zygosity() const { return zygosity_; } 
+    shared_ptr<OntologyClass> get_zygosity() const { return zygosity_; }
     friend std::ostream &operator<<(std::ostream& ost, const Variant& var);
   };
   std::ostream &operator<<(std::ostream& ost, const Variant& var);

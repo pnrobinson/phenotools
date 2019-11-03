@@ -135,9 +135,8 @@ private:
   /** List of edge types, e.g., IS_A, PART_OF. Has same order as e_to_. */
   vector<EdgeType> edge_type_list_;
 
-
-
   int is_a_edge_count_ = 0;
+  bool valid_edge(Edge e) const;
 
 
 public:
@@ -147,6 +146,12 @@ public:
           vector<Edge> &edges,
           const vector<PredicateValue> &predicates,
           const vector<Property> &properties);
+  Ontology(const string &id,
+          const vector<Term> &terms,
+          vector<Edge> &edges,
+          const vector<PredicateValue> &predicates,
+          const vector<Property> &properties,
+          bool edge_lenient);
   Ontology(const Ontology &other);
   Ontology(Ontology &other);
   Ontology& operator=(const Ontology &other);
@@ -157,7 +162,7 @@ public:
   void add_predicate_value(const PredicateValue &propval);
   void add_property(const Property & prop);
   void add_all_terms(const vector<Term> &terms);
-  void add_all_edges(vector<Edge> &edges);
+  void add_all_edges(vector<Edge> &edges, bool edge_lenient);
   int current_term_count() const { return current_term_ids_.size(); }
   int total_term_id_count() const { return term_map_.size(); }
   int edge_count() const { return original_edge_count_; }

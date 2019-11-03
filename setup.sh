@@ -8,11 +8,10 @@
 
 #1 protoc does not seem to work with pkg-config
 # therefore, the following hack
-LOC=`whereis libprotoc`
-# if not found, we would see libprotoc:
-NOTFOUND='libprotoc:'
-# if it is found, then we should see something like
-# ibprotoc: /usr/local/lib/libprotoc.a /usr/local/lib/libprotoc.la ...
+LOC=`protoc`
+# if not found, we would see:
+NOTFOUND='proto: command not found'
+# if it is found, then we should see a help message but not the above ...
 L1=${#NOTFOUND}
 
 echo
@@ -67,7 +66,7 @@ echo
 
 if [ ! -e build ]; then
     mkdir build
-fi  
+fi
 cd build; cmake ..; make
 mv ./app/phenotools .
 

@@ -36,14 +36,15 @@ private:
 	vector<Property> property_list_;
 	/** A list of errors, if any, encountered while parsing the input file.*/
 	vector<string> error_list_;
-
-	//Ontology ontology_;
-
+	/** If true, skip edges where we do not have the corresponding term (this occurs for logical definitions). */
+	bool edge_lenient_;
 	void process_metadata(const rapidjson::Value &val);
 	/** Ingest vertices from the JSON file */
 	void process_nodes(const rapidjson::Value& nodes);
 	/** Ingest edges from the JSON file */
 	void process_edges(const rapidjson::Value& edges);
+
+	void parse();
 
 	PredicateValue json_to_predicate_value(const rapidjson::Value &val);
 	Property json_to_property(const rapidjson::Value &val);
@@ -51,13 +52,15 @@ private:
 	Xref json_to_xref(const rapidjson::Value &val);
 
 public:
-	JsonOboParser(const string path);
+	JsonOboParser(const string &path);
+	JsonOboParser(const string &path, bool edge_lenient);
 	~JsonOboParser(){}
 	/** Transform the nodes and edges into an Ontology object
 			with CLR graph. When this method is called, the CTOR
 			has ingested data to the term_list and the edge_list.*/
 	std::unique_ptr<Ontology> get_ontology();
-  	void output_quality_assessment(std::ostream& s = std::cout) const;
+	/** Output the Q/C findings to an outstream. */
+	void output_quality_assessment(std::ostream& s = std::cout) const;
 };
 
 

@@ -156,15 +156,30 @@ JsonOboParser::process_edges(const rapidjson::Value& edges)
   }
 }
 
-JsonOboParser::JsonOboParser(const string path):
-  path_(path) {
+JsonOboParser::JsonOboParser(const string &path):
+path_(path),
+edge_lenient_(true)
+{
+  parse();
+}
+
+JsonOboParser::JsonOboParser(const string &path, bool edge_leniency):
+  path_(path),
+  edge_lenient_(edge_leniency)
+  {
+    parse();
+  }
+
+void
+JsonOboParser::parse()
+{
   rapidjson::Document d;
   std::cout << "[INFO] Parsing " << path_ << "\n";
   std::ifstream ifs(path_);
   if (! ifs.good()) {
-    std::cerr << "[ERROR] Could not open JSON ontology file \"" << path << "\"\n";
+    std::cerr << "[ERROR] Could not open JSON ontology file \"" << path_ << "\"\n";
     exit(EXIT_FAILURE);
-  } 
+  }
   rapidjson::IStreamWrapper isw(ifs);
 
   d.ParseStream(isw);
@@ -174,8 +189,9 @@ JsonOboParser::JsonOboParser(const string path):
   }
   // the first item in the array is an object with a list of nodes
   if( a.Size() < 1){
-    throw JsonParseException("Ontology JSON did not contain array of nodes.");
+    throw JsonParseException("Ontology JSON array is empty.");
   }
+
   const rapidjson::Value& mainObject = a[0];
   if ( ! mainObject.IsObject()) {
     throw JsonParseException("Main object was not a rapidjson object.");
