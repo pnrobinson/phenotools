@@ -390,15 +390,6 @@ Ontology::add_all_edges(vector<Edge> &edges, bool edge_leniency){
   for (const auto &e : valid_edges) {
     TermId source = e.get_source();
     auto it = termid_to_index_.find(source);
-    /*if (it == termid_to_index_.end()) {
-      // sanity check, should never happen unless input file is corrupted
-      // todo -- write Exception
-      
-      for (auto p : termid_to_index_) {
-        std::cerr <<"xx" << p.first << ": " << p.second << "\n";
-      }
-      throw PhenopacketException("[FATAL] could not find TermId for source node:" + source.get_value() );
-    }*/
     int idx = it->second;
     auto p = index2edge_count.find(idx);
     if (p == index2edge_count.end()) {
@@ -746,7 +737,7 @@ Ontology::filter_terms(std::function<bool(Term*)> f, std::ostream& s)
     if (p != term_map_.end()) {
       std::shared_ptr<Term> t = p->second;
       if (f(t.get())) {
-        s << t->get_label() << "\n";
+        //s << t->get_label() << "\n";
         passed++;
       }
     }

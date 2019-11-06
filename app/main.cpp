@@ -26,6 +26,9 @@ using std::string;
 using std::cout;
 using std::cerr;
 
+// prototypes
+void print_validation(const std::vector<phenotools::Validation> validation_items, std::string message = "Validation");
+
 int main (int argc, char ** argv) {
   /** Path to HPO ontology file hp.json. */
   string hp_json_path;
@@ -144,18 +147,25 @@ int main (int argc, char ** argv) {
       cerr << "[ERROR] mondo command requires -j/--json <path to mondo.json> option.\n";
       exit(EXIT_FAILURE);
     }
-    //try {
     JsonOboParser parser{mondo_json_path};
+    parser.output_quality_assessment();
     std::unique_ptr<Ontology>  ontology = parser.get_ontology();
     Mondo mondo{std::move(ontology)};
     if (mondo_omim_flag) {
       mondo.omim_stats();
     }
-    //} catch (JsonParseException &e) {
-      //std::cerr << e.what();
-    //}
-    
+    ontology->output_descriptive_statistics();
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
+  }
+}
+
+
+
+void print_validation(const std::vector<phenotools::Validation> validation_items, std::string message)
+{
+  std::cout << message << "\n";
+  for (auto v : validation_items) {
+    std::cout << v << "\n";
   }
 }
