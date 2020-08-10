@@ -42,7 +42,7 @@ class HpoCommand : public PhenotoolsCommand {
       void show_qc();
       void show_stats();
       void count_descendants();
-      bool later_than(string iso8601date) const;
+      bool later_than(tm time) const;
 };
 
 };

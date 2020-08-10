@@ -79,43 +79,34 @@ HpoCommand::count_descendants()
     int total = 0;
     int total_newer = 0;
     vector<TermId> descs = this->ontology->get_descendant_term_ids(*tid_);
-    for (TermId tid : descs) {
-        total++;
-        std::optional<Term> termopt = this->ontology->get_term(tid);
-        if (! termopt) {
-            cerr << "[ERROR] Could not find term for " << tid << "\n";
-        } else {
-            cout << tid << ": " << termopt->get_label() << "\n";
-        }
-        vector<PredicateValue> prevals = termopt->get_property_values();
-        if (threshold_date_) {
-            for (PredicateValue pv : prevals) {
-                if (pv.get_property() == Predicate::CREATION_DATE || pv.get_property() == Predicate::DATE) {
-                    string val = pv.get_value();
-                    if (later_than(val)) {
-                        cout << tid << " was created before: " << val << "\n";
-                    } else {
-                        cout << tid << " was created after: " << val << "\n";
-                        total_newer++;
-                    }
-                }
+    if (threshold_date_) {
+        for (TermId tid : descs) {
+            total++;
+            std::optional<Term> termopt = this->ontology->get_term(tid);
+            if (! termopt) {
+                cerr << "[ERROR] Could not find term for " << tid << "\n";
+            } else {
+                cout << tid << ": " << termopt->get_label() << "\n";
             }
-            cout << " We found " << total << " descendants of " << *tid_ << " including " << total_newer << " new terms\n";
-        } else {
-            int N = descs.size();
-            cout << "Term " << *tid_ << " has " << N << " descendants.\n";
+            tm creation_date = termopt->get_creation_date();
+            if (later_than(creation_date)) {
+                cout << tid << " was created before: " << (1900 + creation_date.tm_year) << "\n";
+            } else {
+                cout << tid << " was created after: " << (1900 + creation_date.tm_year) << "\n";
+                total_newer++;
+            }
         }
+        cout << " We found " << total << " descendants of " << *tid_ << " including " << total_newer << " new terms\n";
+    } else {
+        int N = descs.size();
+        cout << "Term " << *tid_ << " has " << N << " descendants.\n";
     }
-
   
 }
 
  bool 
- HpoCommand::later_than(string iso8601date) const
+ HpoCommand::later_than(tm time) const
  {
-    struct tm time = string_to_time(iso8601date);
-    cout << "later than: " << iso8601date << "\n";
-    cout << "threshol data y " << threshold_date_->tm_year << "\n";
     if (time.tm_year > threshold_date_->tm_year) {
         return true;
     } else if (time.tm_mon > threshold_date_->tm_mon) {

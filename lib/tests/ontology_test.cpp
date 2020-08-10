@@ -104,3 +104,23 @@ TEST_CASE("Have common ancestor","[have_common_anc]") {
   // t1 and t3 do not have a common nonroot ancestor, because t1 is the root
   REQUIRE_FALSE(ontology->have_common_ancestor(t1,t3,t1));
 }
+
+TEST_CASE("Test Term date", "[term_date]") {
+  string hp_json_path = "../testdata/hp.small.json";
+  JsonOboParser parser {hp_json_path};
+  std::unique_ptr<Ontology>  ontology = parser.get_ontology();
+  //ontology->debug_print();
+  // term 1 is the root
+  TermId t1 = TermId::from_string("HP:0000001");
+  std::optional<Term> term = ontology->get_term(t1);
+  REQUIRE(term.has_value());
+  // : "2012-04-22T04:38:20Z"
+  tm expected_date = {};
+  expected_date.tm_year = 2012 - 1900;
+  expected_date.tm_mon  = 3;// zero-based
+  expected_date.tm_mday = 22; // zero-based
+  tm creation_date = term->get_creation_date();
+  REQUIRE(expected_date.tm_year == creation_date.tm_year);
+  REQUIRE(expected_date.tm_mon == creation_date.tm_mon);
+  REQUIRE(expected_date.tm_mday == creation_date.tm_mday);
+}

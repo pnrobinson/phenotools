@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+build/
+hp.json
+lib/*.pb.cc
+lib/*.pb.h
+phenopacket-schema/
+phenotools
+.vscode/

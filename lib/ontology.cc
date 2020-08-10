@@ -159,6 +159,26 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
    return false;
  }
 
+ tm
+ Term::get_creation_date() const{
+   tm time = {}; // value initialize to zero
+   time.tm_year = 108; // 2008
+    int y,M,d,h,m,s; // disregard anything outside of y/m/d
+     // 1-31 
+    for (PredicateValue pv : property_values_) {
+        if (pv.get_property() == Predicate::CREATION_DATE || pv.get_property() == Predicate::DATE) {
+          // assumption (not checked) there is only one such property per term
+            string val = pv.get_value();
+            sscanf(val.c_str(), "%d-%d-%dT%d:%d:%fZ", &y, &M, &d, &h, &m, &s);
+            time.tm_year = y - 1900; // Year since 1900
+            time.tm_mon = M - 1;     // 0-11
+            time.tm_mday = d;  
+            break;
+        }
+    }                   
+   return time;
+ }
+
 
 
 std::ostream& operator<<(std::ostream& ost, const Edge& edge){
@@ -757,3 +777,5 @@ Ontology::get_descendant_term_ids(const TermId &sourceTid) const
   }
   return termids;
 }
+
+

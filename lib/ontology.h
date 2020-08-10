@@ -18,6 +18,7 @@
 #include <optional>
 #include <variant>
 #include <functional>
+#include <ctime>
 
 #include "termid.h"
 #include "edge.h"
@@ -107,6 +108,7 @@ public:
   vector<Synonym> get_synonyms() const { return synonym_list_; }
   bool obsolete() const { return is_obsolete_; }
   bool contains_xref_with_prefix(const string &prefix) const;
+  tm get_creation_date() const;
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
 };
 std::ostream& operator<<(std::ostream& ost, const Term& term);
