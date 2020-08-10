@@ -4,12 +4,13 @@ add_library(${PROJECT_NAME} STATIC
   base.pb.cc
   interpretation.pb.cc
   phenopackets.pb.cc
-  myexception.cc
-  property.cc
   edge.cc
+  hpoannotation.cc
   jsonobo.cc
+  myexception.cc
   ontology.cc
   phenotools.cc
+  property.cc
   termid.cc
   ${PROTO_SRCS} ${PROTO_HDRS}
 )

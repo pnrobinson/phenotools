@@ -163,8 +163,8 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
  Term::get_creation_date() const{
    tm time = {}; // value initialize to zero
    time.tm_year = 108; // 2008
-    int y,M,d,h,m,s; // disregard anything outside of y/m/d
-     // 1-31 
+    int y,M,d,h,m;
+    float s; 
     for (PredicateValue pv : property_values_) {
         if (pv.get_property() == Predicate::CREATION_DATE || pv.get_property() == Predicate::DATE) {
           // assumption (not checked) there is only one such property per term
@@ -173,6 +173,7 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
             time.tm_year = y - 1900; // Year since 1900
             time.tm_mon = M - 1;     // 0-11
             time.tm_mday = d;  
+            // disregard anything outside of y/m/d
             break;
         }
     }                   

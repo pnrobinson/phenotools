@@ -12,8 +12,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(${PROJECT_NAME}
 	main.cpp ${PROTO_SRCS} ${PROTO_HDRS}
-	phenotoolscommand.cpp
+	annotcommand.cpp
 	hpocommand.cpp
+	phenotoolscommand.cpp
 
 )
 

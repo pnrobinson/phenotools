@@ -22,7 +22,9 @@
 #include "../lib/jsonobo.h"
 
 // the commands
+#include "phenotoolscommand.h"
 #include "hpocommand.h"
+#include "annotcommand.h"
 
 using std::string;
 using std::cout;
@@ -35,6 +37,8 @@ void print_validation(const std::vector<phenotools::Validation> validation_items
 int main (int argc, char ** argv) {
   /** Path to HPO ontology file hp.json. */
   string hp_json_path;
+  /** Path to phenotype.hpoa file */
+  string phenotype_hpoa_path;
   /** Path to mondo file file, mondo.json. */
   string mondo_json_path;
   string phenopacket_path;
@@ -52,10 +56,13 @@ int main (int argc, char ** argv) {
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "--hp",hp_json_path,"path to hp.json file" )->check ( CLI::ExistingFile );
 
-  // mondo options
-  auto mondo_app = app.add_subcommand("mondo", "work with MONDO");
-  auto mondo_json_option = mondo_app->add_option("-j,--json",mondo_json_path,"path to mondo.json file");
-  auto mondo_omim_flag = mondo_app->add_flag("--omim", omim_analysis, "output OMIM stats");
+  // annotation options
+  auto annot_command = app.add_subcommand("annotation", "work with phenotype.hpoa");
+  auto annot_annot_option = annot_command->add_option("-a,--annot",phenotype_hpoa_path,"path to mondo.json file");
+  auto annot_date_option = annot_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
+  auto annot_term_option = annot_command->add_option("-t,--term", termid, "TermId (target)");
+  auto annot_hp_option = annot_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+
   
   
   // HPO options
@@ -80,16 +87,16 @@ int main (int argc, char ** argv) {
       cerr << "[ERROR] --hp <path to hp.json> option required for hpo command.\n";
       exit(EXIT_FAILURE);
     }
-    std::unique_ptr<HpoCommand> hpo = std::make_unique<HpoCommand>(hp_json_path, 
+    std::unique_ptr<PhenotoolsCommand> hpo = std::make_unique<HpoCommand>(hp_json_path, 
           show_descriptive_stats, 
           show_quality_control,
           iso_date,
           termid);
     hpo->execute();
-    
-   
-   
-    
+  } else if ( annot_command->parsed() ) { 
+    std::unique_ptr<PhenotoolsCommand> annot = std::make_unique<AnnotationCommand>(phenotype_hpoa_path,
+                        hp_json_path, iso_date, termid);
+    annot->execute();
   } else if (debug_command->parsed() ) {
     if (*debug_ont_option) {
       //TODO REMOVE AFTER DEV
