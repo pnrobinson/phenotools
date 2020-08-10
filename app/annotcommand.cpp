@@ -10,6 +10,7 @@
 #include "../lib/ontology.h"
 #include "../lib/termid.h"
 
+
 #include <iostream>
 
 using std::cout;
@@ -54,6 +55,12 @@ AnnotationCommand::execute()
         return 1;
     }
     TermId tid = TermId::from_string(termid_);
+    std::optional<Term> termopt = ontology->get_term(tid);
+    string term_label = "n/a";
+    if (termopt) {
+       term_label = termopt->get_label();
+    }
+    
     tm threshold_date = {};
     int y,M,d,h,m;
     float s; 
@@ -76,11 +83,23 @@ AnnotationCommand::execute()
         if (ann.newer_than(threshold_date)) {
             total_newer++;
             //cout << ann << "\n";
+            cout << ann.get_disease_id() 
+        << "\t" 
+        << ann.get_disease_name() 
+        << "\t"
+        << ann.get_hpo_id()
+        << "\t"
+        << ann.get_negated()
+        << "\t"
+        << ann.get_biocuration_string()
+        << "\n";
         }
     }
     cout << total
-        << " total annotations to term " << tid 
-        <<", of which " 
+        << " total annotations to terms descending from " << term_label
+        << " ("
+        << tid
+        <<"), of which " 
         << total_newer
         << " are newer than "
         << date_

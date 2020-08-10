@@ -51,8 +51,9 @@ Biocuration::Biocuration(const string &curation)
 string 
 Biocuration::to_string() const
 {
-    std::stringstream ss(curator_);
-    ss << "["
+    std::stringstream ss;
+    ss  << curator_ 
+        << "["
         << (curation_date_.tm_year + 1900)
         << "-"
         << (curation_date_.tm_mon + 1)
@@ -201,7 +202,8 @@ HpoAnnotation::get_biocuration_string() const
 
 
 
-std::ostream& operator<<(std::ostream& ost, const HpoAnnotation& annot){
+std::ostream& 
+operator<<(std::ostream& ost, const HpoAnnotation& annot){
   ost << annot.get_disease_id() 
         << "\t" 
         << annot.get_disease_name() 
