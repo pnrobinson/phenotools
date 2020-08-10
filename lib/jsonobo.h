@@ -59,8 +59,9 @@ public:
 			with CLR graph. When this method is called, the CTOR
 			has ingested data to the term_list and the edge_list.*/
 	std::unique_ptr<Ontology> get_ontology();
-	/** Output the Q/C findings to an outstream. */
+	/** Output the Q/C findings to an outstream (prints the error list). */
 	void output_quality_assessment(std::ostream& s = std::cout) const;
+	vector<string> get_errors() const;
 };
 
 

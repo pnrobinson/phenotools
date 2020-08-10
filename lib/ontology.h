@@ -193,6 +193,7 @@ public:
   void output_descriptive_statistics(std::ostream& s = std::cout) const;
   friend std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
   int filter_terms(std::function<bool(Term*)> f, std::ostream& s = std::cout);
+  vector<TermId> get_descendant_term_ids(const TermId &sourceTid) const;
 };
 std::ostream& operator<<(std::ostream& ost, const Ontology& ontology);
 

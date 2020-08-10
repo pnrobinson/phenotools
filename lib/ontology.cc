@@ -744,3 +744,16 @@ Ontology::filter_terms(std::function<bool(Term*)> f, std::ostream& s)
   }
   return passed;
 }
+
+vector<TermId> 
+Ontology::get_descendant_term_ids(const TermId &sourceTid) const
+{
+  vector<TermId> termids;
+  termids.push_back(sourceTid);
+  for (TermId tid : current_term_ids_) {
+    if (exists_path(tid, sourceTid) ) {
+      termids.push_back(tid);
+    }
+  }
+  return termids;
+}

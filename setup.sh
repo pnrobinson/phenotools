@@ -68,7 +68,7 @@ if [ ! -e build ]; then
     mkdir build
 fi
 cd build; cmake ..; make
-mv ./app/phenotools .
+mv app/phenotools ..
 
 echo
 

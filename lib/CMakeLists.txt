@@ -11,17 +11,11 @@ add_library(${PROJECT_NAME} STATIC
   ontology.cc
   phenotools.cc
   termid.cc
-  mondo.cc
   ${PROTO_SRCS} ${PROTO_HDRS}
 )
 
 find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIRS})
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
-#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS foo.proto)
-#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS EXPORT_MACRO DLL_EXPORT foo.proto)
-#protobuf_generate_python(PROTO_PY foo.proto)
-#add_executable(bar bar.cc )
 target_link_libraries(libphenotools ${Protobuf_LIBRARIES})
 
 add_library(libs::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

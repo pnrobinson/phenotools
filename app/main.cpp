@@ -20,11 +20,14 @@
 #include "../lib/base.pb.h"
 #include "../lib/phenotools.h"
 #include "../lib/jsonobo.h"
-#include "../mondo.h"
+
+// the commands
+#include "hpocommand.h"
 
 using std::string;
 using std::cout;
 using std::cerr;
+using namespace phenotools;
 
 // prototypes
 void print_validation(const std::vector<phenotools::Validation> validation_items, std::string message = "Validation");
@@ -35,6 +38,10 @@ int main (int argc, char ** argv) {
   /** Path to mondo file file, mondo.json. */
   string mondo_json_path;
   string phenopacket_path;
+  /** A String representing a date, such as 2018-07-21. */
+  string iso_date;
+  /** A string representing the target TermId */
+  string termid;
   bool show_descriptive_stats = false;
   bool show_quality_control = false;
   bool omim_analysis = false; 
@@ -56,6 +63,8 @@ int main (int argc, char ** argv) {
   CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
   auto hp_stats = hpo_command->add_flag("-s,--stats",show_descriptive_stats,"show descriptive statistics");
   auto hp_qc = hpo_command->add_flag("-q,--qc", show_quality_control, "show quality assessment");
+  CLI::Option* date_option = hpo_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
+  CLI::Option* term_option = hpo_command->add_option("-t,--term", termid, "TermId (target)");
 
   // DEBUG OPTIONs
   CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
@@ -71,20 +80,14 @@ int main (int argc, char ** argv) {
       cerr << "[ERROR] --hp <path to hp.json> option required for hpo command.\n";
       exit(EXIT_FAILURE);
     }
-    JsonOboParser parser{hp_json_path};
-    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-    if (show_descriptive_stats) {
-      ontology->output_descriptive_statistics();
-    }
-    if (show_quality_control) {
-      parser.output_quality_assessment();
-    }
-    if (show_descriptive_stats || show_quality_control ) {
-      return EXIT_SUCCESS;
-    } else {
-      cout << "Consider running with -s or -q option to see descriptive stats and Q/C results.\n";
-      return EXIT_SUCCESS;
-    }
+    std::unique_ptr<HpoCommand> hpo = std::make_unique<HpoCommand>(hp_json_path, 
+          show_descriptive_stats, 
+          show_quality_control,
+          iso_date,
+          termid);
+    hpo->execute();
+    
+   
    
     
   } else if (debug_command->parsed() ) {
@@ -141,7 +144,8 @@ int main (int argc, char ** argv) {
       }
 
     }
-  } else if (mondo_app->parsed()) {
+  } 
+  /*else if (mondo_app->parsed()) {
     // run the MONDO mode
     if (! *mondo_json_option) {
       cerr << "[ERROR] mondo command requires -j/--json <path to mondo.json> option.\n";
@@ -158,6 +162,7 @@ int main (int argc, char ** argv) {
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
   }
+  */
 }
 
 

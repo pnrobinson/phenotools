@@ -455,3 +455,10 @@ JsonOboParser::json_to_xref(const rapidjson::Value &val)
   }
 
 }
+
+
+vector<string> 
+JsonOboParser::get_errors() const
+{
+  return error_list_;
+}
