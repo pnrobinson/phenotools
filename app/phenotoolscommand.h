@@ -21,6 +21,17 @@ namespace phenotools {
 
     };
 
+
+    class PhenopacketCommand : public PhenotoolsCommand {
+        private:
+        string hp_json_path;
+        string phenopacket_path;
+        
+        public:
+        PhenopacketCommand(const string &phenopacket, const string &hp_json);
+          virtual int execute();
+    };
+
 };
 
 

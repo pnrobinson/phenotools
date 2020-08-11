@@ -26,7 +26,8 @@ class HpoCommand : public PhenotoolsCommand {
                 bool descriptive_stats, 
                 bool quality_control,
                 string date,
-                string termid);
+                string termid,
+                bool debug);
       virtual int execute();
 
 
@@ -38,6 +39,7 @@ class HpoCommand : public PhenotoolsCommand {
       bool show_quality_control;
       std::unique_ptr<struct tm> threshold_date_;
       std::unique_ptr<TermId> tid_;
+      bool debug_;
 
       void show_qc();
       void show_stats();

@@ -15,9 +15,11 @@ HpoCommand::HpoCommand(std::string hp_json_path,
                         bool descriptive_stats, 
                         bool quality_control,
                         string date,
-                        string termid):
+                        string termid,
+                        bool debug):
     show_descriptive_stats(descriptive_stats),
-    show_quality_control(quality_control)
+    show_quality_control(quality_control),
+    debug_(debug)
 {
     JsonOboParser parser{hp_json_path};
     error_list_ = parser.get_errors();
@@ -38,6 +40,9 @@ HpoCommand::execute()
     }
     if (show_descriptive_stats) {
       show_stats();
+    }
+    if (debug_) {
+        ontology->debug_print();
     }
     if (tid_) {
         count_descendants();

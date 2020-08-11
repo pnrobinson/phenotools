@@ -12,14 +12,10 @@
 #include <memory>
 #include <vector>
 
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
+
 
 #include "CLI11.hpp"
-#include "../lib/phenopackets.pb.h"
-#include "../lib/base.pb.h"
-#include "../lib/phenotools.h"
-#include "../lib/jsonobo.h"
+
 
 // the commands
 #include "phenotoolscommand.h"
@@ -29,6 +25,7 @@
 using std::string;
 using std::cout;
 using std::cerr;
+using std::make_unique;
 using namespace phenotools;
 
 // prototypes
@@ -49,22 +46,19 @@ int main (int argc, char ** argv) {
   bool show_descriptive_stats = false;
   bool show_quality_control = false;
   bool omim_analysis = false; 
+  bool hpo_debug = false;
 
   CLI::App app ( "phenotools" );
   // phenopacket options
   CLI::App* phenopacket_command = app.add_subcommand ( "phenopacket", "work with GA4GH phenopackets" );
   CLI::Option* phenopacket_path_option = phenopacket_command->add_option ( "-p,--phenopacket",phenopacket_path,"path to input phenopacket" )->check ( CLI::ExistingFile );
   CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "--hp",hp_json_path,"path to hp.json file" )->check ( CLI::ExistingFile );
-
   // annotation options
   auto annot_command = app.add_subcommand("annotation", "work with phenotype.hpoa");
   auto annot_annot_option = annot_command->add_option("-a,--annot",phenotype_hpoa_path,"path to mondo.json file");
   auto annot_date_option = annot_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
   auto annot_term_option = annot_command->add_option("-t,--term", termid, "TermId (target)");
   auto annot_hp_option = annot_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
-
-  
-  
   // HPO options
   CLI::App* hpo_command = app.add_subcommand ( "hpo", "Q/C of JSON HP ontology file" );
   CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
@@ -72,10 +66,7 @@ int main (int argc, char ** argv) {
   auto hp_qc = hpo_command->add_flag("-q,--qc", show_quality_control, "show quality assessment");
   CLI::Option* date_option = hpo_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
   CLI::Option* term_option = hpo_command->add_option("-t,--term", termid, "TermId (target)");
-
-  // DEBUG OPTIONs
-  CLI::App* debug_command = app.add_subcommand ( "debug", "print details of HPO parse" );
-  CLI::Option* debug_ont_option = debug_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+  auto hpo_debug_option = hpo_command->add_flag("--debug", hpo_debug, "print details of HPO parse" );
 
 
 
@@ -87,71 +78,29 @@ int main (int argc, char ** argv) {
       cerr << "[ERROR] --hp <path to hp.json> option required for hpo command.\n";
       exit(EXIT_FAILURE);
     }
-    std::unique_ptr<PhenotoolsCommand> hpo = std::make_unique<HpoCommand>(hp_json_path, 
+    std::unique_ptr<PhenotoolsCommand> hpo = make_unique<HpoCommand>(hp_json_path, 
           show_descriptive_stats, 
           show_quality_control,
           iso_date,
-          termid);
+          termid,
+          hpo_debug);
     hpo->execute();
   } else if ( annot_command->parsed() ) { 
-    std::unique_ptr<PhenotoolsCommand> annot = std::make_unique<AnnotationCommand>(phenotype_hpoa_path,
+    std::unique_ptr<PhenotoolsCommand> annot = make_unique<AnnotationCommand>(phenotype_hpoa_path,
                         hp_json_path, iso_date, termid);
     annot->execute();
-  } else if (debug_command->parsed() ) {
-    if (*debug_ont_option) {
-      //TODO REMOVE AFTER DEV
-      JsonOboParser parser {hp_json_path};
-      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-      cout << *ontology << "\n";
-      ontology->debug_print();
-    } else {
-      cerr << "debug command required -o option.\n";
-    }
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
     if ( ! *phenopacket_path_option ) {
       cerr << "[FATAL] -p/--phenopacket option required!\n";
       return EXIT_FAILURE;
     }
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-    std::ifstream inFile;
-    inFile.open ( phenopacket_path );
-    if ( ! inFile.good() ) {
-      cerr << "Could not open Phenopacket file at " << phenopacket_path <<"\n";
-      return EXIT_FAILURE;
-    }
-    std::stringstream sstr;
-    sstr << inFile.rdbuf();
-    string JSONstring = sstr.str();
-    ::google::protobuf::util::JsonParseOptions options;
-    ::org::phenopackets::schema::v1::Phenopacket phenopacketpb;
-    ::google::protobuf::util::JsonStringToMessage (JSONstring, &phenopacketpb, options);
-    cout << "\n#### Phenopacket at: " << phenopacket_path << " ####\n\n";
-
-    phenotools::Phenopacket ppacket(phenopacketpb);
-    auto validation = ppacket.validate();
-    if (*phenopacket_hp_option) {
-      JsonOboParser parser {hp_json_path};
-      std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-      auto semvalidation = ppacket.semantically_validate(ontology);
-      validation.insert(validation.end(),semvalidation.begin(), semvalidation.end());
-    } else {
-      cout << "[INFO] Validation performed without ontology\n";
-    }
-    if ( validation.empty() ) {
-      cout << "No Q/C issues identified!\n";
-    } else {
-      auto N = validation.size();
-      cout << "#### We identified "
-	        << N << " Q/C issue" << ( N>1?"s":"" )
-	        << " ####\n";
-      for ( auto v : validation ) {
-	       cout << v << "\n";
-      }
-
-    }
-  } 
+   std::unique_ptr<PhenotoolsCommand> ppcommand = make_unique<PhenopacketCommand>(phenopacket_path, hp_json_path);
+    ppcommand->execute();
+    
+  } else {
+    std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
+  }
   /*else if (mondo_app->parsed()) {
     // run the MONDO mode
     if (! *mondo_json_option) {
