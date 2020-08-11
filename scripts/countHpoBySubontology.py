@@ -1,0 +1,102 @@
+import click
+import os
+from collections import defaultdict
+
+PHENOTOOLS = "../phenotools"
+
+## check if exists and if not run
+
+categories = defaultdict(str);
+categories['ABNORMAL_CELLULAR'] = "HP:0025354";
+categories['BLOOD'] = "HP:0001871";
+categories['CONNECTIVE_TISSUE'] = "HP:0003549";
+categories['HEAD_AND_NECK'] = "HP:0000152";
+categories['LIMBS'] = "HP:0040064";
+categories['METABOLISM'] = "HP:0001939";
+categories['PRENATAL'] = "HP:0001197";
+categories['BREAST'] = "HP:0000769";
+categories['CARDIOVASCULAR'] = "HP:0001626";
+categories['DIGESTIVE'] = "HP:0025031";
+categories['EAR'] = "HP:0000598";
+categories['ENDOCRINE'] = "HP:0000818";
+categories['EYE'] = "HP:0000478";
+categories['GENITOURINARY'] = "HP:0000119";
+categories['IMMUNOLOGY'] = "HP:0002715";
+categories['INTEGUMENT'] = "HP:0001574";
+categories['MUSCLE'] = "HP:0003011";
+categories['NERVOUS_SYSTEM'] = "HP:0000707";
+categories['RESPIRATORY'] = "HP:0002086";
+categories['SKELETAL'] = "HP:0000924";
+categories['THORACIC_CAVITY'] = "HP:0045027";
+categories['VOICE'] = "HP:0001608";
+categories['CONSTITUTIONAL'] = "HP:0025142";
+categories['GROWTH'] = "HP:0001507";
+categories['NEOPLASM'] = "HP:0002664";
+
+
+
+
+def check_phenotools():
+    """
+    Run the setup command to install phenotools if necessary
+    :return:
+    """
+    if not os.path.exists(PHENOTOOLS):
+        os.system('../setup.py')
+    else:
+        print("[INFO] we found ")
+
+def run_phenotools(date, term):
+    """
+    Run phenotools for a single category
+    :param categ:
+    :return:
+    """
+    mycommand = "../phenotools hpo --hp ../hp.json --date %s --term %s --out tmp.txt" % (date, term)
+    print(mycommand)
+    os.system(mycommand)
+    subontologyId = None
+    subontologyName = None
+    createdAfter = None
+    total = None
+    with open("tmp.txt") as f:
+        for line in f:
+            if line.startswith("#Subontology"):
+                #fields = line.rstrip('\n').split(':')
+                #fields2 = fields[1].split("(")
+                myline = line[13:].strip()
+                subontologyId = myline[:11]
+                myline = myline[12:]
+                subontologyName = myline.replace(")","").strip()
+            elif line.startswith("#Created after"):
+                field = line.rstrip('\n').split(':')[1].strip()
+                createdAfter = int(field)
+            elif line.startswith("#Total"):
+                field = line.rstrip('\n').split(':')[1].strip()
+                total = int(field)
+    if subontologyId is None:
+        raise ValueError("Could not find subontologyId")
+    elif subontologyName is None:
+        raise ValueError("Could not find subontologyName")
+    elif createdAfter is None:
+        raise ValueError("Could not find createdAfter")
+    elif total is None:
+        raise ValueError("Could not find total")
+    return subontologyId, subontologyName, createdAfter, total
+
+@click.command()
+@click.option('--date', '-d')
+def main(date):
+    if date is None or len(date)==0:
+        print("Error -- --date argument required")
+        return
+    check_phenotools()
+    fh = open('hpocounts', 'wt')
+    fh.write("subontology.id\tsubontology.label\tcreated.after\ttotal\n")
+    for k, v in categories.items():
+        subontologyId, subontologyName, createdAfter, total = run_phenotools(date, v)
+        fh.write("%s\t%s\t%s\t%s\n" % (subontologyId, subontologyName, createdAfter, total))
+    fh.close()
+
+if __name__ == "__main__":
+    main()

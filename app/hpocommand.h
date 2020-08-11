@@ -25,8 +25,15 @@ class HpoCommand : public PhenotoolsCommand {
       HpoCommand(string hp_json_path, 
                 bool descriptive_stats, 
                 bool quality_control,
-                string date,
-                string termid,
+                const string &date,
+                const string &termid,
+                bool debug,
+                const string &outpath);
+      HpoCommand(string hp_json_path, 
+                bool descriptive_stats, 
+                bool quality_control,
+                const string &date,
+                const string &termid,
                 bool debug);
       virtual int execute();
 
@@ -38,12 +45,15 @@ class HpoCommand : public PhenotoolsCommand {
       bool show_descriptive_stats;
       bool show_quality_control;
       std::unique_ptr<struct tm> threshold_date_;
+      string threshold_date_str;
       std::unique_ptr<TermId> tid_;
       bool debug_;
+      string outpath_;
 
       void show_qc();
       void show_stats();
       void count_descendants();
+      void output_descendants(std::ostream & ost);
       bool later_than(tm time) const;
 };
 

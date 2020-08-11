@@ -1,25 +1,45 @@
 #include <iostream>
 #include <optional>
+#include <sstream>
+#include <fstream>
 
 #include "hpocommand.h"
 #include "../lib/jsonobo.h"
 #include "../lib/property.h"
 
+#define EMPTY_STRING ""
+
 using namespace phenotools;
 using std::string;
 using std::cout;
 using std::cerr;
+using std::stringstream;
 using std::make_unique;
+
+
+
+
+HpoCommand::HpoCommand(string hp_json_path, 
+                bool descriptive_stats, 
+                bool quality_control,
+                const string &date,
+                const string &termid,
+                bool debug) : HpoCommand(hp_json_path, descriptive_stats,quality_control,date,termid,debug,EMPTY_STRING) 
+                {
+                }
 
 HpoCommand::HpoCommand(std::string hp_json_path, 
                         bool descriptive_stats, 
                         bool quality_control,
-                        string date,
-                        string termid,
-                        bool debug):
+                        const string &date,
+                        const string &termid,
+                        bool debug,
+                        const string &outpath):
     show_descriptive_stats(descriptive_stats),
     show_quality_control(quality_control),
-    debug_(debug)
+    debug_(debug),
+    outpath_(outpath),
+    threshold_date_str(date)
 {
     JsonOboParser parser{hp_json_path};
     error_list_ = parser.get_errors();
@@ -45,15 +65,21 @@ HpoCommand::execute()
         ontology->debug_print();
     }
     if (tid_) {
-        count_descendants();
+        if (outpath_.empty()) {
+            output_descendants(std::cout);
+        } else {
+            std::ofstream fout;
+            fout.open(outpath_.c_str(), std::ios::out);
+            if (!fout) {
+                cerr << "error: open file for output failed!\n";
+                 abort();  // in <cstdlib> header
+            }
+            output_descendants(fout);
+            fout.close();
+        }
+        //count_descendants();
     }
-   
-    if (show_descriptive_stats || show_quality_control ) {
-      return EXIT_SUCCESS;
-    } else {
-      cout << "Consider running with -s or -q option to see descriptive stats and Q/C results.\n";
-      return EXIT_SUCCESS;
-    }
+    return EXIT_SUCCESS;
 }
 
 
@@ -78,6 +104,62 @@ HpoCommand::show_stats()
 }
 
 
+void 
+HpoCommand::output_descendants(std::ostream & ost)
+{
+    vector<TermId> descs = this->ontology->get_descendant_term_ids(*tid_);
+    std::optional<Term> term = this->ontology->get_term(*tid_);
+    if (! term) {
+        cerr << "[ERROR] Could not find term for " << *tid_ << "\n";
+        return;
+    }
+    string label = term->get_label();
+    int N = descs.size(); 
+    int total = 0;
+    int total_newer = 0;
+    ost << "#Subontology: "
+        << *tid_
+        << " ("
+        << label
+        << ")\n";
+    // Now print the header
+    ost << "#hpo.id\thpo.label\tcreation.date\tincluded\n";
+    if (threshold_date_) {
+        for (TermId tid : descs) {
+            total++;
+            std::optional<Term> termopt = this->ontology->get_term(tid);
+            if (! termopt) {
+                cerr << "[ERROR] Could not find term for " << tid << "\n";
+                return;
+            } 
+            label = termopt->get_label();
+            tm creation_date = termopt->get_creation_date();
+            stringstream ss;
+            ss << creation_date.tm_year + 1900
+                << "-"
+                << creation_date.tm_mon + 1
+                << "-"
+                << creation_date.tm_mday;
+            bool passes_threshold = later_than(creation_date);
+            ost << tid
+                << "\t"
+                << label
+                << "\t"
+                << ss.str()
+                << "\t"
+                << (passes_threshold ? "T" : "F")
+                << "\n";
+            if (passes_threshold) {
+                total_newer++;
+            }
+        }
+        ost << "#Created after " << threshold_date_str << ": " << total_newer << "\n";
+        ost << "#Total: " << total << "\n";
+    } else {
+        cout << "#Total: " << total << "\n";
+    }
+}
+
 void
 HpoCommand::count_descendants() 
 {
@@ -90,6 +172,7 @@ HpoCommand::count_descendants()
             std::optional<Term> termopt = this->ontology->get_term(tid);
             if (! termopt) {
                 cerr << "[ERROR] Could not find term for " << tid << "\n";
+                return;
             } else {
                 cout << tid << ": " << termopt->get_label() << "\n";
             }
@@ -106,8 +189,14 @@ HpoCommand::count_descendants()
         int N = descs.size();
         cout << "Term " << *tid_ << " has " << N << " descendants.\n";
     }
-  
 }
+
+
+
+
+
+
+
 
  bool 
  HpoCommand::later_than(tm time) const

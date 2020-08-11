@@ -7,15 +7,9 @@
 
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <sstream>
 #include <memory>
-#include <vector>
-
-
 
 #include "CLI11.hpp"
-
 
 // the commands
 #include "phenotoolscommand.h"
@@ -28,9 +22,6 @@ using std::cerr;
 using std::make_unique;
 using namespace phenotools;
 
-// prototypes
-void print_validation(const std::vector<phenotools::Validation> validation_items, std::string message = "Validation");
-
 int main (int argc, char ** argv) {
   /** Path to HPO ontology file hp.json. */
   string hp_json_path;
@@ -39,6 +30,8 @@ int main (int argc, char ** argv) {
   /** Path to mondo file file, mondo.json. */
   string mondo_json_path;
   string phenopacket_path;
+  /** Path/name for any outputt file. */
+  string outpath;
   /** A String representing a date, such as 2018-07-21. */
   string iso_date;
   /** A string representing the target TermId */
@@ -67,40 +60,50 @@ int main (int argc, char ** argv) {
   CLI::Option* date_option = hpo_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
   CLI::Option* term_option = hpo_command->add_option("-t,--term", termid, "TermId (target)");
   auto hpo_debug_option = hpo_command->add_flag("--debug", hpo_debug, "print details of HPO parse" );
+  auto hpo_outpath_option = hpo_command->add_option("-o,--out", outpath, "name/path for output file" );
 
 
 
 
   CLI11_PARSE ( app, argc, argv );
+  std::unique_ptr<PhenotoolsCommand> ptcommand; 
 
   if ( hpo_command->parsed() ) {
     if (! *hp_json_path_option) {
       cerr << "[ERROR] --hp <path to hp.json> option required for hpo command.\n";
       exit(EXIT_FAILURE);
     }
-    std::unique_ptr<PhenotoolsCommand> hpo = make_unique<HpoCommand>(hp_json_path, 
+    if (* hpo_outpath_option) {
+      ptcommand = make_unique<HpoCommand>(hp_json_path, 
+          show_descriptive_stats, 
+          show_quality_control,
+          iso_date,
+          termid,
+          hpo_debug, 
+          outpath);
+    } else {
+      ptcommand = make_unique<HpoCommand>(hp_json_path, 
           show_descriptive_stats, 
           show_quality_control,
           iso_date,
           termid,
           hpo_debug);
-    hpo->execute();
+    }
   } else if ( annot_command->parsed() ) { 
-    std::unique_ptr<PhenotoolsCommand> annot = make_unique<AnnotationCommand>(phenotype_hpoa_path,
+    ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
                         hp_json_path, iso_date, termid);
-    annot->execute();
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
     if ( ! *phenopacket_path_option ) {
       cerr << "[FATAL] -p/--phenopacket option required!\n";
       return EXIT_FAILURE;
     }
-   std::unique_ptr<PhenotoolsCommand> ppcommand = make_unique<PhenopacketCommand>(phenopacket_path, hp_json_path);
-    ppcommand->execute();
-    
+   ptcommand = make_unique<PhenopacketCommand>(phenopacket_path, hp_json_path);
   } else {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
+    return 1;
   }
+   ptcommand->execute();
   /*else if (mondo_app->parsed()) {
     // run the MONDO mode
     if (! *mondo_json_option) {
@@ -119,14 +122,4 @@ int main (int argc, char ** argv) {
     std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
   }
   */
-}
-
-
-
-void print_validation(const std::vector<phenotools::Validation> validation_items, std::string message)
-{
-  std::cout << message << "\n";
-  for (auto v : validation_items) {
-    std::cout << v << "\n";
-  }
 }
