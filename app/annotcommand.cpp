@@ -12,6 +12,7 @@
 
 
 #include <iostream>
+#include <fstream>
 
 using std::cout;
 using std::cerr;
@@ -22,11 +23,26 @@ using namespace phenotools;
 AnnotationCommand::AnnotationCommand(const string &path, 
                 const string &hp_json, 
                 const string &date, 
+                const string &termid,
+                const string &outpath):
+    phenotype_hpoa_path(path),
+    hp_json_path(hp_json),
+    termid_(termid),
+    date_(date),
+    outpath_(outpath)
+{
+
+}
+
+AnnotationCommand::AnnotationCommand(const string &path, 
+                const string &hp_json, 
+                const string &date, 
                 const string &termid):
     phenotype_hpoa_path(path),
     hp_json_path(hp_json),
     termid_(termid),
-    date_(date)
+    date_(date),
+    outpath_("")
 {
 
 }
@@ -34,33 +50,9 @@ AnnotationCommand::AnnotationCommand(const string &path,
 
 
 
-
-int
-AnnotationCommand::execute()
+void
+AnnotationCommand::output_descendants(std::ostream & ost)
 {
-    cout << "[INFO] Parsing " << phenotype_hpoa_path << "\n";
-    vector<HpoAnnotation> annots = HpoAnnotation::parse_phenotype_hpoa(phenotype_hpoa_path);
-    cout << "[INFO] Obtained " << annots.size() << " annotations.\n";
-    if (hp_json_path.empty()) {
-        cerr << "[WARNING] No path to hp.json passed\n";
-        return 0;
-    }
-    JsonOboParser parser{hp_json_path};
-    auto ontology =  parser.get_ontology();
-    if (termid_.empty()) {
-        cerr << "[ERROR] No term id passed\n";
-        return 1;
-    } else if (date_.empty()) {
-        cerr << "[ERROR] No date string passed\n";
-        return 1;
-    }
-    TermId tid = TermId::from_string(termid_);
-    std::optional<Term> termopt = ontology->get_term(tid);
-    string term_label = "n/a";
-    if (termopt) {
-       term_label = termopt->get_label();
-    }
-    
     tm threshold_date = {};
     int y,M,d,h,m;
     float s; 
@@ -70,6 +62,18 @@ AnnotationCommand::execute()
     threshold_date.tm_mday = d;  
     int total = 0;
     int total_newer = 0; // created after target date.
+    TermId tid = TermId::from_string(termid_);
+    cout << "[INFO] Parsing " << phenotype_hpoa_path << "\n";
+    vector<HpoAnnotation> annots = HpoAnnotation::parse_phenotype_hpoa(phenotype_hpoa_path);
+    cout << "[INFO] Obtained " << annots.size() << " annotations.\n";
+    JsonOboParser parser{hp_json_path};
+    auto ontology =  parser.get_ontology();
+    std::optional<Term> termopt = ontology->get_term(tid);
+    string term_label = "n/a";
+    if (termopt) {
+       term_label = termopt->get_label();
+    }
+    ost << "#" << tid << " (" << term_label << ")\n";
     for (HpoAnnotation ann : annots) {
         if (! ann.is_omim()) {
             continue;
@@ -83,7 +87,7 @@ AnnotationCommand::execute()
         if (ann.newer_than(threshold_date)) {
             total_newer++;
             //cout << ann << "\n";
-            cout << ann.get_disease_id() 
+        ost << ann.get_disease_id() 
         << "\t" 
         << ann.get_disease_name() 
         << "\t"
@@ -95,15 +99,44 @@ AnnotationCommand::execute()
         << "\n";
         }
     }
-    cout << total
-        << " total annotations to terms descending from " << term_label
-        << " ("
-        << tid
-        <<"), of which " 
-        << total_newer
-        << " are newer than "
-        << date_
+    ost << "#total annotations to terms descending from " << term_label
+        << ":"
+        << total
         << "\n";
+    ost << "#total annotations newer than "
+        << date_
+        << ":"
+        << total_newer
+        << "\n";
+}
 
+
+
+int
+AnnotationCommand::execute()
+{
+    if (hp_json_path.empty()) {
+        cerr << "[WARNING] No path to hp.json passed\n";
+        return 0;
+    }
+    if (termid_.empty()) {
+        cerr << "[ERROR] No term id passed\n";
+        return 1;
+    } else if (date_.empty()) {
+        cerr << "[ERROR] No date string passed\n";
+        return 1;
+    }
+    if (outpath_.empty()) {
+        output_descendants(std::cout);
+    } else {
+        std::ofstream fout;
+        fout.open(outpath_.c_str(), std::ios::out);
+        if (!fout) {
+            cerr << "error: open file for output failed!\n";
+            abort();  // in <cstdlib> header
+        }
+        output_descendants(fout);
+        fout.close();
+    }
     return 0;
 }

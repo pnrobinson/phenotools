@@ -18,6 +18,7 @@ namespace phenotools {
     class AnnotationCommand : public PhenotoolsCommand {
 
         public:
+        AnnotationCommand(const string &path, const string &hp_json, const string &date, const string &termid, const string &outpath);
         AnnotationCommand(const string &path, const string &hp_json, const string &date, const string &termid);
         virtual int execute();
 
@@ -27,7 +28,9 @@ namespace phenotools {
             string hp_json_path;
             string termid_;
             string date_;
+            string outpath_;
             vector<HpoAnnotation> annotations;
+            void output_descendants(std::ostream & ost);
 
 
     };

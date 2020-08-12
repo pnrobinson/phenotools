@@ -48,10 +48,12 @@ int main (int argc, char ** argv) {
   CLI::Option* phenopacket_hp_option = phenopacket_command->add_option ( "--hp",hp_json_path,"path to hp.json file" )->check ( CLI::ExistingFile );
   // annotation options
   auto annot_command = app.add_subcommand("annotation", "work with phenotype.hpoa");
-  auto annot_annot_option = annot_command->add_option("-a,--annot",phenotype_hpoa_path,"path to mondo.json file");
+  auto annot_annot_option = annot_command->add_option("-a,--annot",phenotype_hpoa_path,"path to phenotype.hpoa file")->check ( CLI::ExistingFile );
   auto annot_date_option = annot_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
   auto annot_term_option = annot_command->add_option("-t,--term", termid, "TermId (target)");
   auto annot_hp_option = annot_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
+  auto annot_outpath_option = annot_command->add_option("-o,--out", outpath, "name/path for output file" );
+
   // HPO options
   CLI::App* hpo_command = app.add_subcommand ( "hpo", "Q/C of JSON HP ontology file" );
   CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
@@ -90,8 +92,13 @@ int main (int argc, char ** argv) {
           hpo_debug);
     }
   } else if ( annot_command->parsed() ) { 
-    ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
+    if (*annot_outpath_option) {
+        ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
+                        hp_json_path, iso_date, termid, outpath);
+    } else {
+       ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
                         hp_json_path, iso_date, termid);
+    }
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket
     if ( ! *phenopacket_path_option ) {

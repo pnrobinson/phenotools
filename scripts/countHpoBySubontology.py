@@ -84,19 +84,58 @@ def run_phenotools(date, term):
         raise ValueError("Could not find total")
     return subontologyId, subontologyName, createdAfter, total
 
+
+def run_phenotools_annotations(date, term, annot):
+    """
+    Run phenotools for a single category
+    :param categ:
+    :return:
+    """
+    mycommand = "../phenotools annotation --hp ../hp.json -a %s --date %s --term %s --out tmp.txt" % (annot, date, term)
+    print(mycommand)
+    os.system(mycommand)
+    subontologyId = None
+    subontologyName = None
+    createdAfter = None
+    total = None
+    with open("tmp.txt") as f:
+        for line in f:
+            print(line)
+            if line.startswith('#total annotations to '):
+                field = line.rstrip('\n').split(":")[1]
+                total = int(field)
+            elif line.startswith("#total annotations newer"):
+                field=line.rstrip('\n').split(":")[1]
+                createdAfter = int(field)
+    if total is None:
+        raise ValueError("could not parse total")
+    elif createdAfter is None:
+        raise ValueError("could not parse createdAfter")
+    return createdAfter, total
+
 @click.command()
 @click.option('--date', '-d')
-def main(date):
+@click.option('--annot', '-a')
+def main(date, annot):
     if date is None or len(date)==0:
-        print("Error -- --date argument required")
+        print("Error --date argument required")
+        return
+    if annot is None or len(annot) == 0:
+        print("Error --annot argument required")
         return
     check_phenotools()
-    fh = open('hpocounts', 'wt')
+    fh = open('hpocounts.txt', 'wt')
     fh.write("subontology.id\tsubontology.label\tcreated.after\ttotal\n")
     for k, v in categories.items():
         subontologyId, subontologyName, createdAfter, total = run_phenotools(date, v)
         fh.write("%s\t%s\t%s\t%s\n" % (subontologyId, subontologyName, createdAfter, total))
     fh.close()
+    gh = open('annotcounts.txt', 'wt')
+    gh.write("#Annotations\n")
+    gh.write("subontology.id\tsubontology.label\tcreated.after\ttotal\n")
+    for k, v in categories.items():
+        createdAfter, total = run_phenotools_annotations(date, v, annot)
+        gh.write("%s\t%s\t%s\t%s\n" % (v, k, createdAfter, total))
 
 if __name__ == "__main__":
     main()
