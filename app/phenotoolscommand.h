@@ -15,10 +15,8 @@ namespace phenotools {
             PhenotoolsCommand();
 
         protected:
-                // "2014-11-12T19:12:14.505Z"
+            // "2014-11-12T19:12:14.505Z"
             struct tm string_to_time(string iso8601date) const;
-        
-
     };
 
 

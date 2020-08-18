@@ -46,8 +46,9 @@ namespace phenotools {
          string get_negated() const;
          TermId get_hpo_id() const;
          string get_biocuration_string() const;
-         bool newer_than(const tm &threshold_date) const;
+         tm get_curation_date() const;
         friend std::ostream& operator<<(std::ostream& ost, const HpoAnnotation& annot);
+        static tm DEFAULT_CREATION_DATE;
     };
     std::ostream& operator<<(std::ostream& ost, const HpoAnnotation& annot);
 };

@@ -157,23 +157,49 @@ HpoAnnotation::get_hpo_id() const
      return tid;
 }
 
+// Am J Hum Genet. 2008 Nov 17; 83(5): 610–615. 
+/*
+int tm_sec;   // seconds of minutes from 0 to 61
+   int tm_min;   // minutes of hour from 0 to 59
+   int tm_hour;  // hours of day from 0 to 24
+   int tm_mday;  // day of month from 1 to 31
+   int tm_mon;   // month of year from 0 to 11
+   int tm_year;  // year since 1900
+   int tm_wday;  // days since sunday
+   int tm_yday;  // days since January 1st
+   int tm_isdst; // hours of daylight savings tim
+*/
+tm HpoAnnotation::DEFAULT_CREATION_DATE = {0,0,0,17,10,108,0,0,0};
 
-bool 
-HpoAnnotation::newer_than(const tm &threshold_date) const
+/** 
+ * Return the oldest curation date
+ * Most annotations just have a single date, some have multiple
+ */
+tm 
+HpoAnnotation::get_curation_date() const
 {
-   
-    for (Biocuration bc : curations_) {
-        tm curation_date = bc.get_curation_date();
-        if (threshold_date.tm_year > curation_date.tm_year) {
-            return false;
-        } else if (threshold_date.tm_mon > curation_date.tm_mon) {
-            return false;
-        } else if (threshold_date.tm_mday > curation_date.tm_mday) {
-            return false;
+    if (curations_.empty()) {
+        return HpoAnnotation::DEFAULT_CREATION_DATE;
+    } else if (curations_.size() == 1) {
+        return curations_[0].get_curation_date();
+    } else {
+        // more than one curation date. Take the oldest
+        tm time0 = curations_[0].get_curation_date();
+        tm oldest = time0;
+        for (size_t i = 1; i < curations_.size(); ++i) {
+            tm timeI = curations_[i].get_curation_date();
+            if (oldest.tm_year < timeI.tm_year) {
+                continue;
+            } else if (oldest.tm_mon < timeI.tm_mon ) {
+                continue;
+            } else if (oldest.tm_mday < timeI.tm_mday) {
+                continue;
+            }
         }
+        return oldest;
     }
-    return true;
 }
+
 
 string 
 HpoAnnotation::get_disease_name() const

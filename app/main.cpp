@@ -34,6 +34,8 @@ int main (int argc, char ** argv) {
   string outpath;
   /** A String representing a date, such as 2018-07-21. */
   string iso_date;
+   /** A String representing a date, such as 2018-07-21. */
+  string iso_date_end;
   /** A string representing the target TermId */
   string termid;
   bool show_descriptive_stats = false;
@@ -50,6 +52,7 @@ int main (int argc, char ** argv) {
   auto annot_command = app.add_subcommand("annotation", "work with phenotype.hpoa");
   auto annot_annot_option = annot_command->add_option("-a,--annot",phenotype_hpoa_path,"path to phenotype.hpoa file")->check ( CLI::ExistingFile );
   auto annot_date_option = annot_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
+  auto annot_enddate_option = annot_command->add_option("-e,--enddate", iso_date_end, "date for end of period (e.g., 2020-07-23)");
   auto annot_term_option = annot_command->add_option("-t,--term", termid, "TermId (target)");
   auto annot_hp_option = annot_command->add_option("--hp,--ontology",hp_json_path,"path to hp.json or other ontology")->check ( CLI::ExistingFile );
   auto annot_outpath_option = annot_command->add_option("-o,--out", outpath, "name/path for output file" );
@@ -60,6 +63,7 @@ int main (int argc, char ** argv) {
   auto hp_stats = hpo_command->add_flag("-s,--stats",show_descriptive_stats,"show descriptive statistics");
   auto hp_qc = hpo_command->add_flag("-q,--qc", show_quality_control, "show quality assessment");
   CLI::Option* date_option = hpo_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
+  auto hpo_enddate_option  = hpo_command->add_option("-e,--enddate", iso_date_end, "date for end of period (e.g., 2020-07-23)");
   CLI::Option* term_option = hpo_command->add_option("-t,--term", termid, "TermId (target)");
   auto hpo_debug_option = hpo_command->add_flag("--debug", hpo_debug, "print details of HPO parse" );
   auto hpo_outpath_option = hpo_command->add_option("-o,--out", outpath, "name/path for output file" );
@@ -80,6 +84,7 @@ int main (int argc, char ** argv) {
           show_descriptive_stats, 
           show_quality_control,
           iso_date,
+          iso_date_end,
           termid,
           hpo_debug, 
           outpath);
@@ -88,16 +93,17 @@ int main (int argc, char ** argv) {
           show_descriptive_stats, 
           show_quality_control,
           iso_date,
+          iso_date_end,
           termid,
           hpo_debug);
     }
   } else if ( annot_command->parsed() ) { 
     if (*annot_outpath_option) {
         ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
-                        hp_json_path, iso_date, termid, outpath);
+                        hp_json_path, iso_date,  iso_date_end, termid, outpath);
     } else {
        ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
-                        hp_json_path, iso_date, termid);
+                        hp_json_path, iso_date,  iso_date_end, termid);
     }
   } else if ( phenopacket_command->parsed() ) {
     // if we get here, then we must have the path to a phenopacket

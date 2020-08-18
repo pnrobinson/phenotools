@@ -30,7 +30,7 @@ printJ(const rapidjson::Value &json)
   PrettyWriter<StringBuffer> writer(sb);
   json.Accept(writer);
   auto str = sb.GetString();
-  std::cout << str << "\n";
+  cout << str << "\n";
 }
 
 /**

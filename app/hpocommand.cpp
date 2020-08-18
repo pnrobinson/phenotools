@@ -19,33 +19,46 @@ using std::make_unique;
 
 
 
-HpoCommand::HpoCommand(string hp_json_path, 
+HpoCommand::HpoCommand(const string &hp_json_path, 
                 bool descriptive_stats, 
                 bool quality_control,
                 const string &date,
+                const string &end_date,
                 const string &termid,
-                bool debug) : HpoCommand(hp_json_path, descriptive_stats,quality_control,date,termid,debug,EMPTY_STRING) 
+                bool debug) : HpoCommand(hp_json_path, descriptive_stats,quality_control,date,end_date,termid,debug,EMPTY_STRING) 
                 {
                 }
 
-HpoCommand::HpoCommand(std::string hp_json_path, 
+HpoCommand::HpoCommand(const string &hp_json_path, 
                         bool descriptive_stats, 
                         bool quality_control,
                         const string &date,
+                        const string &end_date,
                         const string &termid,
                         bool debug,
                         const string &outpath):
     show_descriptive_stats(descriptive_stats),
     show_quality_control(quality_control),
+    threshold_date_str(date),
+    end_date_str(end_date),
     debug_(debug),
-    outpath_(outpath),
-    threshold_date_str(date)
+    outpath_(outpath)
 {
     JsonOboParser parser{hp_json_path};
     error_list_ = parser.get_errors();
     this->ontology = parser.get_ontology();
     if (! date.empty()) {
         this->threshold_date_ = make_unique<struct tm>(string_to_time(date));
+    }
+    if (! end_date.empty()) {
+        // this means the user did not pass an end date. We set the end date to 42 days after today to include everything
+        // up to and including the present time
+        // current date/time based on current system
+        time_t now = time(0);
+        tm *gmtm = gmtime(&now);
+        this->end_date_ = make_unique<struct tm>(*gmtm);
+    } else {
+        this->end_date_ = make_unique<struct tm>(string_to_time(end_date));
     }
     if (! termid.empty()) {
         this->tid_ = make_unique<TermId>(TermId::from_string(termid));
@@ -77,7 +90,6 @@ HpoCommand::execute()
             output_descendants(fout);
             fout.close();
         }
-        //count_descendants();
     }
     return EXIT_SUCCESS;
 }
@@ -140,7 +152,7 @@ HpoCommand::output_descendants(std::ostream & ost)
                 << creation_date.tm_mon + 1
                 << "-"
                 << creation_date.tm_mday;
-            bool passes_threshold = later_than(creation_date);
+            bool passes_threshold = in_time_window(creation_date);
             ost << tid
                 << "\t"
                 << label
@@ -177,7 +189,7 @@ HpoCommand::count_descendants()
                 cout << tid << ": " << termopt->get_label() << "\n";
             }
             tm creation_date = termopt->get_creation_date();
-            if (later_than(creation_date)) {
+            if (in_time_window(creation_date)) {
                 cout << tid << " was created before: " << (1900 + creation_date.tm_year) << "\n";
             } else {
                 cout << tid << " was created after: " << (1900 + creation_date.tm_year) << "\n";
@@ -192,22 +204,21 @@ HpoCommand::count_descendants()
 }
 
 
-
-
-
-
-
-
+/**
+ * This function checks whether a date is within the two trheshold dates
+ * A typical use case is to ask whether a term was created between 2015 and 2018.
+ */
  bool 
- HpoCommand::later_than(tm time) const
+ HpoCommand::in_time_window(tm time) const
  {
-    if (time.tm_year > threshold_date_->tm_year) {
+    if (time.tm_year > threshold_date_->tm_year &&  time.tm_year < end_date_->tm_year) {
         return true;
-    } else if (time.tm_mon > threshold_date_->tm_mon) {
+    } else if (time.tm_mon > threshold_date_->tm_mon &&  time.tm_mon < end_date_->tm_mon) {
         return true;
-    } else if (time.tm_mday > threshold_date_->tm_mday) {
+    } else if (time.tm_mday >= threshold_date_->tm_mday &&  time.tm_mday <= end_date_->tm_mday) {
         return true;
     } else {
         return false;
     }
  }
+
