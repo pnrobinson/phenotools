@@ -48,7 +48,7 @@ HpoCommand::HpoCommand(const string &hp_json_path,
     error_list_ = parser.get_errors();
     this->ontology = parser.get_ontology();
     if (! date.empty()) {
-        this->threshold_date_ = make_unique<struct tm>(string_to_time(date));
+        this->start_date_ = make_unique<struct tm>(string_to_time(date));
     }
     if (! end_date.empty()) {
         // this means the user did not pass an end date. We set the end date to 42 days after today to include everything
@@ -136,7 +136,7 @@ HpoCommand::output_descendants(std::ostream & ost)
         << ")\n";
     // Now print the header
     ost << "#hpo.id\thpo.label\tcreation.date\tincluded\n";
-    if (threshold_date_) {
+    if (start_date_) {
         for (TermId tid : descs) {
             total++;
             std::optional<Term> termopt = this->ontology->get_term(tid);
@@ -178,7 +178,7 @@ HpoCommand::count_descendants()
     int total = 0;
     int total_newer = 0;
     vector<TermId> descs = this->ontology->get_descendant_term_ids(*tid_);
-    if (threshold_date_) {
+    if (start_date_) {
         for (TermId tid : descs) {
             total++;
             std::optional<Term> termopt = this->ontology->get_term(tid);
@@ -211,14 +211,27 @@ HpoCommand::count_descendants()
  bool 
  HpoCommand::in_time_window(tm time) const
  {
-    if (time.tm_year > threshold_date_->tm_year &&  time.tm_year < end_date_->tm_year) {
-        return true;
-    } else if (time.tm_mon > threshold_date_->tm_mon &&  time.tm_mon < end_date_->tm_mon) {
-        return true;
-    } else if (time.tm_mday >= threshold_date_->tm_mday &&  time.tm_mday <= end_date_->tm_mday) {
-        return true;
-    } else {
+    if (time.tm_year == start_date_->tm_year) {
+        if (time.tm_mon < start_date_->tm_mon) {
+            return false;
+        } else if (time.tm_mon == start_date_->tm_mon && time.tm_mday < start_date_->tm_mday) {
+            return false;
+        }
+        // if we get here, the years are the same and the month day are not earlier.
+        // so far, ,so good
+    } else if (time.tm_year < start_date_->tm_year) {
         return false;
     }
+    // if we get here, that time is equal to or later than start_date_
+    if (time.tm_year == end_date_->tm_year) {
+        if (time.tm_mon > end_date_->tm_mon) {
+            return false;
+        } else if (time.tm_mon == end_date_->tm_mon && time.tm_mday > end_date_->tm_mday) {
+            return false;
+        }
+    } else if (time.tm_year > end_date_->tm_year) {
+        return false;
+    }
+    return true;
+  
  }
-

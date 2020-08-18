@@ -46,7 +46,7 @@ class HpoCommand : public PhenotoolsCommand {
 	  vector<string> error_list_;
       bool show_descriptive_stats;
       bool show_quality_control;
-      std::unique_ptr<struct tm> threshold_date_;
+      std::unique_ptr<struct tm> start_date_;
       std::unique_ptr<struct tm> end_date_;
       string threshold_date_str;
       string end_date_str;
