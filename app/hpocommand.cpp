@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip> 
 #include <optional>
 #include <sstream>
 #include <fstream>
@@ -16,6 +17,18 @@ using std::cerr;
 using std::stringstream;
 using std::make_unique;
 
+
+string stringify_date(tm *t) {
+    stringstream ss;
+    ss  << t->tm_year + 1900
+        << "-"
+        <<  std::right << std::setfill('0') << std::setw(2)
+        << t->tm_mon + 1
+        << "-"
+        <<  std::right << std::setfill('0') << std::setw(2)
+        << t->tm_mday;
+    return ss.str();
+}
 
 
 
@@ -47,10 +60,13 @@ HpoCommand::HpoCommand(const string &hp_json_path,
     JsonOboParser parser{hp_json_path};
     error_list_ = parser.get_errors();
     this->ontology = parser.get_ontology();
-    if (! date.empty()) {
+    if (date.empty()) {
+        // the following is the birthday of the HPO
+        this->start_date_ = make_unique<struct tm>(string_to_time("2008-11-01"));
+    } else {
         this->start_date_ = make_unique<struct tm>(string_to_time(date));
     }
-    if (! end_date.empty()) {
+    if (end_date.empty()) {
         // this means the user did not pass an end date. We set the end date to 42 days after today to include everything
         // up to and including the present time
         // current date/time based on current system
@@ -136,40 +152,37 @@ HpoCommand::output_descendants(std::ostream & ost)
         << ")\n";
     // Now print the header
     ost << "#hpo.id\thpo.label\tcreation.date\tincluded\n";
-    if (start_date_) {
-        for (TermId tid : descs) {
-            total++;
-            std::optional<Term> termopt = this->ontology->get_term(tid);
-            if (! termopt) {
-                cerr << "[ERROR] Could not find term for " << tid << "\n";
-                return;
-            } 
-            label = termopt->get_label();
-            tm creation_date = termopt->get_creation_date();
-            stringstream ss;
-            ss << creation_date.tm_year + 1900
-                << "-"
-                << creation_date.tm_mon + 1
-                << "-"
-                << creation_date.tm_mday;
-            bool passes_threshold = in_time_window(creation_date);
-            ost << tid
-                << "\t"
-                << label
-                << "\t"
-                << ss.str()
-                << "\t"
-                << (passes_threshold ? "T" : "F")
-                << "\n";
-            if (passes_threshold) {
-                total_newer++;
-            }
+   
+    for (TermId tid : descs) {
+        total++;
+        std::optional<Term> termopt = this->ontology->get_term(tid);
+        if (! termopt) {
+            cerr << "[ERROR] Could not find term for " << tid << "\n";
+            continue;
+        } 
+        label = termopt->get_label();
+        tm creation_date = termopt->get_creation_date();
+        stringstream ss;
+        ss << creation_date.tm_year + 1900
+            << "-"
+            << creation_date.tm_mon + 1
+            << "-"
+            << creation_date.tm_mday;
+        bool passes_threshold = in_time_window(creation_date);
+        ost << tid
+            << "\t"
+            << label
+            << "\t"
+            << ss.str()
+            << "\t"
+            << (passes_threshold ? "T" : "F")
+            << "\n";
+        if (passes_threshold) {
+            total_newer++;
         }
         ost << "#Created after " << threshold_date_str << ": " << total_newer << "\n";
         ost << "#Total: " << total << "\n";
-    } else {
-        cout << "#Total: " << total << "\n";
-    }
+    } 
 }
 
 void
@@ -202,6 +215,7 @@ HpoCommand::count_descendants()
         cout << "Term " << *tid_ << " has " << N << " descendants.\n";
     }
 }
+
 
 
 /**

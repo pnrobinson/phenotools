@@ -39,7 +39,6 @@ class HpoCommand : public PhenotoolsCommand {
                 bool debug);
       virtual int execute();
 
-
     private:
       std::unique_ptr<Ontology> ontology;
       /** A list of errors, if any, encountered while parsing the input file.*/
