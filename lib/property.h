@@ -21,6 +21,7 @@ enum class Predicate {
   RDF_SCHEMA_COMMENT,//rdf-schema#comment
   DATE,//"date" -- probably an error
   OWL_DEPRECATED,//owl#deprecated
+  HAS_ONTOLOGY_ROOT_TERM, // has ontology root term
   IS_ANONYMOUS,//oboInOwl#is_anonymous
   CONSIDER,//oboInOwl#consider
   EDITOR_NOTES,//hsapdv#editor_notes

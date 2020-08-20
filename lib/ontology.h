@@ -106,7 +106,9 @@ public:
   vector<PredicateValue> get_property_values() const { return property_values_; }
   vector<TermId> get_isa_parents(const TermId &child) const;
   vector<Synonym> get_synonyms() const { return synonym_list_; }
+  void set_obsolete(bool obs) { is_obsolete_ = obs; }
   bool obsolete() const { return is_obsolete_; }
+  bool is_alternative_id(const TermId &tid) const;
   bool contains_xref_with_prefix(const string &prefix) const;
   tm get_creation_date() const;
   friend std::ostream& operator<<(std::ostream& ost, const Term& term);
@@ -188,6 +190,7 @@ public:
   bool exists_path(const TermId &source, const TermId &dest, EdgeType etype) const;
   /** @return true if t1 and t2 have a common ancestor excluding root */
   bool have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const;
+  std::set<TermId> get_ancestors(const TermId &tid) const;
   Ontology(vector<Term> terms,vector<Edge> edges,string id, vector<PredicateValue> properties);
   vector<TermId> get_current_term_ids() const { return current_term_ids_; }
   void debug_print() const;

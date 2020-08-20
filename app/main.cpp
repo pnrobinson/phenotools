@@ -30,8 +30,10 @@ int main (int argc, char ** argv) {
   /** Path to mondo file file, mondo.json. */
   string mondo_json_path;
   string phenopacket_path;
+  /** Path/name for file with one HPO term per line that we will annotate with top level terms */
+  string hpo_termfile;
   /** Path/name for any outputt file. */
-  string outpath;
+  string outpath = "phenotools.out";
   /** A String representing a date, such as 2018-07-21. */
   string iso_date;
    /** A String representing a date, such as 2018-07-21. */
@@ -59,7 +61,7 @@ int main (int argc, char ** argv) {
 
   // HPO options
   CLI::App* hpo_command = app.add_subcommand ( "hpo", "Q/C of JSON HP ontology file" );
-  CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
+  CLI::Option* hp_json_path_option = hpo_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile )->required();
   auto hp_stats = hpo_command->add_flag("-s,--stats",show_descriptive_stats,"show descriptive statistics");
   auto hp_qc = hpo_command->add_flag("-q,--qc", show_quality_control, "show quality assessment");
   CLI::Option* date_option = hpo_command->add_option("-d,--date", iso_date, "threshold_date (e.g., 2018-09-23)");
@@ -67,7 +69,12 @@ int main (int argc, char ** argv) {
   CLI::Option* term_option = hpo_command->add_option("-t,--term", termid, "TermId (target)");
   auto hpo_debug_option = hpo_command->add_flag("--debug", hpo_debug, "print details of HPO parse" );
   auto hpo_outpath_option = hpo_command->add_option("-o,--out", outpath, "name/path for output file" );
+  
 
+  CLI::App* toplevel_command = app.add_subcommand("toplevel", "annotate top level terms from an input file");
+  auto toplevel_json_path_option = toplevel_command->add_option ( "--hp", hp_json_path,"path to  hp.json file" )->check ( CLI::ExistingFile );
+  auto toplevel_infile_option = toplevel_command->add_option("-i", hpo_termfile, "input file (one HPO term per line)");
+  auto topvel_outpath_option = toplevel_command->add_option("-o,--out", outpath, "name/path for output file" );
 
 
 
@@ -97,7 +104,9 @@ int main (int argc, char ** argv) {
           termid,
           hpo_debug);
     }
-  } else if ( annot_command->parsed() ) { 
+  } else if (toplevel_command->parsed()) {
+      ptcommand = make_unique<HpoCommand>(hp_json_path, hpo_termfile, outpath);
+  }  else if ( annot_command->parsed() ) { 
     if (*annot_outpath_option) {
         ptcommand = make_unique<AnnotationCommand>(phenotype_hpoa_path,
                         hp_json_path, iso_date,  iso_date_end, termid, outpath);

@@ -15,6 +15,10 @@
 
 using std::cerr;
 using std::cout;
+using std::make_shared;
+using std::make_unique;
+using std::shared_ptr;
+using std::unique_ptr;
 
 
 
@@ -124,6 +128,9 @@ Term::add_synonym(const string &pred, const string &lbl)
 std::ostream& operator<<(std::ostream& ost, const Term& term){
   ost << term.label_ << " [" << term.id_ << "]\n";
   ost << "def: " << (term.definition_.empty() ? "n/a":term.definition_) << "\n";
+   if (term.is_obsolete_) {
+    ost << "[obsolete]\n";
+  }
   if (! term.definition_xref_list_.empty()) {
     for (const auto& p : term.definition_xref_list_){
       ost << "\tdef-xref:" << p << "\n";
@@ -145,6 +152,7 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
       ost << s << "\n";
     }
   }
+ 
   return ost;
 }
 
@@ -161,8 +169,8 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
 
  tm
  Term::get_creation_date() const{
-   tm time = {}; // value initialize to zero
-   time.tm_year = 108; // 2008
+    tm time = {}; // value initialize to zero
+    time.tm_year = 108; // 2008
     int y,M,d,h,m;
     float s; 
     for (PredicateValue pv : property_values_) {
@@ -178,6 +186,18 @@ std::ostream& operator<<(std::ostream& ost, const Term& term){
         }
     }                   
    return time;
+ }
+
+/**
+ * This can be used to figure out if tid is the primary term id or one of the alternate ids of the Term.
+ * Note that we assume that the tid belongs to the term and do not check if it is the primary id --
+ * this should be done by client code if needed.
+ */
+ bool
+ Term::is_alternative_id(const TermId &tid) const
+ {
+   auto p = std::find(alternative_id_list_.begin(), alternative_id_list_.end(),tid);
+   return p != alternative_id_list_.end();
  }
 
 
@@ -307,7 +327,7 @@ void
 Ontology::add_all_terms(const vector<Term> &terms){
   auto N = terms.size();
   for (auto t : terms) {
-    std::shared_ptr<Term> sptr = std::make_shared<Term>(t);
+    shared_ptr<Term> sptr = make_shared<Term>(t);
     TermId tid = t.get_term_id();
     string id = tid.get_id();
     term_map_.insert(std::make_pair(tid,sptr));
@@ -324,7 +344,7 @@ Ontology::add_all_terms(const vector<Term> &terms){
     }
   }
   std::sort(current_term_ids_.begin(), current_term_ids_.end());
-  if (current_term_ids_.size() != N) {
+  if (current_term_ids_.size() + obsolete_term_ids_.size() != N) {
     // sanity check
     // should never ever happen. TODO add exception
     throw PhenopacketException("[FATAL] Number of term ids not equal to number of terms");
@@ -584,7 +604,36 @@ Ontology::exists_path(const TermId &source, const TermId &dest, EdgeType etype) 
 }
 
 
-
+std::set<TermId> 
+Ontology::get_ancestors(const TermId &tid) const
+{
+  auto p = termid_to_index_.find(tid);
+  if (p == termid_to_index_.end()) {
+    // not found, should never happen
+    throw PhenopacketException("Unrecognized TermId: " + tid.get_value());
+  }
+  std::stack<int> st;
+  std::set<int> t1_ancestors;
+  int t1_index = p->second;
+  st.push(t1_index);
+  while (! st.empty()) {
+    int index = st.top();
+    t1_ancestors.insert(index);
+    st.pop();
+    for (int i = offset_to_edge_[index]; i < offset_to_edge_[1+index]; i++) {
+      if (edge_type_list_[i] != EdgeType::IS_A) {
+        continue; // only follow is-a links to get ancestors
+      }
+      int next_vertex = edge_to_[i];
+      st.push(next_vertex);
+    }
+  }
+  std::set<TermId> tid1_ancestors;
+  for (int i : t1_ancestors) {
+    tid1_ancestors.insert(current_term_ids_.at(i));
+  }
+  return tid1_ancestors;
+}
 
 bool
 Ontology::have_common_ancestor(const TermId &t1, const TermId &t2, const TermId &root) const

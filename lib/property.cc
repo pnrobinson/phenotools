@@ -42,6 +42,7 @@ PredicateValue::predicate_registry_ = {
 		   {"subject",Predicate::SUBJECT},
 		   {"title",Predicate::TITLE},
 		   {"IAO_0100001",Predicate::TERM_REPLACED_BY},
+		   {"IAO_0000700", Predicate::HAS_ONTOLOGY_ROOT_TERM},
 		   {"RO_0002161",Predicate::NEVER_IN_TAXON},
 		   {"RO_0002162", Predicate::IN_TAXON},
 		   {"mondo#excluded_synonym",Predicate::EXCLUDED_SYNONYM},
