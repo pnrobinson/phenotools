@@ -88,7 +88,8 @@ HpoAnnotation::parse_phenotype_hpoa(const string &path){
     vector<HpoAnnotation> annotations;
     std::ifstream ifs(path);
     if (! ifs.good()) {
-        std::cerr << "[ERROR] Could not open JSON ontology file \"" << path << "\"\n";
+        std::cerr << "[ERROR(" __FILE__ << ":" << __LINE__ 
+              << ")] Could not open JSON ontology file \"" << path << "\"\n";
         exit(EXIT_FAILURE);
     }
     string line;

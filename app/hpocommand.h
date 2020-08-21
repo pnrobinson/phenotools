@@ -43,9 +43,6 @@ class HpoCommand : public PhenotoolsCommand {
       void print_category(const string &path, const string &outpath) const;
 
     private:
-      std::unique_ptr<Ontology> ontology;
-      /** A list of errors, if any, encountered while parsing the input file.*/
-	  vector<string> error_list_;
       bool show_descriptive_stats;
       bool show_quality_control;
       std::unique_ptr<struct tm> start_date_;
@@ -57,7 +54,7 @@ class HpoCommand : public PhenotoolsCommand {
       string hpo_termfile_;
       string outpath_;
       bool do_term_annotation_ = false;
-      vector<TermId> toplevelCatories_;
+      
 
       void show_qc();
       void show_stats();
@@ -66,7 +63,7 @@ class HpoCommand : public PhenotoolsCommand {
       bool in_time_window(tm time) const;
       void annotate_termfile() const;
       void output_terms_by_category() const;
-      void init_toplevel_categories();
+     
 
 };
 

@@ -7,7 +7,6 @@
 
 #include "annotcommand.h"
 #include "../lib/jsonobo.h"
-#include "../lib/ontology.h"
 #include "../lib/termid.h"
 
 
@@ -21,14 +20,16 @@ using std::make_unique;
 
 using namespace phenotools;
 
+string AnnotationCommand::DEFAULT_OUTFILE_NAME = "hpo_annot.txt";
+
 AnnotationCommand::AnnotationCommand(const string &path, 
                 const string &hp_json, 
                 const string &date, 
                 const string &enddate, 
                 const string &termid,
                 const string &outpath):
+    PhenotoolsCommand(hp_json),
     phenotype_hpoa_path(path),
-    hp_json_path(hp_json),
     termid_(termid),
     date_(date),
     enddate_(enddate),
@@ -51,6 +52,12 @@ AnnotationCommand::AnnotationCommand(const string &path,
     } else {
         this->end_date_ = make_unique<struct tm>(string_to_time(enddate));
     }
+    if (termid.empty()) {
+        do_by_toplevel_category_ = true;
+    }
+    cout << "[INFO] Parsing " << phenotype_hpoa_path << "\n";
+    annotations_ = HpoAnnotation::parse_phenotype_hpoa(phenotype_hpoa_path);
+    cout << "[INFO] Obtained " << annotations_.size() << " annotations.\n";
 }
 
 /**
@@ -75,14 +82,9 @@ AnnotationCommand::output_descendants(std::ostream & ost)
     int total = 0;
     int total_newer = 0; // created after target date.
     TermId tid = TermId::from_string(termid_);
-    cout << "[INFO] Parsing " << phenotype_hpoa_path << "\n";
-    vector<HpoAnnotation> annots = HpoAnnotation::parse_phenotype_hpoa(phenotype_hpoa_path);
-    cout << "[INFO] Obtained " << annots.size() << " annotations.\n";
-    JsonOboParser parser{hp_json_path};
-    auto ontology =  parser.get_ontology();
-    cout <<"[INFO] HPO ontology with " << ontology->current_term_count() << " terms\n" ;
+    cout <<"[INFO] HPO ontology with " << ontology_->current_term_count() << " terms\n" ;
     cout <<"[INFO] We will output descendants from term " << tid << "\n";
-    std::optional<Term> termopt = ontology->get_term(tid);
+    std::optional<Term> termopt = ontology_->get_term(tid);
     string term_label = "n/a";
     if (termopt) {
        term_label = termopt->get_label();
@@ -91,12 +93,12 @@ AnnotationCommand::output_descendants(std::ostream & ost)
         return;
     }
     ost << "#" << tid << " (" << term_label << ")\n";
-    for (HpoAnnotation ann : annots) {
+    for (HpoAnnotation ann : annotations_) {
         if (! ann.is_omim()) {
             continue;
         }
         TermId hpoid = ann.get_hpo_id();
-        if (! ontology->exists_path(hpoid, tid)) {
+        if (! ontology_->exists_path(hpoid, tid)) {
             continue;
             // the term is not a descendant
         }
@@ -127,15 +129,63 @@ AnnotationCommand::output_descendants(std::ostream & ost)
         << "\n";
 }
 
+ void 
+ AnnotationCommand::process_by_top_level_categories() const
+ {
+    int total = 0;
+    int total_in_window = 0;
+    std::ofstream outfile;
+    if (outpath_.empty()) {
+        outfile.open(DEFAULT_OUTFILE_NAME);
+    } else {
+        outfile.open(outpath_);
+    }
+    if (! outfile.good()) {
+         cerr << "[ERROR ("
+            << __FILE__ << ":l." << __LINE__
+            << ")] Could not open \"" << outpath_ << "\" for writing\n";
+        return;
+    }
+    for (HpoAnnotation ann : annotations_) {
+        if (! ann.is_omim()) {
+            continue;
+        }
+        TermId hpoid = ann.get_hpo_id();
+        std::optional<Term> term = ontology_->get_term(hpoid);
+        if (! term) {
+            cerr << "[ERROR] Could not retrieve term for id: " << hpoid << "\n";
+            continue;
+            // the term is not a descendant
+        }
+        string label = term->get_label();
+        total++;
+        if (! in_time_window(ann.get_curation_date())) {
+            continue;
+        }
+        total_in_window++;
+        std::optional<TermId> category = get_toplevel(hpoid);
+        if (! category) {
+            cerr << "[ERROR] Could not identify top-level id for " << hpoid << "\n";
+            continue;
+        }
+        outfile << hpoid << "\t" << *category << "\n";
+    }
+    outfile.close();
+    
+ }
+
 
 
 int
 AnnotationCommand::execute()
 {
-    if (hp_json_path.empty()) {
-        cerr << "[WARNING] No path to hp.json passed\n";
-        return 0;
+    if (do_by_toplevel_category_) {
+        init_toplevel_categories();
+        process_by_top_level_categories();
+        return EXIT_SUCCESS;
     }
+
+
     if (termid_.empty()) {
         cerr << "[ERROR] No term id passed\n";
         return 1;

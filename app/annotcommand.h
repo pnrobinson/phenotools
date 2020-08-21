@@ -3,12 +3,14 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 using std::string;
 using std::vector;
 
 #include "phenotoolscommand.h"
 #include "../lib/hpoannotation.h"
+#include "../lib/ontology.h"
 
 
 using std::string;
@@ -30,13 +32,14 @@ namespace phenotools {
             string date_;
             string enddate_;
             string outpath_;
+            bool do_by_toplevel_category_ = false;
             std::unique_ptr<struct tm> start_date_;
             std::unique_ptr<struct tm> end_date_;
-            vector<HpoAnnotation> annotations;
+            vector<HpoAnnotation> annotations_;
             bool in_time_window(tm time) const;
+            void process_by_top_level_categories() const;
             void output_descendants(std::ostream & ost);
-
-
+            static string DEFAULT_OUTFILE_NAME;
     };
 
 };

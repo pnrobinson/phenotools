@@ -197,7 +197,8 @@ void JsonOboParser::parse()
   std::ifstream ifs(path_);
   if (!ifs.good())
   {
-    std::cerr << "[ERROR] Could not open JSON ontology file \"" << path_ << "\"\n";
+    std::cerr << "[ERROR (" __FILE__ << ":" << __LINE__ 
+              << ")] Could not open JSON ontology file \"" << path_ << "\"\n";
     exit(EXIT_FAILURE);
   }
   rapidjson::IStreamWrapper isw(ifs);

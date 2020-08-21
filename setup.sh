@@ -68,6 +68,12 @@ if [ ! -e build ]; then
     mkdir build
 fi
 cd build; cmake ..; make
+if [ $? -eq 0 ]; then
+    echo "make: success!"
+else    
+    echo "make: failure!"
+    exit 1
+fi
 mv app/phenotools ..
 
 echo
