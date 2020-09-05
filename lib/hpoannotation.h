@@ -26,11 +26,14 @@ namespace phenotools {
             string to_string() const;
     };
 
+    enum class EvidenceType { IEA, TAS, PCS };
+
     class HpoAnnotation {
     private:
         unique_ptr<TermId> disease_id_;
         string disease_name_;
         bool negated_;
+        EvidenceType evidence_;
         unique_ptr<TermId> hpo_id_;
         vector<Biocuration> curations_;
 
@@ -47,6 +50,12 @@ namespace phenotools {
          TermId get_hpo_id() const;
          string get_biocuration_string() const;
          tm get_curation_date() const;
+         bool is_IEA() const { return evidence_ == EvidenceType::IEA; }
+         bool is_TAS() const { return evidence_ == EvidenceType::TAS; }
+         bool is_PCS() const { return evidence_ == EvidenceType::PCS; }
+         EvidenceType get_evidence_type() const { return evidence_; }
+         string get_evidence_type_string() const;
+         string get_database() const { return disease_id_->get_prefix(); }
         friend std::ostream& operator<<(std::ostream& ost, const HpoAnnotation& annot);
         static tm DEFAULT_CREATION_DATE;
     };

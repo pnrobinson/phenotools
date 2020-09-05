@@ -118,6 +118,18 @@ HpoAnnotation::HpoAnnotation(const string &line)
     disease_name_ = fields[1];
     negated_ = fields[2].rfind("NOT", 0) == 0;
     hpo_id_ = make_unique<TermId>(TermId::from_string(fields[3]));
+    string evi = fields[5];
+    if (evi == "IEA") {
+        evidence_ = EvidenceType::IEA;
+    } else if (evi == "TAS") {
+        evidence_ = EvidenceType::TAS;
+    } else if (evi == "PCS") {
+        evidence_ = EvidenceType::PCS;
+    } else {
+        std::cerr << "[ERROR] Malformed evidence type string " << evi << "\n";
+        evidence_ = EvidenceType::IEA; // defailt
+    }
+    
     string biocuration_string = fields[11];
     vector<string> curats = split(biocuration_string, ';');
     for (string s : curats) {
@@ -130,6 +142,7 @@ HpoAnnotation::HpoAnnotation(const HpoAnnotation &annot):
     disease_id_ (make_unique<TermId>(*(annot.disease_id_))),
     disease_name_(annot.disease_name_),
     negated_(annot.negated_),
+    evidence_(annot.evidence_),
     hpo_id_(make_unique<TermId>(*(annot.hpo_id_))),
     curations_(annot.curations_)
 {
@@ -225,6 +238,17 @@ HpoAnnotation::get_biocuration_string() const
         ss << ";";
    }
    return ss.str();
+}
+
+string
+HpoAnnotation::get_evidence_type_string() const {
+    if (evidence_ == EvidenceType::TAS) {
+        return "TAS";
+    } else if (evidence_ == EvidenceType::PCS) {
+        return "PCS";
+    } else {
+        return "IEA";
+    }
 }
 
 

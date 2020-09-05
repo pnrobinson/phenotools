@@ -16,7 +16,7 @@
 using std::cout;
 using std::cerr;
 using std::make_unique;
-
+using std::map;
 
 using namespace phenotools;
 
@@ -58,6 +58,7 @@ AnnotationCommand::AnnotationCommand(const string &path,
     cout << "[INFO] Parsing " << phenotype_hpoa_path << "\n";
     annotations_ = HpoAnnotation::parse_phenotype_hpoa(phenotype_hpoa_path);
     cout << "[INFO] Obtained " << annotations_.size() << " annotations.\n";
+    output_annotation_stats(std::cout);
 }
 
 /**
@@ -205,6 +206,7 @@ AnnotationCommand::execute()
         output_descendants(fout);
         fout.close();
     }
+    output_annotation_stats(std::cout);
     return 0;
 }
 
@@ -238,5 +240,57 @@ AnnotationCommand::execute()
         return false;
     }
     return true;
-  
  }
+
+
+void 
+AnnotationCommand::output_annotation_stats_per_database(std::ostream & ost, const map<string, int> &annotmap, const string &dbasename) const
+{
+    double n_total = 0;
+    auto it = annotmap.begin();
+    while (it != annotmap.end()) {
+        n_total += static_cast<double>(it->second);
+        it++;
+    }
+       
+    it = annotmap.begin();
+    while (it != annotmap.end()) {
+        int count = it->second;
+        double perc = 100.0 * static_cast<double>(count) / n_total;
+        cout << dbasename << "/" << it->first << ": " << count << " (" << perc << "%)\n";
+        it++;
+    } 
+    cout << dbasename << " (total): " << static_cast<int>(n_total) << "\n";
+
+}
+
+/**
+ * Output counts of sources of annotations according to database and evidence code
+ */
+void 
+AnnotationCommand::output_annotation_stats(std::ostream & ost) const {
+    std::map<string, int> decipher;
+    std::map<string, int> omim;
+    std::map<string, int> orpha;
+
+    for (HpoAnnotation annot : annotations_) {
+        string dbase = annot.get_database();
+        auto etype =  annot.get_evidence_type_string();
+        if (dbase == "OMIM") {
+            omim[etype]++;
+        } else if (dbase == "ORPHA") {
+            orpha[etype]++;
+        } else if (dbase == "DECIPHER") {
+            decipher[etype]++;
+        } else {
+            // should never happen
+            std::cerr <<" [ERROR] malformed database prefix: " << dbase << "\n";
+        }
+    }
+    output_annotation_stats_per_database(ost, decipher, "DECIPER");
+    output_annotation_stats_per_database(ost, orpha, "ORPHANET");
+   output_annotation_stats_per_database(ost, omim, "OMIM");
+    cout << "Total annotations: "
+        << annotations_.size() << "\n";
+
+}

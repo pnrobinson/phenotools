@@ -1,10 +1,12 @@
 #ifndef ANNOTATION_COMMAND_H
 #define ANNOTATION_COMMAND_H
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
+using std::map;
 using std::string;
 using std::vector;
 
@@ -39,6 +41,8 @@ namespace phenotools {
             bool in_time_window(tm time) const;
             void process_by_top_level_categories() const;
             void output_descendants(std::ostream & ost);
+            void output_annotation_stats(std::ostream & ost) const;
+            void output_annotation_stats_per_database(std::ostream & ost, const map<string, int> &annotmap, const string &dbasename) const;
             static string DEFAULT_OUTFILE_NAME;
     };
 
