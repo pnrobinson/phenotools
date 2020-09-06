@@ -272,16 +272,27 @@ AnnotationCommand::output_annotation_stats(std::ostream & ost) const {
     std::map<string, int> decipher;
     std::map<string, int> omim;
     std::map<string, int> orpha;
+    map<string, int> decipher_terms;
+    map<string, int> orpha_terms;
+    map<string, int> omim_terms;
+    map<string, int> total_terms;
 
     for (HpoAnnotation annot : annotations_) {
         string dbase = annot.get_database();
         auto etype =  annot.get_evidence_type_string();
+        string termidstring = annot.get_hpo_id().get_value();
         if (dbase == "OMIM") {
             omim[etype]++;
+            omim_terms[termidstring]++;
+            total_terms[termidstring]++;
         } else if (dbase == "ORPHA") {
             orpha[etype]++;
+            orpha_terms[termidstring]++;
+            total_terms[termidstring]++;
         } else if (dbase == "DECIPHER") {
             decipher[etype]++;
+            decipher_terms[termidstring]++;
+            total_terms[termidstring]++;
         } else {
             // should never happen
             std::cerr <<" [ERROR] malformed database prefix: " << dbase << "\n";
@@ -292,5 +303,10 @@ AnnotationCommand::output_annotation_stats(std::ostream & ost) const {
    output_annotation_stats_per_database(ost, omim, "OMIM");
     cout << "Total annotations: "
         << annotations_.size() << "\n";
+    cout << "HPO terms used for annotations:\n";
+    cout << "DECIPHER: n=" << decipher_terms.size() << "\n";
+    cout << "ORPPHANET n=" << orpha_terms.size() << "\n";
+    cout << "OMIM n=" << omim_terms.size() << "\n";
+    cout << "Total n=" << total_terms.size() << "\n";
 
 }
