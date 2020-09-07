@@ -149,6 +149,7 @@ void
 HpoCommand::output_terms_by_category() const {
     vector<TermId> termids = ontology_->get_current_term_ids();
     std::ofstream outfile;
+    unsigned int valid_term_count = 0;
     outfile.open(outpath_);
     if (! outfile.good()) {
          cerr << "[Could not open " << outpath_ << " for writing\n";
@@ -161,6 +162,7 @@ HpoCommand::output_terms_by_category() const {
         } else if (term->obsolete()){
             continue;
         }
+        valid_term_count++;
         std::set<TermId> ancestors = ontology_->get_ancestors(tid);
         bool found = false;
         for (TermId t : ancestors) {
@@ -178,8 +180,9 @@ HpoCommand::output_terms_by_category() const {
                 << tid 
                 << "\n";
         }
+        
     }
-
+    cout << "[INFO] Number of valid terms: " << valid_term_count << "\n";
 }
 
 

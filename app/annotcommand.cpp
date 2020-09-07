@@ -12,11 +12,13 @@
 
 #include <iostream>
 #include <fstream>
+#include <set>
 
 using std::cout;
 using std::cerr;
 using std::make_unique;
 using std::map;
+using std::set;
 
 using namespace phenotools;
 
@@ -243,7 +245,7 @@ AnnotationCommand::execute()
  }
 
 
-void 
+int 
 AnnotationCommand::output_annotation_stats_per_database(std::ostream & ost, const map<string, int> &annotmap, const string &dbasename) const
 {
     double n_total = 0;
@@ -261,7 +263,7 @@ AnnotationCommand::output_annotation_stats_per_database(std::ostream & ost, cons
         it++;
     } 
     cout << dbasename << " (total): " << static_cast<int>(n_total) << "\n";
-
+    return static_cast<int>(n_total);
 }
 
 /**
@@ -276,37 +278,56 @@ AnnotationCommand::output_annotation_stats(std::ostream & ost) const {
     map<string, int> orpha_terms;
     map<string, int> omim_terms;
     map<string, int> total_terms;
+    set<string> decipher_diseases;
+    set<string> omim_diseases;
+    set<string> orpha_diseases;
 
     for (HpoAnnotation annot : annotations_) {
         string dbase = annot.get_database();
+        string disease_id = annot.get_disease_id().get_value();
         auto etype =  annot.get_evidence_type_string();
         string termidstring = annot.get_hpo_id().get_value();
         if (dbase == "OMIM") {
             omim[etype]++;
             omim_terms[termidstring]++;
             total_terms[termidstring]++;
+            omim_diseases.insert(disease_id);
         } else if (dbase == "ORPHA") {
             orpha[etype]++;
             orpha_terms[termidstring]++;
             total_terms[termidstring]++;
+            orpha_diseases.insert(disease_id);
         } else if (dbase == "DECIPHER") {
             decipher[etype]++;
             decipher_terms[termidstring]++;
             total_terms[termidstring]++;
+            decipher_diseases.insert(disease_id);
         } else {
             // should never happen
             std::cerr <<" [ERROR] malformed database prefix: " << dbase << "\n";
         }
     }
-    output_annotation_stats_per_database(ost, decipher, "DECIPER");
-    output_annotation_stats_per_database(ost, orpha, "ORPHANET");
-   output_annotation_stats_per_database(ost, omim, "OMIM");
+    int n_decipher_annots = output_annotation_stats_per_database(ost, decipher, "DECIPER");
+    int n_orpha_annots = output_annotation_stats_per_database(ost, orpha, "ORPHANET");
+    int n_omim_annots = output_annotation_stats_per_database(ost, omim, "OMIM");
+    unsigned int n_decipher_terms =  decipher_terms.size();
+    unsigned int n_decipher_diseases = decipher_diseases.size();
+    double term_per_disease_decipher = static_cast<double>(n_decipher_annots)/static_cast<double>(n_decipher_diseases);
+    unsigned int n_omim_terms =  omim_terms.size();
+    unsigned int n_omim_diseases = omim_diseases.size();
+    double term_per_disease_omim = static_cast<double>(n_omim_annots)/static_cast<double>(n_omim_diseases);
+    unsigned int n_orpha_terms = orpha_terms.size();
+    unsigned int n_orpha_diseases = orpha_diseases.size();
+    double term_per_disease_orpha = static_cast<double>(n_orpha_annots)/static_cast<double>(n_orpha_diseases);
+
     cout << "Total annotations: "
         << annotations_.size() << "\n";
     cout << "HPO terms used for annotations:\n";
-    cout << "DECIPHER: n=" << decipher_terms.size() << "\n";
-    cout << "ORPPHANET n=" << orpha_terms.size() << "\n";
-    cout << "OMIM n=" << omim_terms.size() << "\n";
+    cout << "DECIPHER terms used: n=" << n_decipher_terms << "\n";
+    cout << "ORPPHANET terms used n=" << orpha_terms.size() << "\n";
+    cout << "OMIM terms used n=" << omim_terms.size() << "\n";
     cout << "Total n=" << total_terms.size() << "\n";
-
+    cout << "DECIPHER diseases: n=" << n_decipher_diseases << " (annotations per disease: "<< term_per_disease_decipher << ")\n";
+    cout << "OMIM diseases: n=" << n_omim_diseases << " (terms per disease: "<< term_per_disease_omim << ")\n";
+    cout << "ORPHANET diseases: n=" << n_orpha_diseases << " (terms per disease: "<< term_per_disease_orpha << ")\n";
 }

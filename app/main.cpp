@@ -127,22 +127,5 @@ int main (int argc, char ** argv) {
     return 1;
   }
    ptcommand->execute();
-  /*else if (mondo_app->parsed()) {
-    // run the MONDO mode
-    if (! *mondo_json_option) {
-      cerr << "[ERROR] mondo command requires -j/--json <path to mondo.json> option.\n";
-      exit(EXIT_FAILURE);
-    }
-    JsonOboParser parser{mondo_json_path};
-    parser.output_quality_assessment();
-    std::unique_ptr<Ontology>  ontology = parser.get_ontology();
-    Mondo mondo{std::move(ontology)};
-    if (mondo_omim_flag) {
-      mondo.omim_stats();
-    }
-    ontology->output_descriptive_statistics();
-  } else {
-    std::cerr << "[ERROR] No command passed. Run with -h option to see usage\n";
-  }
-  */
+   return 0;
 }

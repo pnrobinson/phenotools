@@ -42,7 +42,7 @@ namespace phenotools {
             void process_by_top_level_categories() const;
             void output_descendants(std::ostream & ost);
             void output_annotation_stats(std::ostream & ost) const;
-            void output_annotation_stats_per_database(std::ostream & ost, const map<string, int> &annotmap, const string &dbasename) const;
+            int output_annotation_stats_per_database(std::ostream & ost, const map<string, int> &annotmap, const string &dbasename) const;
             static string DEFAULT_OUTFILE_NAME;
     };
 
